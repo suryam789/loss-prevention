@@ -1,0 +1,100 @@
+#!/bin/bash
+#
+# Copyright (C) 2024 Intel Corporation.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+
+RESULT_DIR=./results
+
+# a quick spot test script to smoke testing some of pipeline profiles
+#
+# setup:
+setup() {
+    echo "Clean existing Docker containers"
+    make clean-all || true
+    echo "Build Loss Prevention image"
+    make build
+}
+
+teardown() {
+    make down
+    make clean-results || true
+}
+
+# $1 is the profile name
+# $2 is the status code from caller
+verifyStatusCode() {
+    status_code=$1
+    if [ "$status_code" -eq 0 ]
+    then
+        echo "=== Loss Prevention smoke test status code PASSED"
+    else
+        echo "=== Loss Prevention smoke test status code FAILED"
+    fi
+}
+
+# $1 is the profile name
+verifyNonEmptyPipelineLog() {
+    if [ $(ls $RESULT_DIR/pipeline*.log 2> /dev/null | wc -l) -ge 1 ]
+    then
+        echo "=== Loss Prevention smoke test pipeline log PASSED"
+    else
+        echo "=== Loss Prevention smoke test pipeline log FAILED"
+    fi
+}
+
+waitForLogFile() {
+    max_wait_time=300
+    sleep_increments=10
+    total_wait_time=0
+    pipeline_logs=0
+    echo "Waiting for log file to generate"
+    while [ $pipeline_logs -le 0 ]
+    do
+        pipeline_logs=$(ls $RESULT_DIR/pipeline*.log 2> /dev/null | wc -l)
+        echo $pipeline_logs
+        ls $RESULT_DIR/pipeline*.log 2> /dev/null | wc -l
+        if [ "$total_wait_time" -gt "$max_wait_time" ]
+        then
+            echo "FAILED: exceeding the max wait time $max_wait_time while waiting for pipeline0.log file, stop waiting"
+            return
+        fi
+        echo "could not find pipeline log file yet, sleep for $sleep_increments and retry it again"
+        sleep $sleep_increments
+        total_wait_time=$(( total_wait_time + sleep_increments ))
+    done
+    echo "total wait time = $total_wait_time seconds"
+}
+
+# initial setup
+setup
+
+# 1. test Loss Prevention: should run and exit without any error
+echo "Running Loss Prevention..."
+make run
+status_code=$?
+verifyStatusCode $status_code
+# test profile currently doesn't have logfile output
+teardown
+
+# 2. Loss Prevention CPU results: should see non-empty pipeline0.log contents
+echo "Running Loss Prevention CPU with logs..."
+make run
+status_code=$?
+verifyStatusCode $status_code 
+# allowing some time to process
+waitForLogFile
+verifyNonEmptyPipelineLog
+teardown
+
+# 3. Loss Prevention GPU results: should see non-empty pipeline0.log contents
+echo "Running Loss Prevention GPU with logs..."
+make run DEVICE_ENV=res/yolov5-gpu.env DEVICE=GPU
+status_code=$?
+verifyStatusCode $status_code 
+# allowing some time to process
+waitForLogFile
+verifyNonEmptyPipelineLog
+teardown
