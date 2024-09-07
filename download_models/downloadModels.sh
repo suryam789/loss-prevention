@@ -39,6 +39,7 @@ if [ "$REFRESH_MODE" -eq 1 ]; then
 fi
 
 pipelineZooModel="https://github.com/dlstreamer/pipeline-zoo-models/raw/main/storage/"
+openVINOModelZoo="https://storage.openvinotoolkit.org/repositories/open_model_zoo/2022.3/models_bin/1/"
 
 # $1 model file name
 # $2 download URL
@@ -136,8 +137,22 @@ downloadTextRecognition() {
     fi
 }
 
+downloadPersonDetection() {
+    personDetection0106="person-detection-0106"
+    modelType="object_detection"
+    personjsonModelPath="$modelType/$personDetection0106/$modelPrecisionFP16INT8/$personDetection0106.bin"
+    echo $personjsonModelPath
+
+    if [ ! -f $personjsonModelPath ]; then
+        getModelFiles $personDetection0106 $openVINOModelZoo$personDetection0106 $modelPrecisionFP16INT8 $modelType                
+    else
+        echo "personDetection0106 $modelPrecisionFP16INT8 model already exists, skip downloading..."
+    fi
+}
+
 ### Run custom downloader section below:
 downloadYolov5sFP16INT8
 downloadEfficientnetb0
 downloadHorizontalText
 downloadTextRecognition
+downloadPersonDetection
