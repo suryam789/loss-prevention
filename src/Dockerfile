@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-FROM intel/dlstreamer:2024.1.1-dev-ubuntu22 as base
+FROM intel/dlstreamer:2024.1.2-ubuntu24 as base
 USER root
 
 FROM base as build-default
