@@ -138,7 +138,7 @@ downloadTextRecognition() {
 }
 
 downloadPersonDetection() {
-    personDetection0106="person-detection-0106"
+    personDetection0106="person-detection-0200"
     modelType="object_detection"
     personjsonModelPath="$modelType/$personDetection0106/$modelPrecisionFP16INT8/$personDetection0106.bin"
     echo $personjsonModelPath
