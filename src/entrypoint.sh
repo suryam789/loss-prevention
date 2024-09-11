@@ -32,7 +32,7 @@ DECODE="${DECODE:="decodebin force-sw-decoders=1"}" #decodebin|vaapidecodebin
 DEVICE="${DEVICE:="CPU"}" #GPU|CPU|MULTI:GPU,CPU
 
 show_help() {
-	echo "usage: \"--pipeline_script_choice\" requires an argument yolov5s.sh|yolov5s_effnetb0.sh|yolov5s_full.sh"
+	echo "usage: \"--pipeline_script_choice\" requires an argument yolov5s.sh|yolov5s_effnetb0.sh|yolov5s_full.sh|people_detection.sh"
 }
 
 while :; do
@@ -66,7 +66,7 @@ while :; do
 
 done
 
-if [ "$PIPELINE_SCRIPT" != "yolov5s.sh" ] && [ "$PIPELINE_SCRIPT" != "yolov5s_effnetb0.sh" ] && [ "$PIPELINE_SCRIPT" != "yolov5s_full.sh" ]
+if [ "$PIPELINE_SCRIPT" != "yolov5s.sh" ] && [ "$PIPELINE_SCRIPT" != "yolov5s_effnetb0.sh" ] && [ "$PIPELINE_SCRIPT" != "yolov5s_full.sh" ] && [ "$PIPELINE_SCRIPT" != "people_detection.sh" ]
 then
 	echo "Error on your input: $PIPELINE_SCRIPT"
 	show_help
@@ -96,11 +96,15 @@ elif grep -q "file" <<< "$INPUTSRC"; then
 	arrfilesrc=(${INPUTSRC//:/ })
 	# use vids since container maps a volume to this location based on sample-media folder
 	inputsrc="filesrc location=vids/"${arrfilesrc[1]}" ! qtdemux ! h264parse "
-elif grep -q "video" <<< "$INPUTSRC"; then
+elif grep -q "/dev" <<< "$INPUTSRC"; then
 	inputsrc="v4l2src device="$INPUTSRC
 	DECODE="$DECODE ! videoconvert ! video/x-raw,format=BGR"
-	# when using realsense camera, the dgpu.0 not working
+	# for http:// videos	
+elif grep -q "http" <<< "$INPUTSRC"; then
+	inputsrc="urisourcebin buffer-size=4096 uri="$INPUTSRC
+	DECODE="decodebin"
 else
+	# when using realsense camera, the dgpu.0 not working
 	# rs-serial realsenssrc
 	inputsrc="realsensesrc cam-serial-number="$INPUTSRC" stream-type=0 align=0 imu_on=false"
 	echo "----- in run_gst.sh COLOR_WIDTH=$COLOR_WIDTH, COLOR_HEIGHT=$COLOR_HEIGHT, COLOR_FRAMERATE=$COLOR_FRAMERATE"
