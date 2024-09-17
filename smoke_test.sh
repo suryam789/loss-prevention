@@ -73,7 +73,7 @@ waitForLogFile() {
 # initial setup
 setup
 
-1. test Loss Prevention: should run and exit without any error
+# 1. test Loss Prevention: should run and exit without any error
 echo "Running Loss Prevention..."
 make run
 status_code=$?
