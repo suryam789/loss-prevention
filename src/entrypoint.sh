@@ -32,7 +32,7 @@ DECODE="${DECODE:="decodebin force-sw-decoders=1"}" #decodebin|vaapidecodebin
 DEVICE="${DEVICE:="CPU"}" #GPU|CPU|MULTI:GPU,CPU
 
 show_help() {
-	echo "usage: \"--pipeline_script_choice\" requires an argument yolov5s.sh|yolov5s_effnetb0.sh|yolov5s_full.sh|people_detection.sh"
+	echo "usage: \"--pipeline_script_choice\" requires an argument yolov5s.sh|yolov5s_effnetb0.sh|yolov5s_full.sh|people_detection.sh|yolov8s_roi.sh"
 }
 
 while :; do
@@ -66,7 +66,7 @@ while :; do
 
 done
 
-if [ "$PIPELINE_SCRIPT" != "yolov5s.sh" ] && [ "$PIPELINE_SCRIPT" != "yolov5s_effnetb0.sh" ] && [ "$PIPELINE_SCRIPT" != "yolov5s_full.sh" ] && [ "$PIPELINE_SCRIPT" != "people_detection.sh" ]
+if [ "$PIPELINE_SCRIPT" != "yolov5s.sh" ] && [ "$PIPELINE_SCRIPT" != "yolov5s_effnetb0.sh" ] && [ "$PIPELINE_SCRIPT" != "yolov5s_full.sh" ] && [ "$PIPELINE_SCRIPT" != "people_detection.sh" ] && [ "$PIPELINE_SCRIPT" != "yolov8s_roi.sh" ]
 then
 	echo "Error on your input: $PIPELINE_SCRIPT"
 	show_help
