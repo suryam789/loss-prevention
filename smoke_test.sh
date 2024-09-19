@@ -16,7 +16,7 @@ setup() {
     make clean-all || true
     echo "Build Loss Prevention image"
     make build
-    echo "Downlaod models"
+    echo "Download models"
     make download-models
 }
 
