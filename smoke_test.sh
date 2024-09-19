@@ -16,6 +16,8 @@ setup() {
     make clean-all || true
     echo "Build Loss Prevention image"
     make build
+    echo "Download models"
+    make download-models
 }
 
 teardown() {
@@ -92,6 +94,16 @@ teardown
 # 3. Loss Prevention GPU results: should see non-empty pipeline0.log contents
 echo "Running Loss Prevention GPU with logs..."
 make run DEVICE_ENV=res/yolov5-gpu.env DEVICE=GPU
+status_code=$?
+verifyStatusCode $status_code 
+# allowing some time to process
+waitForLogFile
+verifyNonEmptyPipelineLog
+teardown
+
+# 4. Yolov8s pipeine: should see non-empty pipeline0.log contents
+echo "Running YOLOv8s pipeline with logs..."
+INPUTSRC=https://github.com/intel-iot-devkit/sample-videos/raw/master/people-detection.mp4 PIPELINE_SCRIPT=yolov8s_roi.sh docker compose -f src/docker-compose.yml up -d
 status_code=$?
 verifyStatusCode $status_code 
 # allowing some time to process

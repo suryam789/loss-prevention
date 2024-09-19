@@ -47,9 +47,9 @@ services:
       - INPUTSRC=${INPUTSRC:-rtsp://localhost:8554/camera_0}
       - RENDER_MODE=${RENDER_MODE:-0} #RENDER_MODE=1 will work only after running xhost +local:docker
       - DISPLAY=$DISPLAY
-      - HTTP_PROXY=${HTTP_PROXY}
-      - HTTPS_PROXY=${HTTPS_PROXY}
-      - NO_PROXY=${NO_PROXY}
+      - HTTP_PROXY
+      - HTTPS_PROXY
+      - NO_PROXY
     volumes:
       - ${RESULTS_DIR:-../results}:/tmp/results
       - ~/.Xauthority:/home/dlstreamer/.Xauthority

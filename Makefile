@@ -3,7 +3,7 @@
 
 .PHONY: build build-realsense run down
 .PHONY: build-telegraf run-telegraf run-portainer clean-all clean-results clean-telegraf clean-models down-portainer
-.PHONY: download-models clean-test run-demo run-headless
+.PHONY: download-models clean-test run-demo run-headless download-yolov8s
 
 MKDOCS_IMAGE ?= asc-mkdocs
 PIPELINE_COUNT ?= 1
@@ -12,9 +12,23 @@ DOCKER_COMPOSE ?= docker-compose.yml
 RESULTS_DIR ?= $(PWD)/results
 RETAIL_USE_CASE_ROOT ?= $(PWD)
 
-download-models:
-	./download_models/downloadModels.sh
-
+download-models: download-yolov8s
+	./download_models/downloadModels.sh	
+	
+download-yolov8s:
+	@if [ ! -d "$(PWD)/models/object_detection/yolov8s/" ]; then \
+		echo "The yolov8s folder doesn't exist. Creating it and downloading the model..."; \
+		mkdir -p $(PWD)/models/object_detection/yolov8s/; \
+		docker run --user 1000:1000 -e HTTPS_PROXY=${HTTPS_PROXY} -e HTTP_PROXY=${HTTPS_PROXY} --rm \
+			-e YOLO_DEBUG=1 \
+			-v $(PWD)/models/object_detection/yolov8s:/models \
+			ultralytics/ultralytics:latest-cpu \
+			bash -c "cd /models && yolo export model=yolov8s.pt format=openvino"; \
+		mv $(PWD)/models/object_detection/yolov8s/yolov8s_openvino_model $(PWD)/models/object_detection/yolov8s/FP32; \
+	else \
+		echo "yolov8s already exists."; \
+	fi
+	
 download-sample-videos:
 	cd performance-tools/benchmark-scripts && ./download_sample_videos.sh
 
