@@ -57,3 +57,5 @@ services:
       - ~/.cl-cache:/home/pipeline-server/.cl-cache
       - ./res/:/home/pipeline-server/envs
       - ${RETAIL_USE_CASE_ROOT:-..}/models:/home/pipeline-server/models
+      - ./pipelines/:/home/pipeline-server/pipelines
+      - ./extensions/:/home/pipeline-server/extensions

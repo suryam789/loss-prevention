@@ -4,15 +4,13 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-FROM intel/dlstreamer:2024.1.2-ubuntu24 as base
+FROM intel/dlstreamer:2024.2.0-ubuntu22 as base
 USER root
 
 FROM base as build-default
 COPY ./requirements.txt /requirements.txt
 RUN pip3 install --upgrade pip --no-cache-dir -r /requirements.txt
 WORKDIR /
-COPY /extensions /home/pipeline-server/extensions
-COPY /pipelines /home/pipeline-server/pipelines
 COPY entrypoint.sh /script/entrypoint.sh
 RUN chmod +x /script/entrypoint.sh
 

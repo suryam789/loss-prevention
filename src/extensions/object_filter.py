@@ -9,10 +9,6 @@ import gi
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GObject
 
-from gstgva import VideoFrame
-
-Gst.init(sys.argv)
-
 classes = {
     'person': 0,
     'bicycle': 1,
@@ -98,19 +94,21 @@ classes = {
 
 
 class ObjectDetectionFilter:
-    def __init__(self, disable=False, class_ids=""):
+    def __init__(self, disable=False, class_ids="", rois=""):
         self.class_ids = class_ids
+        self.rois = rois
 
-    def process_frame(self, frame: VideoFrame):
+    def process_frame(self, frame):
         if self.class_ids == "": 
             return True
                 
         class_ids_list = [int(i) for i in self.class_ids.split(',')]
+        roi_list = [str(i) for i in self.rois.split(',')]
         
         for roi in list(frame.regions()):  
             label = roi.label()
-            class_id = classes.get(label, -1)                        
-            if class_id not in class_ids_list:
+            class_id = classes.get(label, -1)                                 
+            if class_id not in class_ids_list and label not in roi_list:
                 frame.remove_region(roi)                            
 
         return True
