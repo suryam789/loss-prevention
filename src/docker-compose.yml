@@ -66,4 +66,13 @@ services:
     network_mode: "host"
     ports:
       - "127.0.0.1:1883:1883"      
+  
+  mqtt_tracker:
+    image: loss-prevention:dev
+    environment:
+      - MQTT_URL=mosquitto
+      - MQTT_PORT=1883
+      - MQTT_TOPIC=event/detection
+      - ROI_NAME=BASKET
+    restart: always
 
