@@ -47,7 +47,7 @@ def on_connect(client, userdata, flags, rc):
     print(f"Connected with result code {rc}")
     client.subscribe(MQTT_TOPIC)
 
-client = mqtt.Client()
+client = mqtt.Client(client_id="", clean_session=True, userdata=None, protocol=mqtt.MQTTv311, transport="tcp")
 client.on_connect = on_connect
 client.on_message = on_message
 
