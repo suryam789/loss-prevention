@@ -22,7 +22,7 @@ download-yolov8s:
 		docker run --user 1000:1000 -e HTTPS_PROXY=${HTTPS_PROXY} -e HTTP_PROXY=${HTTPS_PROXY} --rm \
 			-e YOLO_DEBUG=1 \
 			-v $(PWD)/models/object_detection/yolov8s:/models \
-			ultralytics/ultralytics:latest-cpu \
+			ultralytics/ultralytics:8.2.101-cpu \
 			bash -c "cd /models && yolo export model=yolov8s.pt format=openvino"; \
 		mv $(PWD)/models/object_detection/yolov8s/yolov8s_openvino_model $(PWD)/models/object_detection/yolov8s/FP32; \
 	else \

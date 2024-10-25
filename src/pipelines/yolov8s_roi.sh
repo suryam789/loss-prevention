@@ -22,7 +22,7 @@ fi
 echo "decode type $DECODE"
 echo "Run YOLOv8 pipeline with ROI and Filtering on $DEVICE with batch size = $BATCH_SIZE"
 
-gstLaunchCmd="GST_DEBUG=\"GST_TRACER:7\" GST_TRACERS=\"latency_tracer(flags=pipeline,interval=100)\" gst-launch-1.0 $inputsrc ! $DECODE ! gvaattachroi mode=1 file-path=/home/pipeline-server/pipelines/roi.json ! gvadetect batch-size=$BATCH_SIZE model-instance-id=odmodel name=detection model=models/object_detection/yolov8s/FP32/yolov8s.xml device=$DEVICE $PRE_PROCESS inference-region=1 object-class=$ROI threshold=0.5 ! \
+gstLaunchCmd="GST_DEBUG=1 GST_TRACERS=\"latency_tracer(flags=pipeline,interval=100)\" gst-launch-1.0 $inputsrc ! $DECODE ! gvaattachroi mode=1 file-path=/home/pipeline-server/pipelines/roi.json ! gvadetect batch-size=$BATCH_SIZE model-instance-id=odmodel name=detection model=models/object_detection/yolov8s/FP32/yolov8s.xml device=$DEVICE $PRE_PROCESS inference-region=1 object-class=$ROI threshold=0.5 ! \
 gvapython module=/home/pipeline-server/extensions/object_filter.py class=ObjectDetectionFilter kwarg=\"{\\\"class_ids\\\": \\\"$CLASS_IDS\\\", \\\"rois\\\": \\\"$ROI\\\"}\" !  gvatrack ! \
 $AGGREGATE gvametaconvert name=metaconvert add-empty-results=true ! \
 gvapython module=/home/pipeline-server/extensions/gva_roi_metadata.py class=RoiMetadata kwarg=\"{\\\"roi\\\": \\\"$ROI\\\"}\" ! \
