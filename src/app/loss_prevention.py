@@ -40,18 +40,21 @@ def on_message(client, userdata, message):
             if obj_id not in objects_in_current_frame[roi_name]
         }
         
-        for obj_id, label in entered_objects.items():
-            print(f"Object {label} (ID: {obj_id}) entered the {roi_name} ROI.")
-
-        for obj_id, label in left_objects.items():
-            if roi_name == "BAGGING":
-                print(f"ALERT: Object {label} (ID: {obj_id}) was inside the BAGGING ROI and has now left.")
-            else:
-                print(f"Object {label} (ID: {obj_id}) left the {roi_name} ROI.")
+        entered_left(roi_name, entered_objects, left_objects)
         
         current_objects_in_roi[roi_name] = objects_in_current_frame[roi_name]
     
     print(f"Current objects in ROIs: {current_objects_in_roi}")
+
+def entered_left(roi_name, entered_objects, left_objects):
+    for obj_id, label in entered_objects.items():
+        print(f"Object {label} (ID: {obj_id}) entered the {roi_name} ROI.")
+
+    for obj_id, label in left_objects.items():
+        if roi_name == "BAGGING":
+            print(f"ALERT: Object {label} (ID: {obj_id}) was inside the BAGGING ROI and has now left.")
+        else:
+            print(f"Object {label} (ID: {obj_id}) left the {roi_name} ROI.")
 
 def on_connect(client, userdata, flags, rc):
     print(f"Connected to MQTT")
