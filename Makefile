@@ -3,7 +3,7 @@
 
 .PHONY: build build-realsense run down
 .PHONY: build-telegraf run-telegraf run-portainer clean-all clean-results clean-telegraf clean-models down-portainer
-.PHONY: download-models clean-test run-demo run-headless download-yolov8s
+.PHONY: download-models clean-test run-demo run-headless download-yolov8s logs
 .PHONY: clean-benchmark-results
 
 MKDOCS_IMAGE ?= asc-mkdocs
@@ -161,3 +161,11 @@ helm-package:
 	helm package helm/
 	helm repo index .
 	helm repo index --url https://github.com/intel-retail/loss-prevention .
+
+logs:
+	@CONTAINER_ID=$(shell docker ps --filter "name=loss-prevention" --format "{{.ID}}") && \
+	if [ -n "$$CONTAINER_ID" ]; then \
+		docker logs -f $$CONTAINER_ID; \
+	else \
+		echo "No running container found with name containing 'loss-prevention'"; \
+	fi
