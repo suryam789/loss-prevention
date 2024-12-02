@@ -102,7 +102,7 @@ elif grep -q "/dev" <<< "$INPUTSRC"; then
 	DECODE="$DECODE ! videoconvert ! video/x-raw,format=BGR"
 	# for http:// videos	
 elif grep -q "http" <<< "$INPUTSRC"; then
-	inputsrc="urisourcebin buffer-size=4096 uri="$INPUTSRC
+	inputsrc="souphttpsrc location=$INPUTSRC is-live=true"	
 	DECODE="decodebin"
 else
 	# when using realsense camera, the dgpu.0 not working

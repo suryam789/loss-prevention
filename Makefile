@@ -65,7 +65,7 @@ run:
 
 run-render-mode:
 	xhost +local:docker
-	RENDER_MODE=1 docker compose -f src/$(DOCKER_COMPOSE) up -d
+	INPUTSRC=https://github.com/openvinotoolkit/openvino_notebooks/raw/refs/heads/recipes/recipes/automated_self_checkout/data/example.mp4 RENDER_MODE=1 docker compose -f src/$(DOCKER_COMPOSE) up -d
 
 down:
 	docker compose -f src/$(DOCKER_COMPOSE) down

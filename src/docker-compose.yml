@@ -13,6 +13,7 @@ services:
     image: aler9/rtsp-simple-server
     ports:
       - "127.0.0.1:8554:8554"
+    network_mode: "host"
   camera-simulator0:
     image: jrottenberg/ffmpeg:4.1-alpine
     container_name: camera-simulator0
@@ -36,7 +37,7 @@ services:
       mode: replicated
       replicas: ${PIPELINE_COUNT:-1}
     network_mode: "host"
-    entrypoint: /script/entrypoint.sh --pipeline_script_choice ${PIPELINE_SCRIPT:-yolov5s.sh}
+    entrypoint: /script/entrypoint.sh --pipeline_script_choice ${PIPELINE_SCRIPT:-yolov8s_roi.sh}
     privileged: true
     ipc: "host"
     env_file:
@@ -45,7 +46,8 @@ services:
     environment:
       - CONTAINER_NAME="gst0"
       - INPUTSRC=${INPUTSRC:-rtsp://localhost:8554/camera_0}
-      - RENDER_MODE=${RENDER_MODE:-0} #RENDER_MODE=1 will work only after running xhost +local:docker
+      - RENDER_MODE=${RENDER_MODE:-0} #RENDER_MODE=1 will work only after running xhost +local:docker      
+      - RTSP=${RTSP:-0}
       - DISPLAY=$DISPLAY
       - HTTP_PROXY
       - HTTPS_PROXY
@@ -59,6 +61,8 @@ services:
       - ${RETAIL_USE_CASE_ROOT:-..}/models:/home/pipeline-server/models
       - ./pipelines/:/home/pipeline-server/pipelines
       - ./extensions/:/home/pipeline-server/extensions
+    depends_on:
+      - camera-simulator
 
   mosquitto:
     image: eclipse-mosquitto:2.0    
@@ -97,4 +101,11 @@ services:
     volumes:
       - ./grafana/provisioning/dashboard-actual/:/dashboards/
       - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini
+  go2rtc:
+    image: alexxit/go2rtc
+    container_name: go2rtc
+    network_mode: "host"           
+    volumes:
+      - ./go2rtc:/config
       

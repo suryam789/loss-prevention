@@ -9,6 +9,10 @@ USER root
 
 FROM base as build-default
 COPY ./requirements.txt /requirements.txt
+RUN apt update && \
+    apt install -y gstreamer1.0-plugins-ugly && \
+    apt clean && \
+    rm -rf /var/lib/apt/lists/*
 RUN pip3 install --upgrade pip --no-cache-dir -r /requirements.txt
 WORKDIR /
 COPY entrypoint.sh /script/entrypoint.sh
