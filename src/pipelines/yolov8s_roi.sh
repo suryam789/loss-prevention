@@ -21,7 +21,7 @@ if [ "$RENDER_MODE" == "0" ] && [ "$RTSP" == "0" ]; then
     OUTPUT="${OUTPUT:="! fpsdisplaysink video-sink=fakesink sync=true --verbose"}"
 fi
 
-if [ "$RENDER_MODE" == "0" ] && [ "$RTSP" == "1" ]; then
+if [ "$RTSP" == "1" ]; then
     OUTPUT="${OUTPUT:="! gvawatermark ! videoscale ! video/x-raw,width=1280,height=720,pixel-aspect-ratio=1/1 ! videocrop left=10 right=10 ! queue max-size-buffers=1 max-size-bytes=0 max-size-time=0 ! x264enc speed-preset=medium tune=zerolatency key-int-max=1 bitrate=8000 quantizer=10 ! video/x-h264, profile=high ! rtspclientsink location=rtsp://localhost:8554/yolo"}"
 fi
 
