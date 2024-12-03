@@ -1,328 +1,353 @@
 {
-    "annotations": {
-      "list": [
-        {
-          "builtIn": 1,
-          "datasource": {
-            "type": "grafana",
-            "uid": "-- Grafana --"
-          },
-          "enable": true,
-          "hide": true,
-          "iconColor": "rgba(0, 211, 255, 1)",
-          "name": "Annotations & Alerts",
-          "type": "dashboard"
-        }
-      ]
-    },
-    "editable": true,
-    "fiscalYearStartMonth": 0,
-    "graphTooltip": 0,
-    "id": 1,
-    "links": [],
-    "panels": [
+  "annotations": {
+    "list": [
       {
+        "builtIn": 1,
         "datasource": {
-          "type": "yesoreyeram-infinity-datasource",
-          "uid": "Infinity"
+          "type": "grafana",
+          "uid": "-- Grafana --"
         },
-        "fieldConfig": {
-          "defaults": {
-            "color": {
-              "mode": "thresholds"
-            },
-            "custom": {
-              "align": "auto",
-              "cellOptions": {
-                "type": "auto"
-              },
-              "inspect": false
-            },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green",
-                  "value": null
-                },
-                {
-                  "color": "red",
-                  "value": 80
-                }
-              ]
-            }
-          },
-          "overrides": []
-        },
-        "gridPos": {
-          "h": 8,
-          "w": 7,
-          "x": 0,
-          "y": 0
-        },
-        "id": 1,
-        "options": {
-          "cellHeight": "sm",
-          "footer": {
-            "countRows": false,
-            "fields": "",
-            "reducer": [
-              "sum"
-            ],
-            "show": false
-          },
-          "showHeader": true
-        },
-        "pluginVersion": "11.3.0+security-01",
-        "targets": [
-          {
-            "columns": [
-              {
-                "selector": "id",
-                "text": "id",
-                "type": "string"
-              },
-              {
-                "selector": "label",
-                "text": "label",
-                "type": "string"
-              }
-            ],
-            "datasource": {
-              "type": "yesoreyeram-infinity-datasource",
-              "uid": "Infinity"
-            },
-            "filters": [],
-            "format": "table",
-            "global_query_id": "",
-            "refId": "A",
-            "root_selector": "$.BASKET",
-            "source": "url",
-            "type": "json",
-            "url": "http://127.0.0.1:5000/current_objects",
-            "url_options": {
-              "data": "",
-              "method": "GET"
-            }
-          }
-        ],
-        "title": "BASKET AREA",
-        "type": "table"
-      },
-      {
-        "datasource": {
-          "type": "yesoreyeram-infinity-datasource",
-          "uid": "Infinity"
-        },
-        "fieldConfig": {
-          "defaults": {
-            "color": {
-              "mode": "thresholds"
-            },
-            "custom": {
-              "align": "auto",
-              "cellOptions": {
-                "type": "auto"
-              },
-              "inspect": false
-            },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green",
-                  "value": null
-                },
-                {
-                  "color": "red",
-                  "value": 80
-                }
-              ]
-            }
-          },
-          "overrides": []
-        },
-        "gridPos": {
-          "h": 8,
-          "w": 7,
-          "x": 7,
-          "y": 0
-        },
-        "id": 3,
-        "options": {
-          "cellHeight": "sm",
-          "footer": {
-            "countRows": false,
-            "fields": "",
-            "reducer": [
-              "sum"
-            ],
-            "show": false
-          },
-          "showHeader": true
-        },
-        "pluginVersion": "11.3.0+security-01",
-        "targets": [
-          {
-            "columns": [
-              {
-                "selector": "id",
-                "text": "id",
-                "type": "string"
-              },
-              {
-                "selector": "label",
-                "text": "label",
-                "type": "string"
-              }
-            ],
-            "datasource": {
-              "type": "yesoreyeram-infinity-datasource",
-              "uid": "Infinity"
-            },
-            "filters": [],
-            "format": "table",
-            "global_query_id": "",
-            "refId": "A",
-            "root_selector": "$.BAGGING",
-            "source": "url",
-            "type": "json",
-            "url": "http://127.0.0.1:5000/current_objects",
-            "url_options": {
-              "data": "",
-              "method": "GET"
-            }
-          }
-        ],
-        "title": "BAGGING AREA",
-        "type": "table"
-      },
-      {
-        "datasource": {
-          "type": "yesoreyeram-infinity-datasource",
-          "uid": "Infinity"
-        },
-        "fieldConfig": {
-          "defaults": {
-            "color": {
-              "mode": "thresholds"
-            },
-            "custom": {
-              "align": "auto",
-              "cellOptions": {
-                "type": "auto"
-              },
-              "inspect": false
-            },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green",
-                  "value": null
-                },
-                {
-                  "color": "red",
-                  "value": 80
-                }
-              ]
-            }
-          },
-          "overrides": []
-        },
-        "gridPos": {
-          "h": 8,
-          "w": 7,
-          "x": 14,
-          "y": 0
-        },
-        "id": 2,
-        "options": {
-          "cellHeight": "sm",
-          "footer": {
-            "countRows": false,
-            "fields": "",
-            "reducer": [
-              "sum"
-            ],
-            "show": false
-          },
-          "showHeader": true
-        },
-        "pluginVersion": "11.3.0+security-01",
-        "targets": [
-          {
-            "columns": [
-              {
-                "selector": "id",
-                "text": "id",
-                "type": "string"
-              },
-              {
-                "selector": "label",
-                "text": "label",
-                "type": "string"
-              },
-              {
-                "selector": "timestamp",
-                "text": "date",
-                "type": "timestamp_epoch_s"
-              }
-            ],
-            "datasource": {
-              "type": "yesoreyeram-infinity-datasource",
-              "uid": "Infinity"
-            },
-            "filters": [],
-            "format": "table",
-            "global_query_id": "",
-            "refId": "A",
-            "root_selector": "$.*",
-            "source": "url",
-            "type": "json",
-            "url": "http://127.0.0.1:5000/alerts",
-            "url_options": {
-              "data": "",
-              "method": "GET"
-            }
-          }
-        ],
-        "title": "ALERTS",
-        "type": "table"
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
       }
-    ],
-    "preload": false,
-    "refresh": "2s",
-    "schemaVersion": 40,
-    "tags": [],
-    "templating": {
-      "list": []
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 1,
+  "links": [],
+  "panels": [
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 17,
+        "w": 18,
+        "x": 0,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<iframe width=\"1000\" height=\"600\"\n   src=\"http://localhost:1984/stream.html?src=test&mode=webrtc\">\n</iframe>",
+        "mode": "html"
+      },
+      "pluginVersion": "11.3.0+security-01",
+      "title": "Stream",
+      "type": "text"
     },
-    "time": {
-      "from": "now-6h",
-      "to": "now"
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "Infinity"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "11.3.0+security-01",
+      "targets": [
+        {
+          "columns": [
+            {
+              "selector": "id",
+              "text": "id",
+              "type": "string"
+            },
+            {
+              "selector": "label",
+              "text": "label",
+              "type": "string"
+            }
+          ],
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "Infinity"
+          },
+          "filters": [],
+          "format": "table",
+          "global_query_id": "",
+          "refId": "A",
+          "root_selector": "$.BASKET",
+          "source": "url",
+          "type": "json",
+          "url": "http://127.0.0.1:5000/current_objects",
+          "url_options": {
+            "data": "",
+            "method": "GET"
+          }
+        }
+      ],
+      "title": "BASKET AREA",
+      "type": "table"
     },
-    "timepicker": {
-      "refresh_intervals": [
-        "2s",
-        "5s",
-        "10s",
-        "30s",
-        "1m",
-        "5m",
-        "15m",
-        "30m",
-        "1h",
-        "2h",
-        "1d"
-      ]
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "Infinity"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 18,
+        "y": 5
+      },
+      "id": 3,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "11.3.0+security-01",
+      "targets": [
+        {
+          "columns": [
+            {
+              "selector": "id",
+              "text": "id",
+              "type": "string"
+            },
+            {
+              "selector": "label",
+              "text": "label",
+              "type": "string"
+            }
+          ],
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "Infinity"
+          },
+          "filters": [],
+          "format": "table",
+          "global_query_id": "",
+          "refId": "A",
+          "root_selector": "$.BAGGING",
+          "source": "url",
+          "type": "json",
+          "url": "http://127.0.0.1:5000/current_objects",
+          "url_options": {
+            "data": "",
+            "method": "GET"
+          }
+        }
+      ],
+      "title": "BAGGING AREA",
+      "type": "table"
     },
-    "timezone": "browser",
-    "title": "Loss Prevention",
-    "uid": "ce428u65d0irkf",
-    "version": 6,
-    "weekStart": ""
-  }
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "Infinity"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 18,
+        "y": 10
+      },
+      "id": 2,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "11.3.0+security-01",
+      "targets": [
+        {
+          "columns": [
+            {
+              "selector": "id",
+              "text": "id",
+              "type": "string"
+            },
+            {
+              "selector": "label",
+              "text": "label",
+              "type": "string"
+            },
+            {
+              "selector": "timestamp",
+              "text": "date",
+              "type": "timestamp_epoch_s"
+            }
+          ],
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "Infinity"
+          },
+          "filters": [],
+          "format": "table",
+          "global_query_id": "",
+          "refId": "A",
+          "root_selector": "$.*",
+          "source": "url",
+          "type": "json",
+          "url": "http://127.0.0.1:5000/alerts",
+          "url_options": {
+            "data": "",
+            "method": "GET"
+          }
+        }
+      ],
+      "title": "ALERTS",
+      "type": "table"
+    }
+  ],
+  "preload": false,
+  "refresh": "2s",
+  "schemaVersion": 40,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "2s",
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "browser",
+  "title": "Loss Prevention",
+  "uid": "ce428u65d0irkf",
+  "version": 1,
+  "weekStart": ""
+}
