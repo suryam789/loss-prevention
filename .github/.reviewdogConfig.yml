@@ -13,9 +13,9 @@ runner:
     cmd: shellcheck **/*.sh -f gcc | tee "$PWD"/scan_results/shellcheckResults.txt
     errorformat: 
       - "%f:%l:%c:%m" 
-  pep8:
-    cmd: pep8 **/*.py | tee "$PWD"/scan_results/pep8Results.txt
-    format: pep8
+  pycodestyle:
+    cmd: pycodestyle **/*.py | tee "$PWD"/scan_results/pep8Results.txt
+    format: pycodestyle
   # golangci-lint:
   #   cmd: ./bin/golangci-lint run --config .github/.golangci.yml --out-format=line-number **/*.go
   #   format: golangci-lint
