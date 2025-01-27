@@ -32,7 +32,8 @@ jobs:
             pip install bandit && bandit --version
         - name: Install pycodestyle
           run: |
-              sudo apt install pycodestyle
+            python3 -m pip install --upgrade pip
+            python3 -m pip install pycodestyle
         - name: Install hadolint
           env:
             HADOLINT_VERSION: v1.16.3
