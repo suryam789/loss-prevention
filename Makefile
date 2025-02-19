@@ -50,7 +50,7 @@ update-submodules:
 	@git submodule update --init --recursive
 	@git submodule update --remote --merge
 
-build:
+build: build-scale
 	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} --target build-default -t dlstreamer:dev -f src/Dockerfile src/
 	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} -t loss-prevention:dev -f src/app/Dockerfile src/app
 
@@ -59,9 +59,6 @@ build-scale:
 
 build-realsense:
 	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} --target build-realsense -t dlstreamer:realsense -f src/Dockerfile src/
-
-build-pipeline-server: | download-models update-submodules download-sample-videos
-	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} -t dlstreamer:pipeline-server -f src/pipeline-server/Dockerfile.pipeline-server src/pipeline-server
 
 run:
 	docker compose -f src/$(DOCKER_COMPOSE) up -d
@@ -86,12 +83,6 @@ run-headless: | download-models update-submodules download-sample-videos
 	$(MAKE) build-scale
 	@echo Running Loss Prevention pipeline
 	$(MAKE) run
-
-run-pipeline-server: | build-pipeline-server
-	RETAIL_USE_CASE_ROOT=$(RETAIL_USE_CASE_ROOT) docker compose -f src/pipeline-server/docker-compose.pipeline-server.yml up -d
-
-down-pipeline-server:
-	docker compose -f src/pipeline-server/docker-compose.pipeline-server.yml down
 
 build-benchmark:
 	cd performance-tools && $(MAKE) build-benchmark-docker

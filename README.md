@@ -34,6 +34,18 @@ stop containers:
 make down
 ```
 
+## Run Pipeline with Grafana
+
+```
+RTSP=1 make run-demo
+```
+
+Open grafana dashboard:
+
+🔗 [Grafana Dashboard](http://127.0.0.1:3000/d/ce428u65d0irkf/loss-prevention?from=now-6h&to=now&timezone=browser&refresh=2s)
+
+![alt text](<grafana.jpg>)
+
 ## Pipeline Benchmark
 
 Go here for [the documentation of loss prevention pipeline benchmark](./benchmark.md)
