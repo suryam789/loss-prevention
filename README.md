@@ -44,7 +44,7 @@ Open grafana dashboard:
 
 🔗 [Grafana Dashboard](http://127.0.0.1:3000/d/ce428u65d0irkf/loss-prevention?from=now-6h&to=now&timezone=browser&refresh=2s)
 
-![alt text](<grafana.jpg>)
+![Grafana](<grafana.jpg>)
 
 ## Pipeline Benchmark
 
