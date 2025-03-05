@@ -27,16 +27,15 @@ class SimulateSensorData:
             self.client.tls_set(ROOT_CA)
         self.client.on_connect = self.on_connect
         self.client.connect(MQTT_BROKER, MQTT_PORT, 60)
-        self.publish_file(file)
-        self.client.loop_forever()
+        self.client.loop_start()
         return
 
     def on_connect(self, client, userdata, flags, rc):
         print("Connected with result code "+str(rc))
         return
 
-    def publish_file(self, file):
-        with open(file) as f:
+    def publish_file(self):
+        with open(self.file) as f:
             for line in f:
                 parts = line.split(" ", 1)
                 if len(parts) == 2:
@@ -55,7 +54,9 @@ def main():
     if not os.path.exists(args.file):
         print("Need a file to simulate sensor data")
         return
-    SimulateSensorData(args.file)
+    sensor_simulator = SimulateSensorData(args.file)
+    while True:
+        sensor_simulator.publish_file()
     return
 
 if __name__ == "__main__":

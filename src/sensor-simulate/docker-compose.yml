@@ -32,7 +32,7 @@ services:
       dockerfile: Dockerfile
     container_name: sensor-simulate
     hostname: sensor-simulate
-    image: sensor-simulate:dev
+    image: lp-sensor:dev
     network_mode: "host"
     volumes:
       - ./sample-file.txt:/sample-file.txt
