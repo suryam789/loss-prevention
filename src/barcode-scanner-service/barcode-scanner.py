@@ -177,7 +177,7 @@ def main():
         except usb.core.USBError:
             # Timed out. End of the data stream. Print the scan line.
             if len(line) > 0:
-                msg = '{"id": %d, "time": %s, "barcode": %s}' % (PID, str(scanTime), str(line))
+                msg = '{"id": %s, "time": %s, "barcode": %s}' % (PID, str(scanTime), str(line))
                 print(msg)
                 client.publish("barcode", msg)
                 line = ''
