@@ -62,6 +62,9 @@ build-scale:
 build-barcode:
 	cd src/barcode-scanner-service && $(MAKE) build
 
+build-sensor-simulate:
+	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} -t lp-sensor:dev -f src/sensor-simulate/Dockerfile src/sensor-simulate
+
 build-realsense:
 	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} --target build-realsense -t dlstreamer:realsense -f src/Dockerfile src/
 
