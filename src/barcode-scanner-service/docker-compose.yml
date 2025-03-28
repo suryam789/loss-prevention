@@ -33,6 +33,11 @@ services:
     devices:
       - /dev/:/dev/
     privileged: true
+    environment:
+      - MQTT_URL=localhost
+      - MQTT_PORT=1883
+      - VID=0x05e0
+      - PID=0x1200
     network_mode: "host"
     volumes:
       - /dev/bus/usb:/dev/bus/usb
