@@ -1,6 +1,0 @@
-streams:
-    test:
-        - 'rtsp://127.0.0.1:8554/yolo'
-rtsp:
-  listen: ":8556"
-  default_query: "video&audio"

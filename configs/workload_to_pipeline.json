@@ -1,0 +1,20 @@
+{
+  "workload_definitions": {
+    "hidden_item": {
+      "script": "./pipelines/hidden_item.sh",
+      "type": "object_detection"
+    },
+    "product_switching": {
+      "script": "./pipelines/product_switching.sh",
+      "type": "object_detection"
+    },
+    "product_swapping": {
+      "script": "./pipelines/product_swapping.sh",
+      "type": "object_detection"
+    },
+    "bagging_without_scan": {
+      "script": "./pipelines/bagging_without_scan.sh",
+      "type": "object_detection"
+    }
+  }
+}
