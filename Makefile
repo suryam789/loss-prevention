@@ -1,20 +1,24 @@
-# Usage:
-# make run INPUT_JSON=./configs/camera_to_workload.json
+# Copyright © 2025 Intel Corporation. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 
-INPUT_JSON ?= ./configs/camera_to_workload.json
-WORKLOAD_CONFIG ?= ./configs/workload_to_pipeline.json
-
-.PHONY: run
-
+MODEL ?= yolo11n
+MODEL_TYPE ?= yolo_v11
 
 download-models:
-	@echo "Downloading sample videos..."
-	./download/download_models.sh
+	./download_models/downloadModels.sh ${MODEL} ${MODEL_TYPE}
 
-download-samples:
-	@echo "Downloading sample videos..."
-	./download/download_samples.sh
+download-sample-videos:
+	cd performance-tools/benchmark-scripts && ./download_sample_videos.sh
 
-run:
-	@echo "Launching DLStreamer pipelines using input: $(INPUT_JSON)"
-	python3 scripts/launch_pipelines.py --camera-config $(INPUT_JSON) --workload-config $(WORKLOAD_CONFIG)
+build:
+	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} --target build-default -t dlstreamer:dev -f src/Dockerfile src/
+
+update-submodules:
+	@git submodule update --init --recursive
+	@git submodule update --remote --merge	
+
+run-loss-prevention: | download-models update-submodules download-sample-videos
+	@echo "Building automated self checkout app"
+	$(MAKE) build
+	@echo Running automated self checkout pipeline
+	$(MAKE) run-render-mode

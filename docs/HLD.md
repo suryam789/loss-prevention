@@ -1,47 +1,30 @@
 # High-Level Design (HLD): Loss Prevention Proxy Pipeline System
 
-## 1. Objective
+## 1. System Overview
+The Loss Prevention Proxy Pipeline System is designed to optimize and manage the execution of loss prevention workloads in automated self-checkout environments. It provides a flexible, extensible, and efficient architecture for mapping cameras to workloads, consolidating pipelines, and benchmarking resource usage.
 
-Design a proxy pipeline architecture to optimize execution of loss prevention workloads in automated self-checkout systems, ensuring efficient camera-to-workload mapping, pipeline consolidation, and resource benchmarking. The system should allow user customization and future extensibility.
+## 2. Major Components
+- **Asset Preparation Service**: Downloads and prepares required models and video files (see `downloads/`).
+- **Pipeline Execution Service**: Launches and manages GStreamer pipelines for each camera/workload, consolidates pipelines, and runs benchmarking tools (see `src/`).
+- **Configuration Management**: Handles user-provided JSON files for camera-to-workload and workload-to-pipeline mappings (see `configs/`).
+- **Benchmarking Integration**: Collects and logs performance metrics for each pipeline.
+- **Dockerization**: Uses `docker/` for containerization and `docker-compose.yml` for orchestration.
 
-## 2. Workloads and Execution Model
+## 3. Data Flow Diagram
+```
+User Configs (configs/) ──▶ Asset Preparation (downloads/) ──▶ Pipeline Execution (src/) ──▶ Benchmarking ──▶ Output Artifacts
+```
 
-- Supports multiple loss prevention workloads:
-  - hidden_item
-  - product_switching
-  - product_swapping
-  - bagging_without_scan
-- Each workload is implemented as a DLStreamer pipeline (shell script).
-- Pipelines may differ by model, parameters, or logic, even for the same workload type.
-- Each workload results in an independently runnable GStreamer pipeline unless two or more workloads can share the exact same pipeline.
+## 4. Deployment Architecture
+- Two Docker containers:
+  - `asset-prep`: Handles asset downloads (see `docker/Dockerfile.downloader`).
+  - `pipeline-exec`: Runs pipelines and benchmarking (see `docker/Dockerfile.pipelines`).
+- Benchmarking repo as a Git submodule.
 
-## 3. User Configuration Inputs
+## 5. Extensibility
+- Modular, config-driven design for easy addition of new workloads, camera types, and benchmarking tools.
+- Documentation and design details in `docs/`.
 
-- **Camera-to-Workload Mapping File:** Specifies which workloads are assigned to each camera.
-- **Workload-to-Pipeline Mapping File:** Maps each workload to its shell script path and type. Allows user overrides.
+---
 
-## 4. Pipeline Consolidation Logic
-
-- For each camera, determine the set of unique shell scripts required.
-- If multiple workloads use the same script, only one pipeline instance is launched.
-- Consolidation is based on script path, not just workload type.
-
-## 5. Benchmarking Integration
-
-- Benchmarking scripts are integrated as a Git submodule.
-- When pipelines are launched, benchmarking scripts run in parallel to collect latency, CPU/GPU utilization, memory, and bandwidth metrics.
-- Metrics are logged per camera and per workload.
-
-## 6. System Output
-
-- Execution plan: how many pipelines are launched per camera.
-- Consolidated summary: total unique pipelines.
-- Optional resource estimation: how many lanes can run on available hardware.
-- Benchmark logs per camera/workload.
-
-## 7. Extensibility and Future-Proofing
-
-- Support for multiple camera types (RTSP, USB, File input).
-- User-supplied shell scripts and parameterization.
-- Future: dynamic scheduling, real-time consolidation, support for additional Vision AI workloads.
-
+For diagrams or further breakdowns, see system_design.md and LLD.md.

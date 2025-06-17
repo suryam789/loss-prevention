@@ -1,37 +1,23 @@
 # Loss Prevention Proxy Pipeline System
 
-## Overview
+## Project Structure
 
-This project provides a proxy pipeline system for loss prevention workloads in self-checkout systems, supporting camera-to-workload mapping, pipeline consolidation, and benchmarking.
-
-## Folder Structure
-
-- `configs/`: User configuration files
-- `pipelines/`: Shell scripts for each workload
-- `benchmarking/`: Benchmarking scripts (as submodule)
-- `scripts/`: Pipeline launcher and utilities
-- `docs/`: HLD and LLD documents
-
-## Setup
-
-1. Clone the repository and initialize submodules:
-   ```
-   git clone <repo-url>
-   cd loss-prevention
-   git submodule update --init --recursive
-   ```
-2. Edit configuration files in `configs/`.
-3. Add or customize pipeline shell scripts in `pipelines/`.
+- `configs/` - Configuration files (camera/workload mapping, pipeline mapping)
+- `docker/` - Dockerfiles for downloader and pipeline containers
+- `docs/` - Documentation (HLD, LLD, system design)
+- `downloads/` - Scripts for downloading models and videos
+- `src/` - Main source code and pipeline runner scripts
+- `docker-compose.yml` - Docker Compose configuration
+- `Makefile` - Build automation
+- `README.md` - Project overview and instructions
 
 ## Usage
 
-Run the pipeline launcher script:
-```
-make run INPUT_JSON=./configs/camera_to_workload.json
-```
+- Use `docker/Dockerfile.downloader` to build the asset preparation container.
+- Use `docker/Dockerfile.pipelines` to build the pipeline execution container.
+- Place or update configuration files in `configs/` as needed.
+- Download scripts are in `downloads/`.
+- Main pipeline runner is in `src/`.
 
-## Extending
-
-- Add new workloads by creating new shell scripts and updating configs.
-- Integrate new benchmarking scripts via the submodule.
+---
 

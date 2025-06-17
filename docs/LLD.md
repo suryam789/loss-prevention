@@ -1,49 +1,49 @@
 # Low-Level Design (LLD): Loss Prevention Proxy Pipeline System
 
-## 1. Modules
+## 1. Asset Preparation Service
+- **Input**: List of required models and videos (from `configs/`).
+- **Logic**:
+  - Check if each asset exists locally in the appropriate directory.
+  - If missing, download from predefined sources using scripts in `downloads/`.
+  - Validate integrity and store in designated directories.
+- **Output**: Ready-to-use assets for pipeline execution.
 
-### a. Config Parser
-- Reads `camera_to_workload.json` and `workload_to_pipeline.json`.
-- Validates schema and required fields.
+## 2. Configuration Management
+- **Files**:
+  - `configs/camera_to_workload.json`: Maps cameras to workloads.
+  - `configs/workload_to_pipeline.json`: Maps workloads to pipeline scripts and parameters.
+- **Logic**:
+  - Parse and validate JSON files.
+  - Provide APIs/utilities for other services to query mappings.
 
-### b. Pipeline Consolidator
-- For each camera, maps workloads to unique shell scripts.
-- Consolidates workloads using the same script.
+## 3. Pipeline Execution Service
+- **Input**: Config files, prepared assets.
+- **Logic**:
+  - For each camera, determine unique set of required pipelines (by script path).
+  - Consolidate workloads using the same pipeline.
+  - Construct and launch GStreamer pipelines (shell scripts in `src/`) per camera.
+  - For each launched pipeline, start a benchmarking process in parallel.
+- **Output**: Execution plan, pipeline logs, benchmark logs.
 
-### c. Pipeline Launcher
-- Launches shell scripts as subprocesses.
-- Handles process monitoring and logging.
+## 4. Benchmarking Integration
+- **Input**: Running pipeline process.
+- **Logic**:
+  - Launch benchmarking scripts as subprocesses.
+  - Collect metrics: latency, CPU/GPU/memory/bandwidth.
+  - Parse and log metrics per camera/workload.
+- **Output**: Structured logs and summary reports.
 
-### d. Benchmarking Integration
-- Invokes benchmarking scripts as subprocesses.
-- Associates metrics with camera/workload.
+## 5. Output Artifacts
+- **Execution Plan**: JSON summary of pipelines per camera.
+- **Consolidated Summary**: Total unique pipelines running.
+- **Benchmark Logs**: Metrics per camera/workload.
+- **Resource Estimation**: (Optional) Lanes supported on current hardware.
 
-### e. Reporting Module
-- Generates execution plan (pipelines per camera).
-- Summarizes total unique pipelines.
-- Optionally estimates resource usage.
+## 6. Error Handling & Logging
+- Log all errors and warnings with context.
+- Validate all user inputs and asset downloads.
+- Provide clear error messages for missing/invalid configs or assets.
 
-## 2. Data Structures
+---
 
-- **CameraConfig:** camera_id, workloads[]
-- **WorkloadDefinition:** workload_name, script_path, type
-- **ExecutionPlan:** camera_id, [script_paths]
-
-## 3. Interfaces
-
-- `parse_config(file_path) -> dict`
-- `consolidate_pipelines(camera_config, workload_defs) -> execution_plan`
-- `launch_pipeline(script_path, camera_id)`
-- `run_benchmark(camera_id, workload_name)`
-
-## 4. Error Handling
-
-- Invalid config: log and exit.
-- Script failure: log error, continue with others.
-
-## 5. Extensibility
-
-- Add new workload types by adding new shell scripts and updating config.
-- Plug-in benchmarking scripts via submodule.
-- Support for multiple camera types and user-supplied scripts.
-
+For sequence diagrams, class diagrams, or further breakdowns, see system_design.md and HLD.md.
