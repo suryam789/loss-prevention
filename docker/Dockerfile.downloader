@@ -1,0 +1,18 @@
+# Dockerfile.downloader
+
+FROM ubuntu:22.04
+
+RUN apt-get update && \
+    apt-get install -y wget unzip curl && \
+    apt-get clean
+
+WORKDIR /data
+
+# Download models and videos via script
+COPY download_models.sh /usr/local/bin/download_models.sh
+COPY download_models.sh /usr/local/bin/download_videos.sh
+
+RUN chmod +x /usr/local/bin/download_models.sh
+RUN chmod +x /usr/local/bin/download_videos.sh
+
+CMD ["/bin/bash", "-c","/usr/local/bin/download_models.sh && /usr/local/bin/download_videos.sh"]
