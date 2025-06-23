@@ -1,18 +1,23 @@
 # Dockerfile.downloader
 
-FROM ubuntu:22.04
+FROM python:3.10-slim
 
 RUN apt-get update && \
-    apt-get install -y wget unzip curl && \
-    apt-get clean
+    apt-get install -y wget curl bash ca-certificates libgl1 libglib2.0-0 && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /data
+WORKDIR /home
+
+# Create required directories
+RUN mkdir -p /home/pipeline-server/sample-media /home/pipeline-server/models
 
 # Download models and videos via script
-COPY download_models.sh /usr/local/bin/download_models.sh
-COPY download_models.sh /usr/local/bin/download_videos.sh
+COPY download-scripts/download_models.sh /scripts/download_models.sh
+COPY download-scripts/download_videos.sh /scripts/download_videos.sh
+COPY download-scripts/download_convert_model.py /scripts/download_convert_model.py
 
-RUN chmod +x /usr/local/bin/download_models.sh
-RUN chmod +x /usr/local/bin/download_videos.sh
+RUN chmod +x /scripts/download_models.sh
+RUN chmod +x /scripts/download_videos.sh
+RUN chmod +x /scripts/download_convert_model.py
 
-CMD ["/bin/bash", "-c","/usr/local/bin/download_models.sh && /usr/local/bin/download_videos.sh"]
+CMD ["/bin/bash", "-c", "/scripts/download_models.sh && /scripts/download_videos.sh"]
