@@ -1,6 +1,8 @@
 # Copyright © 2025 Intel Corporation. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
+.PHONY: update-submodules download-models download-samples download-sample-videos build-assets-downloader run-assets-downloader build-pipeline-runner run-loss-prevention
+
 # Asset directories (shared between containers)
 ASSETS_DIR ?= /opt/retail-assets
 MODELS_DIR := $(ASSETS_DIR)/models
@@ -32,21 +34,18 @@ run-assets-downloader:
 		assets-downloader:latest
 	@echo "assets downloader completed"
 
-# Example: run pipeline-runner with mounted assets
-run-pipeline-runner:
-	docker run \
-		-v $(MODELS_DIR):/models \
-		-v $(SAMPLES_DIR):/sample-media \
-		pipeline-runner:latest
 
-build-pipeline:
+build-pipeline-runner:
 	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} -t pipeline-runner:latest -f docker/Dockerfile.pipeline .
 
 update-submodules:
-	@git submodule update --init --recursive
-	@git submodule update --remote --merge	
+	@echo "Cloning performance tool repositories"
+	git submodule deinit -f .
+	git submodule update --init --recursive
+	git submodule update --remote --merge
+	@echo "Submodules updated (if any present)."
 
-run-loss-prevention: | build-assets update-submodules download-sample-videos
+run-loss-prevention: | build-assets-downloader build-pipeline-runner update-submodules download-sample-videos
 	@echo "Building automated self checkout app"
 	$(MAKE) build
 	@echo Running automated self checkout pipeline
