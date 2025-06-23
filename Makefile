@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Asset directories (shared between containers)
-ASSETS_DIR ?= /home/intel/retail-assets
+ASSETS_DIR ?= /opt/retail-assets
 MODELS_DIR := $(ASSETS_DIR)/models
 SAMPLES_DIR := $(ASSETS_DIR)/sample-media
 

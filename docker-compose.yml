@@ -1,14 +1,20 @@
 version: '3.8'
 
 services:
-  model-downloader:
-    build:
-      context: ./docker
-      dockerfile: Dockerfile.downloader
-    container_name: model-downloader
+  assets-downloader:
+    image: assets-downloader:latest
+    container_name: assets-downloader
+    environment:
+      - HTTP_PROXY
+      - HTTPS_PROXY
+      - http_proxy
+      - https_proxy
+      - MODELS_DIR=/data/models
+      - SAMPLES_DIR=/data/sample-media
     volumes:
-      - ./data:/data
-    command: ["/bin/bash", "download_models.sh"]
+      - /opt/retail-assets/models:/data/models
+      - /opt/retail-assets/sample-media:/data/sample-media
+    command: ["/bin/bash", "-c", "/scripts/download_models.sh && /scripts/download_videos.sh"]
 
   pipeline-runner:
     build:
@@ -16,7 +22,12 @@ services:
       dockerfile: Dockerfile.pipelines
     container_name: pipeline-runner
     depends_on:
-      - model-downloader
+      - assets-downloader
+    environment:
+      - MODELS_DIR=/data/models
+      - SAMPLES_DIR=/data/sample-media
+      - ASSETS_DIR=/opt/retail-assets
     volumes:
-      - ./data:/data
-    command: ["/bin/bash", "run_pipeline.sh"]
+      - /opt/retail-assets/models:/data/models
+      - /opt/retail-assets/sample-media:/data/sample-media
+    command: ["/bin/bash", "/run_pipeline.sh"]
