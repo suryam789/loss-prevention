@@ -16,20 +16,20 @@ from ultralytics.data.converter import coco80_to_coco91_class
 from ultralytics.data.utils import check_det_dataset
 from ultralytics.utils.metrics import ConfusionMatrix
 
-def export_yolo(model_name, model_type, output_dir):
+def export_yolo(model_name, output_dir):
     model_dir = os.path.join(output_dir, "object_detection", model_name)
     os.makedirs(model_dir, exist_ok=True)
     weights = model_name + ".pt"
+    # Set YOLO_CONFIG_DIR if provided
+    yolo_env = os.environ.copy()
+    if "YOLO_CONFIG_DIR" in os.environ:
+        yolo_env["YOLO_CONFIG_DIR"] = os.environ["YOLO_CONFIG_DIR"]
     model = YOLO(weights)
     model.info()
     converted_path = model.export(format='openvino')
     converted_model = os.path.join(converted_path, model_name + '.xml')
     core = openvino.Core()
-    ov_model = core.read_model(model=converted_model)
-    if model_type in ["YOLOv8-SEG", "yolo_v11_seg"]:
-        ov_model.output(0).set_names({"boxes"})
-        ov_model.output(1).set_names({"masks"})
-    ov_model.set_rt_info(model_type, ['model_info', 'model_type'])
+    ov_model = core.read_model(model=converted_model)    
     os.makedirs(os.path.join(model_dir, "FP32"), exist_ok=True)
     os.makedirs(os.path.join(model_dir, "FP16"), exist_ok=True)
     openvino.save_model(ov_model, os.path.join(model_dir, "FP32", model_name + ".xml"), compress_to_fp16=False)
@@ -111,60 +111,6 @@ def quantize_yolo(model_name, dataset_manifest, output_dir):
         if os.path.exists(p2):
             shutil.rmtree(p2)
 
-def export_classification(model_name, output_dir):
-    model_dir = os.path.join(output_dir, "object_classification", model_name)
-    os.makedirs(model_dir, exist_ok=True)
-    model = timm.create_model(model_name, pretrained=True)
-    model.eval()
-    dummy = torch.randn(1, 3, 224, 224)
-    onnx_path = os.path.join(model_dir, f"{model_name}.onnx")
-    torch.onnx.export(model, dummy, onnx_path, input_names=["input"], output_names=["output"], opset_version=12)
-    print(f"Exported {model_name} to ONNX: {onnx_path}")
-    mo.convert(input_model=onnx_path, output_dir=os.path.join(model_dir, "FP32"), data_type="FP32")
-
-def download_face_detection(model_name, output_dir):
-    model_dir = os.path.join(output_dir, "face_detection", model_name)
-    os.makedirs(model_dir, exist_ok=True)
-    subprocess.run(["omz_downloader", "--name", model_name, "--output_dir", model_dir], check=True)
-    subprocess.run(["omz_converter", "--name", model_name, "--precisions", "FP32", "--download_dir", model_dir, "--output_dir", os.path.join(model_dir, "FP32")], check=True)
-
-def download_all(config_path, output_dir):
-    with open(config_path) as f:
-        config = json.load(f)
-    for workload in config.get("workloads", []):
-        model_name = workload["model_name"]
-        model_category = workload["model_type"]
-        if model_category == "object_detection":
-            model_path = os.path.join(output_dir, "object_detection", model_name, "FP32", f"{model_name}.xml")
-            if os.path.exists(model_path):
-                print(f"[INFO] Model {model_name} ({model_category}) already exists at {model_path}, skipping download.")
-                continue
-            print(f"[INFO] Downloading/converting {model_name} ({model_category}) ...")
-            export_yolo(model_name, model_category, output_dir)
-            # Quantize if needed
-            quant_dataset = os.path.join(output_dir, "datasets", "coco128.yaml")
-            if not os.path.exists(quant_dataset):
-                os.makedirs(os.path.dirname(quant_dataset), exist_ok=True)
-                url = "https://raw.githubusercontent.com/ultralytics/ultralytics/v8.1.0/ultralytics/cfg/datasets/coco128.yaml"
-                subprocess.run(["wget", "--timeout=30", "--tries=2", url, "-O", quant_dataset], check=True)
-            quantize_yolo(model_name, quant_dataset, output_dir)
-        elif model_category == "object_classification":
-            model_path = os.path.join(output_dir, "object_classification", model_name, "FP32", f"{model_name}.xml")
-            if os.path.exists(model_path):
-                print(f"[INFO] Model {model_name} ({model_category}) already exists at {model_path}, skipping download.")
-                continue
-            print(f"[INFO] Downloading/converting {model_name} ({model_category}) ...")
-            export_classification(model_name, output_dir)
-        elif model_category == "face_detection":
-            model_path = os.path.join(output_dir, "face_detection", model_name, "FP32", f"{model_name}.xml")
-            if os.path.exists(model_path):
-                print(f"[INFO] Model {model_name} ({model_category}) already exists at {model_path}, skipping download.")
-                continue
-            print(f"[INFO] Downloading/converting {model_name} ({model_category}) ...")
-            download_face_detection(model_name, output_dir)
-        else:
-            print(f"[WARN] Unsupported model category: {model_category}, skipping...")
-    print("###################### Model downloading has been completed successfully #########################")
 
 def main():
     if len(sys.argv) < 2:
@@ -172,25 +118,15 @@ def main():
         sys.exit(1)
     cmd = sys.argv[1]
     if cmd == "export_yolo":
-        if len(sys.argv) < 5:
-            print("Usage: model_convert.py export_yolo <model_name> <model_type> <output_dir>")
+        if len(sys.argv) < 4:
+            print("Usage: model_convert.py export_yolo <model_name> <output_dir>")
             sys.exit(1)
-        export_yolo(sys.argv[2], sys.argv[3], sys.argv[4])
+        export_yolo(sys.argv[2], sys.argv[3])
     elif cmd == "quantize_yolo":
         if len(sys.argv) < 5:
             print("Usage: model_convert.py quantize_yolo <model_name> <dataset_manifest> <output_dir>")
             sys.exit(1)
-        quantize_yolo(sys.argv[2], sys.argv[3], sys.argv[4])
-    elif cmd == "object_classification":
-        if len(sys.argv) < 4:
-            print("Usage: model_convert.py object_classification <model_name> <output_dir>")
-            sys.exit(1)
-        export_classification(sys.argv[2], sys.argv[3])
-    elif cmd == "download_all":
-        if len(sys.argv) < 4:
-            print("Usage: model_convert.py download_all <config_path> <output_dir>")
-            sys.exit(1)
-        download_all(sys.argv[2], sys.argv[3])
+        quantize_yolo(sys.argv[2], sys.argv[3], sys.argv[4])     
     else:
         print(f"[ERROR] Unsupported command: {cmd}")
         sys.exit(2)

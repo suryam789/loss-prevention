@@ -1,21 +1,40 @@
 {
   "workload_pipeline_map": {
-    "hidden_item": [
-      {
-        "model_category": "OBJECT_DETECTION",
+    "items_in_basket": [
+      {        
         "type": "gvadetect",
-        "model": "yolo11n.xml",
-        "model_type": "yolo_v11",
-        "device": "GPU"
+        "model": "yolo11n.xml",       
+        "device": "GPU",        
+        "region_of_interest" : {
+          "x": 0.1,
+          "y": 0.1,
+          "width": 0.8,
+          "height": 0.8
+        }
       }
     ],
-    "product_switching": [
+    "Multi_Product_Identification": [
       {
-        "model_category": "OBJECT_DETECTION",
         "type": "gvadetect",
         "model": "yolo11n.xml",
-        "model_type": "yolo_v11",
-        "device": "CPU"
+        "device": "GPU",
+        "region_of_interest" : {
+          "x": 0.1,
+          "y": 0.1,
+          "width": 0.8,
+          "height": 0.8
+        }
+      },
+      {
+        "type": "gvaclassify",
+        "model": "efficientnet-v2-s",
+        "device": "GPU",
+        "region_of_interest" : {
+          "x": 0.1,
+          "y": 0.1,
+          "width": 0.8,
+          "height": 0.8
+        }
       }
     ]
   }

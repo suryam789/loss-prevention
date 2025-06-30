@@ -24,55 +24,53 @@ if ! command -v jq &>/dev/null; then
     exit 1
 fi
 
-# Extract all model_category/model/model_type (optional) from all arrays in the JSON (handle nested arrays in objects)
+# Extract all type/model from all arrays in the JSON (handle nested arrays in objects)
 mapfile -t MODEL_PAIRS < <(jq -r '
   to_entries[] |
   if (.value | type == "array") then
-    .value[] | select(.model_category and .model) | [.model_category, .model, (.model_type // "")] | @tsv
+    .value[] | select(.type and .model) | [.type, .model] | @tsv
   elif (.value | type == "object") then
-    .value[]? | select(type == "array") | .[] | select(.model_category and .model) | [.model_category, .model, (.model_type // "")] | @tsv
+    .value[]? | select(type == "array") | .[] | select(.type and .model) | [.type, .model] | @tsv
   else
     empty
   end
 ' "$CONFIG_JSON" | sort -u)
 
-declare -A CATEGORY_MODELS
+declare -A TYPE_MODELS
 
-# Build associative array: CATEGORY_MODELS[category]="model1|type1,model2|type2,..."
+# Build associative array: TYPE_MODELS[type]="model1,model2,..."
 for PAIR in "${MODEL_PAIRS[@]}"; do
-    MODEL_CATEGORY_ORIG="$(echo "$PAIR" | cut -f1)"
+    TYPE_RAW="$(echo "$PAIR" | cut -f1)"
     MODEL_NAME_RAW="$(echo "$PAIR" | cut -f2)"
-    MODEL_TYPE_RAW="$(echo "$PAIR" | cut -f3)"
     MODEL_NAME="${MODEL_NAME_RAW%.xml}"
-    MODEL_TYPE="$MODEL_TYPE_RAW"
-    MODEL_CATEGORY="$(echo "$MODEL_CATEGORY_ORIG" | tr '[:upper:]' '[:lower:]')"
-    ENTRY="$MODEL_NAME|$MODEL_TYPE"
-    if [[ -z "${CATEGORY_MODELS[$MODEL_CATEGORY]+x}" ]]; then
-        CATEGORY_MODELS[$MODEL_CATEGORY]="$ENTRY"
+    TYPE_KEY="$(echo "$TYPE_RAW" | tr '[:upper:]' '[:lower:]')"
+    ENTRY="$MODEL_NAME"
+    if [[ -z "${TYPE_MODELS[$TYPE_KEY]+x}" ]]; then
+        TYPE_MODELS[$TYPE_KEY]="$ENTRY"
     else
         # Only add if not already present
-        if [[ ",${CATEGORY_MODELS[$MODEL_CATEGORY]}," != *",$ENTRY,"* ]]; then
-            CATEGORY_MODELS[$MODEL_CATEGORY]+=",$ENTRY"
+        if [[ ",${TYPE_MODELS[$TYPE_KEY]}," != *",$ENTRY,"* ]]; then
+            TYPE_MODELS[$TYPE_KEY]+=",$ENTRY"
         fi
     fi
+
 done
 
-echo "####### MODEL_CATEGORIES"${!CATEGORY_MODELS[@]}
+echo "####### MODEL_TYPES ====  "${!TYPE_MODELS[@]}""
 
-for MODEL_CATEGORY in "${!CATEGORY_MODELS[@]}"; do
-    IFS=',' read -ra MODELS <<< "${CATEGORY_MODELS[$MODEL_CATEGORY]}"
-    for MODEL_PAIR in "${MODELS[@]}"; do
-        MODEL_NAME="${MODEL_PAIR%%|*}"
-        MODEL_TYPE="${MODEL_PAIR#*|}"
+for TYPE_KEY in "${!TYPE_MODELS[@]}"; do
+    IFS=',' read -ra MODELS <<< "${TYPE_MODELS[$TYPE_KEY]}"
+    for MODEL_NAME in "${MODELS[@]}"; do
         MODEL_PATH="$MODELS_PATH/$MODEL_NAME"
         if [ -e "$MODEL_PATH" ]; then
-            echo "[INFO] $MODEL_NAME already exists, skipping download."
+            echo "[INFO] ########## $MODEL_NAME already exists, skipping download."
             continue
         fi
-        echo "[INFO] Processing $MODEL_NAME ($MODEL_CATEGORY, $MODEL_TYPE) ..."
-        case "$MODEL_CATEGORY" in
-            object_detection)
-                python3 "$SCRIPT_BASE_PATH/model_convert.py" export_yolo "$MODEL_NAME" "$MODEL_TYPE" "$MODELS_PATH"
+        echo "[INFO] ########### Processing $MODEL_NAME ($TYPE_KEY) ..."
+        case "$TYPE_KEY" in
+            gvadetect|object_detection)
+                echo "[INFO] ######  Downloading and converting model: $MODEL_NAME"
+                python3 "$SCRIPT_BASE_PATH/model_convert.py" export_yolo "$MODEL_NAME" "$MODELS_PATH"
                 # Quantize if needed
                 quant_dataset="$MODELS_PATH/datasets/coco128.yaml"
                 if [ ! -f "$quant_dataset" ]; then
@@ -81,14 +79,15 @@ for MODEL_CATEGORY in "${!CATEGORY_MODELS[@]}"; do
                 fi
                 python3 "$SCRIPT_BASE_PATH/model_convert.py" quantize_yolo "$MODEL_NAME" "$quant_dataset" "$MODELS_PATH"
                 ;;
-            object_classification)
-                python3 "$SCRIPT_BASE_PATH/model_convert.py" object_classification "$MODEL_NAME" "$MODELS_PATH"
+            gvaclassify|object_classification)
+                echo "[INFO] ######  Downloading and converting object classification model: $MODEL_NAME"
+                python3 "$SCRIPT_BASE_PATH/efnetv2s_download_quant.py" "$MODEL_NAME" "$MODELS_PATH"
                 ;;
             face_detection)
                 python3 "$SCRIPT_BASE_PATH/model_convert.py" face_detection "$MODEL_NAME" "$MODELS_PATH"
                 ;;
             *)
-                echo "[WARN] Unsupported model category: $MODEL_CATEGORY, skipping..."
+                echo "[WARN] Unsupported type: $TYPE_KEY, skipping..."
                 ;;
         esac
     done

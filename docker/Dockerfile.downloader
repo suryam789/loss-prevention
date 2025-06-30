@@ -19,14 +19,13 @@ WORKDIR /workspace
 # Copy your scripts and requirements
 COPY download-scripts/requirements.txt /workspace/scripts/requirements.txt
 COPY download-scripts/downloadModels.sh /workspace/scripts/downloadModels.sh
-COPY download-scripts/download_videos.sh /workspace/scripts/download_videos.sh
 COPY download-scripts/model_convert.py /workspace/scripts/model_convert.py
+COPY download-scripts/efnetv2s_download_quant.py /workspace/scripts/efnetv2s_download_quant.py
 COPY configs/workload_to_pipeline.json /workspace/configs/workload_to_pipeline.json
 COPY configs/camera_to_workload.json /workspace/configs/camera_to_workload.json
 
 # Make the script executable
 RUN chmod +x /workspace/scripts/downloadModels.sh
-RUN chmod +x /workspace/scripts/download_videos.sh
 
 
 # Install Python dependencies with verbose output for logs
@@ -34,5 +33,5 @@ RUN pip3 install --upgrade pip -vvv --no-cache-dir && \
     pip3 install -vvv --no-cache-dir -r /workspace/scripts/requirements.txt
 
 
-# Default command (can be overridden)
+# Default command: run both scripts in sequence
 CMD ["/bin/bash", "-c", "/workspace/scripts/downloadModels.sh"]

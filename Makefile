@@ -19,28 +19,21 @@ download-sample-videos:
 
 build-assets-downloader:
 	@echo "Building assets downloader"
-	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} -t assets-downloader:latest -f docker/Dockerfile.downloader .
+	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} -t model-downloader:lp -f docker/Dockerfile.downloader .
 	@echo "assets downloader completed"
 
 run-assets-downloader:
+	@echo "Running assets downloader"
 	docker run --rm \
 		-e HTTP_PROXY=${HTTP_PROXY} \
- 		-e HTTPS_PROXY=${HTTPS_PROXY} \
- 		-e http_proxy=${HTTP_PROXY} \
- 		-e https_proxy=${HTTPS_PROXY} \
-		-e MODELS_DIR=/workspace/models -v "$(shell pwd)/models:/workspace/models" assets-downloader:latest
-
-# run-assets-downloader:
-# 	@echo "Running assets downloader"
-# 	docker run \
-# 		-e HTTP_PROXY=${HTTP_PROXY} \
-# 		-e HTTPS_PROXY=${HTTPS_PROXY} \
-# 		-e http_proxy=${HTTP_PROXY} \
-# 		-e https_proxy=${HTTPS_PROXY} \
-# 		-v $(MODELS_DIR):/models \
-# 		-v $(SAMPLES_DIR):/sample-media \
-# 		assets-downloader:latest
-# 	@echo "assets downloader completed"
+		-e HTTPS_PROXY=${HTTPS_PROXY} \
+		-e http_proxy=${HTTP_PROXY} \
+		-e https_proxy=${HTTPS_PROXY} \
+		-e MODELS_DIR=/workspace/models \
+		-e SAMPLES_DIR=/workspace/sample-media \
+		-v "$(shell pwd)/models:/workspace/models" \
+		model-downloader:lp
+		@echo "assets downloader completed"
 
 
 build-pipeline-runner:
