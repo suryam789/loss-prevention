@@ -7,6 +7,28 @@
 
 set -euo pipefail
 
+pipelineZooModel="https://github.com/dlstreamer/pipeline-zoo-models/raw/main/storage/"
+
+modelPrecisionFP16INT8="FP16-INT8"
+modelPrecisionFP32INT8="FP32-INT8"
+modelPrecisionFP32="FP32"
+
+downloadEfficientnetb0() {
+    efficientnetb0="efficientnet-b0"
+    modelType=object_classification
+    # FP32-INT8 efficientnet-b0 for capi
+    customefficientnetb0Modelfile="$modelType/$efficientnetb0/$efficientnetb0.json"
+    if [ ! -f $customefficientnetb0Modelfile ]; then
+        echo "downloading model efficientnet $modelPrecisionFP32INT8 model..."
+        wget "https://github.com/dlstreamer/pipeline-zoo-models/raw/main/storage/efficientnet-b0_INT8/$modelPrecisionFP32INT8/efficientnet-b0.bin" -P $modelType/$efficientnetb0/$modelPrecisionFP32
+        wget "https://github.com/dlstreamer/pipeline-zoo-models/raw/main/storage/efficientnet-b0_INT8/$modelPrecisionFP32INT8/efficientnet-b0.xml" -P $modelType/$efficientnetb0/$modelPrecisionFP32
+        wget "https://github.com/dlstreamer/pipeline-zoo-models/raw/main/storage/efficientnet-b0_INT8/efficientnet-b0.json" -P $modelType/$efficientnetb0
+        wget "https://raw.githubusercontent.com/dlstreamer/dlstreamer/master/samples/labels/imagenet_2012.txt" -P $modelType/$efficientnetb0
+    else
+        echo "efficientnet $modelPrecisionFP32INT8 model already exists, skip downloading..."
+    fi
+}
+
 SCRIPT_BASE_PATH=/workspace/scripts/
 # MODELS_PATH is set to /workspace/models by default, matching the container mount
 MODELS_PATH="${MODELS_DIR:-/workspace/models}"
@@ -81,7 +103,7 @@ for TYPE_KEY in "${!TYPE_MODELS[@]}"; do
                 ;;
             gvaclassify|object_classification)
                 echo "[INFO] ######  Downloading and converting object classification model: $MODEL_NAME"
-                python3 "$SCRIPT_BASE_PATH/efnetv2s_download_quant.py" "$MODEL_NAME" "$MODELS_PATH"
+                downloadEfficientnetb0
                 ;;
             face_detection)
                 python3 "$SCRIPT_BASE_PATH/model_convert.py" face_detection "$MODEL_NAME" "$MODELS_PATH"
@@ -92,5 +114,8 @@ for TYPE_KEY in "${!TYPE_MODELS[@]}"; do
         esac
     done
 done
+
+
+
 
 echo "###################### Model downloading has been completed successfully #########################"

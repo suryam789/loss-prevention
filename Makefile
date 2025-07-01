@@ -17,12 +17,12 @@ download-samples:
 download-sample-videos:
 	cd performance-tools/benchmark-scripts && ./download_sample_videos.sh
 
-build-assets-downloader:
+build-model-downloader:
 	@echo "Building assets downloader"
 	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} -t model-downloader:lp -f docker/Dockerfile.downloader .
 	@echo "assets downloader completed"
 
-run-assets-downloader:
+run-model-downloader:
 	@echo "Running assets downloader"
 	docker run --rm \
 		-e HTTP_PROXY=${HTTP_PROXY} \
@@ -38,6 +38,17 @@ run-assets-downloader:
 
 build-pipeline-runner:
 	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} -t pipeline-runner:latest -f docker/Dockerfile.pipeline .
+
+
+run-pipeline-runner:
+	@echo "Running pipeline runner"
+	docker run \
+		-e HTTP_PROXY=${HTTP_PROXY} \
+		-e HTTPS_PROXY=${HTTPS_PROXY} \
+		-e http_proxy=${HTTP_PROXY} \
+		-e https_proxy=${HTTPS_PROXY} \
+		pipeline-runner:latest
+		@echo "pipeline runner container completed successfully"
 
 update-submodules:
 	@echo "Cloning performance tool repositories"

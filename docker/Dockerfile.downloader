@@ -23,6 +23,7 @@ COPY download-scripts/model_convert.py /workspace/scripts/model_convert.py
 COPY download-scripts/efnetv2s_download_quant.py /workspace/scripts/efnetv2s_download_quant.py
 COPY configs/workload_to_pipeline.json /workspace/configs/workload_to_pipeline.json
 COPY configs/camera_to_workload.json /workspace/configs/camera_to_workload.json
+COPY configs/yolo_model_type_mapping.json /workspace/configs/yolo_model_type_mapping.json
 
 # Make the script executable
 RUN chmod +x /workspace/scripts/downloadModels.sh

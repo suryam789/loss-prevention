@@ -6,13 +6,13 @@
         "width": 1920,
         "height": 1080,
         "fps": 30,
-        "fileSrc":"Self-Checkout-Scanner-View.mp4|https://www.pexels.com/download/video/32658412", 
-        "workloads": ["items_in_basket", "multi_product_identification"] 
+        "fileSrc":"items-in-basket-32658421.mp4|https://www.pexels.com/download/video/32658421/", 
+        "workloads": ["items_in_basket"] 
       },
       { 
         "camera_id": "cam2", 
-        "fileSrc":"Checkout-Scanner-View.mp4|https://www.pexels.com/download/video/32658412", 
-        "workloads": ["fake_scan_detection","multi_product_identification"] 
+        "fileSrc":"fake-detection-video-32658412.mp4|https://www.pexels.com/download/video/32658412", 
+        "workloads": ["fake_scan_detection"] 
       }
     ]
   }

@@ -16,20 +16,46 @@ from ultralytics.data.converter import coco80_to_coco91_class
 from ultralytics.data.utils import check_det_dataset
 from ultralytics.utils.metrics import ConfusionMatrix
 
+def get_model_type(model_name, mapping_path=None):  
+    if mapping_path is None:
+        mapping_path = os.path.join(os.path.dirname(__file__), "../configs/yolo_model_type_mapping.json")
+    try:
+        with open(mapping_path, "r") as f:
+            mapping = json.load(f)
+        print(f"[DEBUG] Loaded mapping: {mapping}")
+        print(f"[DEBUG] Available keys: {list(mapping.keys())}")
+        print(f"[DEBUG] Searching for model_name: '{model_name}'")
+    except Exception as e:
+        print(f"[ERROR] Could not load mapping file: {e}")
+        return None
+    # Try exact key
+    if model_name in mapping:
+        print(f"[DEBUG] Found model type for '{model_name}': {mapping[model_name]}")
+        return mapping[model_name]
+    # Try base name without extension
+    base_name = os.path.splitext(model_name)[0]
+    if base_name in mapping:
+        print(f"[WARN] Model type for '{model_name}' not found, using base name '{base_name}': {mapping[base_name]}")
+        return mapping[base_name]
+    print(f"[ERROR] Model type for '{model_name}' not found in mapping.")
+    return None
+
 def export_yolo(model_name, output_dir):
+    model_type = get_model_type(model_name)
+    print(f"############ Exporting model_name == {model_name} of type model_type == {model_type} to {output_dir} ############")
     model_dir = os.path.join(output_dir, "object_detection", model_name)
     os.makedirs(model_dir, exist_ok=True)
     weights = model_name + ".pt"
-    # Set YOLO_CONFIG_DIR if provided
-    yolo_env = os.environ.copy()
-    if "YOLO_CONFIG_DIR" in os.environ:
-        yolo_env["YOLO_CONFIG_DIR"] = os.environ["YOLO_CONFIG_DIR"]
     model = YOLO(weights)
     model.info()
     converted_path = model.export(format='openvino')
     converted_model = os.path.join(converted_path, model_name + '.xml')
     core = openvino.Core()
-    ov_model = core.read_model(model=converted_model)    
+    ov_model = core.read_model(model=converted_model)
+    if model_type in ["YOLOv8-SEG", "yolo_v11_seg"]:
+        ov_model.output(0).set_names({"boxes"})
+        ov_model.output(1).set_names({"masks"})
+    ov_model.set_rt_info(model_type, ['model_info', 'model_type'])
     os.makedirs(os.path.join(model_dir, "FP32"), exist_ok=True)
     os.makedirs(os.path.join(model_dir, "FP16"), exist_ok=True)
     openvino.save_model(ov_model, os.path.join(model_dir, "FP32", model_name + ".xml"), compress_to_fp16=False)
@@ -110,6 +136,7 @@ def quantize_yolo(model_name, dataset_manifest, output_dir):
         p2 = os.path.join(model_dir, d)
         if os.path.exists(p2):
             shutil.rmtree(p2)
+
 
 
 def main():

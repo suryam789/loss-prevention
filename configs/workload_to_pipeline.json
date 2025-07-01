@@ -3,37 +3,78 @@
     "items_in_basket": [
       {        
         "type": "gvadetect",
-        "model": "yolo11n.xml",       
-        "device": "GPU",        
+        "model": "yolo11n",       
+        "device": "CPU",
+        "precision": "INT8",          
         "region_of_interest" : {
-          "x": 0.1,
-          "y": 0.1,
-          "width": 0.8,
-          "height": 0.8
-        }
-      }
-    ],
-    "Multi_Product_Identification": [
-      {
-        "type": "gvadetect",
-        "model": "yolo11n.xml",
-        "device": "GPU",
-        "region_of_interest" : {
-          "x": 0.1,
-          "y": 0.1,
-          "width": 0.8,
-          "height": 0.8
+          "x": 311,
+          "y": 888,
+          "width": 755,
+          "height": 445
         }
       },
       {
         "type": "gvaclassify",
-        "model": "efficientnet-v2-s",
-        "device": "GPU",
+        "model": "efficientnet-b0",
+        "device": "CPU",
+        "precision": "FP32",
         "region_of_interest" : {
-          "x": 0.1,
-          "y": 0.1,
-          "width": 0.8,
-          "height": 0.8
+          "x": 311,
+          "y": 888,
+          "width": 755,
+          "height": 445
+        }
+      }
+    ],
+    "fake_scan_detection": [
+      {        
+        "type": "gvadetect",
+        "model": "yolo11n",       
+        "device": "CPU",
+        "precision": "INT8",          
+        "region_of_interest" : {
+          "x": 555,
+          "y": 665,
+          "width": 755,
+          "height": 430
+        }
+      },
+      {
+        "type": "gvaclassify",
+        "model": "efficientnet-b0",
+        "device": "CPU",
+        "precision": "FP32",
+        "region_of_interest" : {
+           "x": 555,
+          "y": 665,
+          "width": 755,
+          "height": 430
+        }
+      }
+    ],
+    "multi_product_identification": [
+      {
+        "type": "gvadetect",
+        "model": "yolo11n",
+        "device": "CPU",
+        "precision": "INT8",
+        "region_of_interest" : {
+          "x": 555,
+          "y": 665,
+          "width": 755,
+          "height": 430
+        }
+      },
+      {
+        "type": "gvaclassify",
+        "model": "efficientnet-b0",
+        "device": "CPU",
+        "precision": "FP32",
+        "region_of_interest" : {
+          "x": 555,
+          "y": 665,
+          "width": 755,
+          "height": 430
         }
       }
     ]
