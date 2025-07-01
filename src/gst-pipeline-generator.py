@@ -46,9 +46,13 @@ def build_gst_element(cfg):
     model = cfg["model"]
     device = cfg["device"]
     precision = cfg.get("precision", "")
+    # Add inference-region=1 if region_of_interest is present in cfg (from workload_to_pipeline.json)
+    inference_region = ""
+    if cfg["type"] == "gvadetect" and cfg.get("region_of_interest") is not None:
+        inference_region = " inference-region=1"
     if cfg["type"] == "gvadetect":
         model_path = download_model_if_missing(model, "gvadetect", precision)
-        elem = f"gvadetect model={model_path} device={device}"
+        elem = f"gvadetect{inference_region} model={model_path} device={device}"
     elif cfg["type"] == "gvaclassify":
         model_path = download_model_if_missing(model, "gvaclassify", precision)
         elem = f"gvaclassify model={model_path} device={device}"
