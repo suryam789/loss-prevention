@@ -91,16 +91,10 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
     for w in workloads:
         if w in workload_map:
             all_steps.extend(workload_map[w])
-    unique_steps = []
-    last_sig = None
-    for step in all_steps:
-        sig = pipeline_cfg_signature(step)
-        if sig != last_sig:
-            unique_steps.append(step)
-        last_sig = sig
+    # Do NOT deduplicate steps: allow all steps from all workloads, even if models are the same
     rois = []
     seen_rois = set()
-    for step in unique_steps:
+    for step in all_steps:
         roi = step.get("region_of_interest")
         if roi:
             roi_tuple = (roi.get('x', 0), roi.get('y', 0), roi.get('width', 1), roi.get('height', 1))
@@ -112,23 +106,27 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
         gvaattachroi_elem = "gvaattachroi " + " ".join(roi_strs)
         pipeline += f" ! {gvaattachroi_elem}"
     inference_types = {"gvadetect", "gvaclassify"}
-    # Use unique model-instance-id per stream and per type
-    for i, step in enumerate(unique_steps):
+    # Use unique model-instance-id per step in the stream
+    detect_count = 1
+    classify_count = 1
+    for i, step in enumerate(all_steps):
         if not rois and i == 0 and step["type"] in inference_types:
             pipeline += " ! gvaattachroi"
         if step["type"] == "gvadetect":
-            model_instance_id = f"detect{branch_idx+1}"
+            model_instance_id = f"detect{branch_idx+1}_{detect_count}"
+            detect_count += 1
             elem = build_gst_element(step)
             elem = elem.replace("gvadetect", f"gvadetect model-instance-id={model_instance_id}")
             pipeline += f" ! {elem} ! queue max-size-buffers=10"
         elif step["type"] == "gvaclassify":
-            model_instance_id = f"classify{branch_idx+1}"
+            model_instance_id = f"classify{branch_idx+1}_{classify_count}"
+            classify_count += 1
             elem = build_gst_element(step)
             elem = elem.replace("gvaclassify", f"gvaclassify model-instance-id={model_instance_id}")
             pipeline += f" ! {elem} ! queue max-size-buffers=10"
         else:
             pipeline += f" ! {build_gst_element(step)}"
-        if i < len(unique_steps) - 1:
+        if i < len(all_steps) - 1:
             pipeline += " ! queue"
     # Save results to /home/pipeline-server/results in the container (which should be mounted to host results dir)
     tee_name = f"t{branch_idx+1}"

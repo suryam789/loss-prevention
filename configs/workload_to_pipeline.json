@@ -55,7 +55,7 @@
     "multi_product_identification": [
       {
         "type": "gvadetect",
-        "model": "yolo11n",
+        "model": "yolo12n",
         "device": "CPU",
         "precision": "INT8",
         "region_of_interest" : {
@@ -67,7 +67,7 @@
       },
       {
         "type": "gvaclassify",
-        "model": "efficientnet-b0",
+        "model": "efficientnet-1b0",
         "device": "CPU",
         "precision": "FP32",
         "region_of_interest" : {
