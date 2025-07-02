@@ -42,13 +42,20 @@ build-pipeline-runner:
 
 run-pipeline-runner:
 	@echo "Running pipeline runner"
-	docker run \
+	xhost +local:root
+	docker run -it \
+		--env DISPLAY=$(DISPLAY) \
+		--env XDG_RUNTIME_DIR=$(XDG_RUNTIME_DIR) \
+		--volume /tmp/.X11-unix:/tmp/.X11-unix \
 		-e HTTP_PROXY=${HTTP_PROXY} \
 		-e HTTPS_PROXY=${HTTPS_PROXY} \
 		-e http_proxy=${HTTP_PROXY} \
 		-e https_proxy=${HTTPS_PROXY} \
+		--volume $(PWD)/results:/home/pipeline-server/results \
 		pipeline-runner:latest
-		@echo "pipeline runner container completed successfully"
+	xhost -local:root
+	@echo "pipeline runner container completed successfully"
+
 
 update-submodules:
 	@echo "Cloning performance tool repositories"

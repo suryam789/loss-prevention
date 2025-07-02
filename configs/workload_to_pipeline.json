@@ -7,10 +7,10 @@
         "device": "CPU",
         "precision": "INT8",          
         "region_of_interest" : {
-          "x": 311,
-          "y": 888,
-          "width": 755,
-          "height": 445
+          "x": 550,
+          "y": 500,
+          "width": 1800,
+          "height": 850
         }
       },
       {
@@ -19,10 +19,10 @@
         "device": "CPU",
         "precision": "FP32",
         "region_of_interest" : {
-          "x": 311,
-          "y": 888,
-          "width": 755,
-          "height": 445
+          "x": 550,
+          "y": 500,
+          "width": 1800,
+          "height": 850
         }
       }
     ],
@@ -33,10 +33,10 @@
         "device": "CPU",
         "precision": "INT8",          
         "region_of_interest" : {
-          "x": 555,
-          "y": 665,
-          "width": 755,
-          "height": 430
+          "x": 450,
+          "y": 450,
+          "width": 1190,
+          "height": 1190
         }
       },
       {
@@ -45,10 +45,10 @@
         "device": "CPU",
         "precision": "FP32",
         "region_of_interest" : {
-           "x": 555,
-          "y": 665,
-          "width": 755,
-          "height": 430
+          "x": 450,
+          "y": 450,
+          "width": 1190,
+          "height": 1190
         }
       }
     ],
@@ -59,10 +59,10 @@
         "device": "CPU",
         "precision": "INT8",
         "region_of_interest" : {
-          "x": 555,
-          "y": 665,
-          "width": 755,
-          "height": 430
+          "x": 450,
+          "y": 450,
+          "width": 1190,
+          "height": 1190
         }
       },
       {
@@ -71,10 +71,10 @@
         "device": "CPU",
         "precision": "FP32",
         "region_of_interest" : {
-          "x": 555,
-          "y": 665,
-          "width": 755,
-          "height": 430
+          "x": 450,
+          "y": 450,
+          "width": 1190,
+          "height": 1190
         }
       }
     ]

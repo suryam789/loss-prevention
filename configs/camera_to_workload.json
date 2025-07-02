@@ -11,6 +11,9 @@
       },
       { 
         "camera_id": "cam2", 
+        "width": 1920,
+        "height": 1080,
+        "fps": 30,
         "fileSrc":"fake-detection-video-32658412.mp4|https://www.pexels.com/download/video/32658412", 
         "workloads": ["fake_scan_detection"] 
       }

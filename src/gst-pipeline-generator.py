@@ -6,15 +6,21 @@ import copy
 CONFIG_CAMERA_TO_WORKLOAD = "/home/pipeline-server/configs/camera_to_workload.json"
 CONFIG_WORKLOAD_TO_PIPELINE = "/home/pipeline-server/configs/workload_to_pipeline.json"
 
-ASSETS_DIR = "/home/pipeline-server/assets"
-VIDEOS_DIR = os.path.join(ASSETS_DIR, "videos")
+
 MODELSERVER_DIR = "/home/pipeline-server"
 MODELSERVER_MODELS_DIR = "/home/pipeline-server/models"
 MODELSERVER_VIDEOS_DIR = "/home/pipeline-server/sample-media"
 
 
-def download_video_if_missing(video_name):
-    video_path = os.path.join(MODELSERVER_VIDEOS_DIR, video_name)
+def download_video_if_missing(video_name, width=None, fps=None):
+    # Use default width and fps if not provided
+    width = width if width is not None else 1920
+    fps = fps if fps is not None else 15
+    # Remove .mp4 extension if present for base name
+    base_name = video_name[:-4] if video_name.endswith('.mp4') else video_name
+    # Compose the expected file name
+    file_name = f"{base_name}-{width}-{fps}-bench.mp4"
+    video_path = os.path.join(MODELSERVER_VIDEOS_DIR, file_name)
     return video_path
 
 def download_model_if_missing(model_name, model_type=None, precision=None):
@@ -22,11 +28,19 @@ def download_model_if_missing(model_name, model_type=None, precision=None):
         precision_lower = precision.lower()
         return f"{MODELSERVER_MODELS_DIR}/object_detection/{model_name}/{precision}/{model_name}.xml"
     elif model_type == "gvaclassify" and precision:
-        return f"{MODELSERVER_MODELS_DIR}/object_classification/{model_name}/{precision}/{model_name}.xml"
+        base_path = f"{MODELSERVER_MODELS_DIR}/object_classification/{model_name}"
+        model_path = f"{base_path}/{precision}/{model_name}.xml"
+        label_path = f"{base_path}/imagenet_2012.txt"
+        proc_path = f"{base_path}/{model_name}.json"
+        return model_path, label_path, proc_path
     elif model_type == "gvadetect":
         return f"{MODELSERVER_MODELS_DIR}/object_detection/{model_name}/{precision}/{model_name}.xml"
     elif model_type == "gvaclassify":
-        return f"{MODELSERVER_MODELS_DIR}/object_classification/{model_name}/{precision}/{model_name}.xml"
+        base_path = f"{MODELSERVER_MODELS_DIR}/object_classification/{model_name}"
+        model_path = f"{base_path}/{precision}/{model_name}.xml"
+        label_path = f"{base_path}/imagenet_2012.txt"
+        proc_path = f"{base_path}/{model_name}.json"
+        return model_path, label_path, proc_path
     else:
         # fallback
         return os.path.join(MODELSERVER_MODELS_DIR, model_name)
@@ -54,28 +68,28 @@ def build_gst_element(cfg):
         model_path = download_model_if_missing(model, "gvadetect", precision)
         elem = f"gvadetect{inference_region} model={model_path} device={device}"
     elif cfg["type"] == "gvaclassify":
-        model_path = download_model_if_missing(model, "gvaclassify", precision)
-        elem = f"gvaclassify model={model_path} device={device}"
+        model_path, label_path, proc_path = download_model_if_missing(model, "gvaclassify", precision)
+        elem = f"gvaclassify model={model_path} device={device} labels={label_path} model-proc={proc_path}"
     else:
         model_path = download_model_if_missing(model)
         elem = f"{cfg['type']} model={model_path} device={device}"
     return elem
 
-def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=0):
-    # Always use fileSrc for video file
+def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=0, model_instance_map=None, model_instance_counter=None, results_dir=None):
+    if model_instance_map is None:
+        model_instance_map = {}
+    if model_instance_counter is None:
+        model_instance_counter = [0]  # Use list for mutability in nested scope
     file_src = camera["fileSrc"]
     video_name = file_src.split("|")[0].strip()
-    video_file = download_video_if_missing(video_name)
-    # Use width/fps from camera config if present, else default
     width = camera.get("width", 1920)
     fps = camera.get("fps", 15)
+    video_file = download_video_if_missing(video_name, width, fps)
     pipeline = f"filesrc location={video_file} ! decodebin ! videoconvert"
-    # Gather all pipeline configs for this camera's workloads (flatten all steps for all workloads)
     all_steps = []
     for w in workloads:
         if w in workload_map:
             all_steps.extend(workload_map[w])
-    # Remove consecutive duplicate steps (by signature)
     unique_steps = []
     last_sig = None
     for step in all_steps:
@@ -83,7 +97,6 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
         if sig != last_sig:
             unique_steps.append(step)
         last_sig = sig
-    # Collect all unique ROIs from unique_steps
     rois = []
     seen_rois = set()
     for step in unique_steps:
@@ -93,24 +106,21 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
             if roi_tuple not in seen_rois:
                 seen_rois.add(roi_tuple)
                 rois.append(roi)
-    # Build gvaattachroi element if any unique ROIs exist
     if rois:
         roi_strs = [f"roi={r['x']},{r['y']},{r['width']},{r['height']}" for r in rois]
         gvaattachroi_elem = "gvaattachroi " + " ".join(roi_strs)
         pipeline += f" ! {gvaattachroi_elem}"
-    # Find index of first inference element
     inference_types = {"gvadetect", "gvaclassify"}
     first_infer_idx = next((i for i, step in enumerate(unique_steps) if step["type"] in inference_types), 0)
-    infer_count = 0
-    # Build pipeline, inserting gvaattachroi before first inference if not already added
     for i, step in enumerate(unique_steps):
-        # If no ROIs and this is the first inference, insert gvaattachroi here (for completeness)
         if not rois and i == first_infer_idx:
             pipeline += " ! gvaattachroi"
-        # Assign unique model-instance-id for each inference element
         if step["type"] in inference_types:
-            model_instance_id = f"id{branch_idx*10+infer_count}"
-            infer_count += 1
+            key = (step["type"], step["model"], step["device"])
+            if key not in model_instance_map:
+                model_instance_map[key] = f"id{model_instance_counter[0]}"
+                model_instance_counter[0] += 1
+            model_instance_id = model_instance_map[key]
             elem = build_gst_element(step)
             elem = elem.replace(step["type"], f"{step['type']} model-instance-id={model_instance_id}")
             pipeline += f" ! {elem}"
@@ -118,8 +128,13 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
             pipeline += f" ! {build_gst_element(step)}"
         if i < len(unique_steps) - 1:
             pipeline += " ! queue"
-    # Add gvametaconvert, gvametapublish, and fakesink with unique output file
-    pipeline += f" ! gvametaconvert ! gvametapublish method=file file-path=/tmp/out{branch_idx+1}.jsonl ! fakesink"
+    # Save results to /home/pipeline-server/results in the container (which should be mounted to host results dir)
+    tee_name = f"t{branch_idx+1}"
+    out_file = f"/home/pipeline-server/results/r{branch_idx+1}.jsonl"
+    # GStreamer: no backslash after tee, only after each branch
+    pipeline += f" ! gvametaconvert format=json ! tee name={tee_name} "
+    pipeline += f"    {tee_name}. ! queue ! gvametapublish file-format=json-lines file-path={out_file} ! fakesink sync=false async=false \\\n"
+    pipeline += f"    {tee_name}. ! queue ! gvawatermark ! videoconvert ! fpsdisplaysink video-sink=autovideosink text-overlay=false signal-fps-measurements=true"
     return pipeline
 
 def format_pipeline_multiline(pipeline):
@@ -145,19 +160,27 @@ def format_pipeline_branch(pipeline):
     return f'({pipeline})'
 
 def main():
+    # Ensure results directory exists at project root before running pipeline
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    results_dir = os.path.abspath(os.path.join(script_dir, "..", "results"))
+    os.makedirs(results_dir, exist_ok=True)
     camera_config = load_json(CONFIG_CAMERA_TO_WORKLOAD)
     workload_map = load_json(CONFIG_WORKLOAD_TO_PIPELINE)["workload_pipeline_map"]
     pipelines = []
+    model_instance_map = {}
+    model_instance_counter = [0]
     for idx, cam in enumerate(camera_config["lane_config"]["cameras"]):
         workloads = [w.lower() for w in cam["workloads"]]
         norm_workload_map = {k.lower(): v for k, v in workload_map.items()}
-        pipeline = build_dynamic_gstlaunch_command(cam, workloads, norm_workload_map, branch_idx=idx)
+        pipeline = build_dynamic_gstlaunch_command(cam, workloads, norm_workload_map, branch_idx=idx, model_instance_map=model_instance_map, model_instance_counter=model_instance_counter, results_dir=results_dir)
         pipelines.append(pipeline.strip())
-    # Output a single gst-launch command with all branches concatenated (no parentheses)
-    print("gst-launch-1.0 -e \\")
+    # Print gst-launch-1.0 -e and all pipelines without extra newline after the command
+    print("gst-launch-1.0 -e \\\n", end="")
     for idx, p in enumerate(pipelines):
         end = " \\" if idx < len(pipelines) - 1 else ""
-        print(f"  {p}{end}")
+        print(f"  {p}{end}", end="")
+        if idx < len(pipelines) - 1:
+            print()
     print()
 
 if __name__ == "__main__":
