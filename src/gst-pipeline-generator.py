@@ -75,7 +75,7 @@ def build_gst_element(cfg):
         elem = f"{cfg['type']} model={model_path} device={device}"
     return elem
 
-def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=0, model_instance_map=None, model_instance_counter=None, results_dir=None):
+def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=0, model_instance_map=None, model_instance_counter=None):
     if model_instance_map is None:
         model_instance_map = {}
     if model_instance_counter is None:
@@ -85,7 +85,8 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
     width = camera.get("width", 1920)
     fps = camera.get("fps", 15)
     video_file = download_video_if_missing(video_name, width, fps)
-    pipeline = f"filesrc location={video_file} ! decodebin ! videoconvert"
+    # Add videorate and set framerate to 10/1 as in the example
+    pipeline = f"filesrc location={video_file} ! decodebin ! videorate ! video/x-raw,framerate=10/1 ! videoconvert"
     all_steps = []
     for w in workloads:
         if w in workload_map:
@@ -111,29 +112,31 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
         gvaattachroi_elem = "gvaattachroi " + " ".join(roi_strs)
         pipeline += f" ! {gvaattachroi_elem}"
     inference_types = {"gvadetect", "gvaclassify"}
-    first_infer_idx = next((i for i, step in enumerate(unique_steps) if step["type"] in inference_types), 0)
+    # Use unique model-instance-id per stream and per type
     for i, step in enumerate(unique_steps):
-        if not rois and i == first_infer_idx:
+        if not rois and i == 0 and step["type"] in inference_types:
             pipeline += " ! gvaattachroi"
-        if step["type"] in inference_types:
-            key = (step["type"], step["model"], step["device"])
-            if key not in model_instance_map:
-                model_instance_map[key] = f"id{model_instance_counter[0]}"
-                model_instance_counter[0] += 1
-            model_instance_id = model_instance_map[key]
+        if step["type"] == "gvadetect":
+            model_instance_id = f"detect{branch_idx+1}"
             elem = build_gst_element(step)
-            elem = elem.replace(step["type"], f"{step['type']} model-instance-id={model_instance_id}")
-            pipeline += f" ! {elem}"
+            elem = elem.replace("gvadetect", f"gvadetect model-instance-id={model_instance_id}")
+            pipeline += f" ! {elem} ! queue max-size-buffers=10"
+        elif step["type"] == "gvaclassify":
+            model_instance_id = f"classify{branch_idx+1}"
+            elem = build_gst_element(step)
+            elem = elem.replace("gvaclassify", f"gvaclassify model-instance-id={model_instance_id}")
+            pipeline += f" ! {elem} ! queue max-size-buffers=10"
         else:
             pipeline += f" ! {build_gst_element(step)}"
         if i < len(unique_steps) - 1:
             pipeline += " ! queue"
     # Save results to /home/pipeline-server/results in the container (which should be mounted to host results dir)
     tee_name = f"t{branch_idx+1}"
-    out_file = f"/home/pipeline-server/results/r{branch_idx+1}.jsonl"
+    results_dir = "/home/pipeline-server/results"
+    out_file = f"{results_dir}/out{branch_idx+1}.jsonl"
     # GStreamer: no backslash after tee, only after each branch
     pipeline += f" ! gvametaconvert format=json ! tee name={tee_name} "
-    pipeline += f"    {tee_name}. ! queue ! gvametapublish file-format=json-lines file-path={out_file} ! fakesink sync=false async=false \\\n"
+    pipeline += f"    {tee_name}. ! queue ! gvametapublish method=file file-path={out_file} ! fakesink \\\n"
     pipeline += f"    {tee_name}. ! queue ! gvawatermark ! videoconvert ! fpsdisplaysink video-sink=autovideosink text-overlay=false signal-fps-measurements=true"
     return pipeline
 
@@ -161,8 +164,7 @@ def format_pipeline_branch(pipeline):
 
 def main():
     # Ensure results directory exists at project root before running pipeline
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    results_dir = os.path.abspath(os.path.join(script_dir, "..", "results"))
+    results_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "results"))
     os.makedirs(results_dir, exist_ok=True)
     camera_config = load_json(CONFIG_CAMERA_TO_WORKLOAD)
     workload_map = load_json(CONFIG_WORKLOAD_TO_PIPELINE)["workload_pipeline_map"]
@@ -172,7 +174,7 @@ def main():
     for idx, cam in enumerate(camera_config["lane_config"]["cameras"]):
         workloads = [w.lower() for w in cam["workloads"]]
         norm_workload_map = {k.lower(): v for k, v in workload_map.items()}
-        pipeline = build_dynamic_gstlaunch_command(cam, workloads, norm_workload_map, branch_idx=idx, model_instance_map=model_instance_map, model_instance_counter=model_instance_counter, results_dir=results_dir)
+        pipeline = build_dynamic_gstlaunch_command(cam, workloads, norm_workload_map, branch_idx=idx, model_instance_map=model_instance_map, model_instance_counter=model_instance_counter)
         pipelines.append(pipeline.strip())
     # Print gst-launch-1.0 -e and all pipelines without extra newline after the command
     print("gst-launch-1.0 -e \\\n", end="")
