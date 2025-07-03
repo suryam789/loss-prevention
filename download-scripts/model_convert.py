@@ -66,7 +66,7 @@ def export_yolo(model_name, output_dir):
 
 def quantize_yolo(model_name, dataset_manifest, output_dir):
     model_dir = os.path.join(output_dir, "object_detection", model_name)
-    fp32_xml = os.path.join(model_dir, "FP32", model_name + ".xml")
+    fp16_xml = os.path.join(model_dir, "FP16", model_name + ".xml")
     int8_dir = os.path.join(model_dir, "INT8")
     os.makedirs(int8_dir, exist_ok=True)
     validator = DetectionValidator()
@@ -79,7 +79,7 @@ def quantize_yolo(model_name, dataset_manifest, output_dir):
         input_tensor = validator.preprocess(data_item)["img"].numpy()
         return input_tensor
     calibration_dataset = nncf.Dataset(data_loader, transform_fn)
-    model = ov.Core().read_model(fp32_xml)
+    model = ov.Core().read_model(fp16_xml)
     quantized_model = nncf.quantize(model, calibration_dataset, subset_size=len(data_loader))
     def validate(model, data_loader, validator, num_samples=None):
         validator.seen = 0
@@ -126,9 +126,9 @@ def quantize_yolo(model_name, dataset_manifest, output_dir):
     xml_path = os.path.join(int8_dir, model_name + ".xml")
     bin_path = os.path.join(int8_dir, model_name + ".bin")
     ov.save_model(quantized_model, xml_path, compress_to_fp16=False)
-    fp32_bin = os.path.join(model_dir, "FP32", model_name + ".bin")
-    if os.path.exists(fp32_bin) and not os.path.exists(bin_path):
-        shutil.copy(fp32_bin, bin_path)
+    fp16_bin = os.path.join(model_dir, "FP16", model_name + ".bin")
+    if os.path.exists(fp16_bin) and not os.path.exists(bin_path):
+        shutil.copy(fp16_bin, bin_path)
     for d in ["datasets", "runs"]:
         p = os.path.join(output_dir, d)
         if os.path.exists(p):

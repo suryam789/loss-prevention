@@ -8,30 +8,20 @@ RUN apt-get update && \
     apt-get install -y wget curl bash ca-certificates libgl1 libglib2.0-0 jq && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Debug: print proxy and environment before installing dependencies
-RUN echo "HTTP_PROXY: $HTTP_PROXY" && \
-    echo "HTTPS_PROXY: $HTTPS_PROXY" && \
-    env
-
 # Set workdir
 WORKDIR /workspace
 
 # Copy your scripts and requirements
-COPY download-scripts/requirements.txt /workspace/scripts/requirements.txt
-COPY download-scripts/downloadModels.sh /workspace/scripts/downloadModels.sh
-COPY download-scripts/model_convert.py /workspace/scripts/model_convert.py
-COPY download-scripts/efnetv2s_download_quant.py /workspace/scripts/efnetv2s_download_quant.py
-COPY configs/workload_to_pipeline.json /workspace/configs/workload_to_pipeline.json
-COPY configs/camera_to_workload.json /workspace/configs/camera_to_workload.json
-COPY configs/yolo_model_type_mapping.json /workspace/configs/yolo_model_type_mapping.json
+COPY download-scripts/* /workspace/scripts/
+COPY configs/* /workspace/configs/
 
 # Make the script executable
 RUN chmod +x /workspace/scripts/downloadModels.sh
 
 
 # Install Python dependencies with verbose output for logs
-RUN pip3 install --upgrade pip -vvv --no-cache-dir && \
-    pip3 install -vvv --no-cache-dir -r /workspace/scripts/requirements.txt
+RUN pip3 install --upgrade pip -v --no-cache-dir && \
+    pip3 install -v --no-cache-dir -r /workspace/scripts/requirements.txt    
 
 
 # Default command: run both scripts in sequence

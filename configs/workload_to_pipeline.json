@@ -15,9 +15,9 @@
       },
       {
         "type": "gvaclassify",
-        "model": "efficientnet-b0",
+        "model": "efficientnet-v2-b0",
         "device": "CPU",
-        "precision": "FP32",
+        "precision": "INT8",
         "region_of_interest" : {
           "x": 550,
           "y": 500,
@@ -41,9 +41,9 @@
       },
       {
         "type": "gvaclassify",
-        "model": "efficientnet-b0",
+        "model": "efficientnet-v2-b0",
         "device": "CPU",
-        "precision": "FP32",
+        "precision": "INT8",
         "region_of_interest" : {
           "x": 500,
           "y": 700,
@@ -55,7 +55,7 @@
     "multi_product_identification": [
       {
         "type": "gvadetect",
-        "model": "yolo12n",
+        "model": "yolo11n",
         "device": "CPU",
         "precision": "INT8",
         "region_of_interest" : {
@@ -67,9 +67,9 @@
       },
       {
         "type": "gvaclassify",
-        "model": "efficientnet-1b0",
+        "model": "efficientnet-v2-b0",
         "device": "CPU",
-        "precision": "FP32",
+        "precision": "INT8",
         "region_of_interest" : {
           "x": 500,
           "y": 700,
