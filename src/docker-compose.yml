@@ -1,8 +1,18 @@
 services:
   model-downloader:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.downloader
+      args:
+        - HTTP_PROXY=${HTTP_PROXY}
+        - HTTPS_PROXY=${HTTPS_PROXY}
     image: model-downloader:lp
     container_name: model-downloader
     environment:
+      - HTTP_PROXY=${HTTP_PROXY}
+      - HTTPS_PROXY=${HTTPS_PROXY}
+      - http_proxy=${http_proxy}
+      - https_proxy=${https_proxy}
       - MODELS_DIR=/workspace/models
     volumes:
       - ../models:/workspace/models
@@ -10,6 +20,12 @@ services:
     command: ["/bin/bash", "-c", "/workspace/scripts/downloadModels.sh"]
 
   pipeline-runner:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.pipeline
+      args:
+        - HTTP_PROXY=${HTTP_PROXY}
+        - HTTPS_PROXY=${HTTPS_PROXY}
     image: pipeline-runner:lp
     container_name: pipeline-runner
     depends_on:

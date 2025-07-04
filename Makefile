@@ -8,11 +8,10 @@ ASSETS_DIR ?= /opt/retail-assets
 MODELS_DIR := $(ASSETS_DIR)/models
 SAMPLES_DIR := $(ASSETS_DIR)/sample-media
 
-download-models:
-	ASSETS_DIR=$(ASSETS_DIR) MODELS_DIR=$(MODELS_DIR) ./download-scripts/download_models.sh
+# Default values for benchmark
+PIPELINE_COUNT ?= 1
+RESULTS_DIR ?= ../results
 
-download-samples:
-	ASSETS_DIR=$(ASSETS_DIR) SAMPLES_DIR=$(SAMPLES_DIR) ./download-scripts/download_videos.sh
 
 download-sample-videos:
 	cd performance-tools/benchmark-scripts && ./download_sample_videos.sh
@@ -67,8 +66,9 @@ update-submodules:
 build-benchmark:
 	cd performance-tools && $(MAKE) build-benchmark-docker
 
-benchmark: build-benchmark
-	cd performance-tools/benchmark-scripts && python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipeline $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR)
+benchmark: build-benchmark build-model-downloader build-pipeline-runner
+		cd performance-tools/benchmark-scripts && python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR); \
+	
 
 
 run-lp: | download-sample-videos
@@ -94,3 +94,24 @@ run-render-mode:
 	@echo "Using DISPLAY=$(DISPLAY)"
 	@xhost +local:docker
 	@RENDER_MODE=1 docker compose -f src/docker-compose.yml up -d
+
+
+consolidate-metrics:
+	cd performance-tools/benchmark-scripts && \
+	( \
+	python3 -m venv venv && \
+	. venv/bin/activate && \
+	pip install -r requirements.txt && \
+	python3 consolidate_multiple_run_of_metrics.py --root_directory $(RESULTS_DIR) --output $(RESULTS_DIR)/metrics.csv && \
+	deactivate \
+	)
+
+plot-metrics:
+	cd performance-tools/benchmark-scripts && \
+	( \
+	python3 -m venv venv && \
+	. venv/bin/activate && \
+	pip install -r requirements.txt && \
+	python3 usage_graph_plot.py --dir $(RESULTS_DIR)  && \
+	deactivate \
+	)
