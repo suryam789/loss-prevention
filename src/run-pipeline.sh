@@ -14,10 +14,8 @@ echo "#############  GStreamer pipeline command generated succussfully #########
 
 # Generate timestamp for log files
 timestamp=$(date +"%Y%m%d_%H%M%S")
-
-# Append logging pipeline to gst_cmd
-gst_cmd="${gst_cmd} \
-2>&1 | tee /home/pipeline-server/results/pipeline_${timestamp}.log | (stdbuf -oL sed -n -e 's/^.*current: //p' | stdbuf -oL cut -d , -f 1 > /home/pipeline-server/results/fps_${timestamp}.log)"
+# Append logging pipeline to gst_cmd with proper line breaks
+gst_cmd=$(printf "%s \\\\\n\\\\\n%s" "$gst_cmd" "2>&1 | tee /home/pipeline-server/results/pipeline_${timestamp}.log | (stdbuf -oL sed -n -e 's/^.*current: //p' | stdbuf -oL cut -d , -f 1 > /home/pipeline-server/results/fps_${timestamp}.log)")
 
 # Print and run the pipeline command
 echo "################# Running Pipeline ###################"
@@ -25,3 +23,5 @@ echo "$gst_cmd"
 eval "$gst_cmd"
 
 echo "############# GST COMMAND COMPLETED SUCCESSFULLY #############"
+
+sleep 10m

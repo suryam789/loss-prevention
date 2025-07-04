@@ -27,19 +27,17 @@ def download_model_if_missing(model_name, model_type=None, precision=None):
     if model_type == "gvadetect" and precision:
         precision_lower = precision.lower()
         return f"{MODELSERVER_MODELS_DIR}/object_detection/{model_name}/{precision}/{model_name}.xml"
-    elif model_type == "gvaclassify" and precision:
+    elif model_type == "gvaclassify" and precision and precision == "INT8":
         base_path = f"{MODELSERVER_MODELS_DIR}/object_classification/{model_name}"
         model_path = f"{base_path}/{precision}/{model_name}.xml"
-        label_path = f"{base_path}/imagenet_2012.txt"
-        proc_path = f"{base_path}/{model_name}.json"
+        label_path = f"{base_path}/{precision}/{model_name}.txt"
+        proc_path = f"{base_path}/{precision}/{model_name}.json"
         return model_path, label_path, proc_path
     elif model_type == "gvadetect":
         return f"{MODELSERVER_MODELS_DIR}/object_detection/{model_name}/{precision}/{model_name}.xml"
     elif model_type == "gvaclassify":
         base_path = f"{MODELSERVER_MODELS_DIR}/object_classification/{model_name}"
-        model_path = f"{base_path}/{precision}/{model_name}.xml"
-        label_path = f"{base_path}/imagenet_2012.txt"
-        proc_path = f"{base_path}/{model_name}.json"
+        model_path = f"{base_path}/{precision}/{model_name}.xml"       
         return model_path, label_path, proc_path
     else:
         # fallback
@@ -131,7 +129,7 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
     # Save results to /home/pipeline-server/results in the container (which should be mounted to host results dir)
     tee_name = f"t{branch_idx+1}"
     results_dir = "/home/pipeline-server/results"
-    out_file = f"{results_dir}/out{branch_idx+1}.jsonl"
+    out_file = f"{results_dir}/rs-{branch_idx+1}.jsonl"
     # GStreamer: no backslash after tee, only after each branch
     pipeline += f" ! gvametaconvert format=json ! tee name={tee_name} "
     pipeline += f"    {tee_name}. ! queue ! gvametapublish method=file file-path={out_file} ! fakesink \\\n"
