@@ -133,8 +133,8 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
     out_file = f"{results_dir}/rs-{branch_idx+1}_{timestamp}.jsonl"
     # GStreamer: no backslash after tee, only after each branch
     pipeline += f" ! gvametaconvert format=json ! tee name={tee_name} "
-    pipeline += f"    {tee_name}. ! queue ! gvametapublish method=file file-path={out_file} ! fakesink \\\n"
-    pipeline += f"    {tee_name}. ! queue ! gvawatermark ! videoconvert ! fpsdisplaysink video-sink=autovideosink text-overlay=false signal-fps-measurements=true"
+    pipeline += f"    {tee_name}. ! queue ! gvametapublish method=file file-path={out_file} ! gvafpscounter ! fakesink sync=false async=false \\\n"
+    pipeline += f"    {tee_name}. ! queue ! gvawatermark ! videoconvert ! fpsdisplaysink video-sink=autovideosink text-overlay=true signal-fps-measurements=true"
     return pipeline
 
 def format_pipeline_multiline(pipeline):
