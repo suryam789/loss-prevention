@@ -2,6 +2,7 @@ import os
 import json
 from pathlib import Path
 import copy
+from datetime import datetime
 
 CONFIG_CAMERA_TO_WORKLOAD = "/home/pipeline-server/configs/camera_to_workload.json"
 CONFIG_WORKLOAD_TO_PIPELINE = "/home/pipeline-server/configs/workload_to_pipeline.json"
@@ -73,7 +74,7 @@ def build_gst_element(cfg):
         elem = f"{cfg['type']} model={model_path} device={device}"
     return elem
 
-def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=0, model_instance_map=None, model_instance_counter=None):
+def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=0, model_instance_map=None, model_instance_counter=None, timestamp=None):
     if model_instance_map is None:
         model_instance_map = {}
     if model_instance_counter is None:
@@ -129,7 +130,7 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
     # Save results to /home/pipeline-server/results in the container (which should be mounted to host results dir)
     tee_name = f"t{branch_idx+1}"
     results_dir = "/home/pipeline-server/results"
-    out_file = f"{results_dir}/rs-{branch_idx+1}.jsonl"
+    out_file = f"{results_dir}/rs-{branch_idx+1}_{timestamp}.jsonl"
     # GStreamer: no backslash after tee, only after each branch
     pipeline += f" ! gvametaconvert format=json ! tee name={tee_name} "
     pipeline += f"    {tee_name}. ! queue ! gvametapublish method=file file-path={out_file} ! fakesink \\\n"
@@ -162,6 +163,10 @@ def main():
     # Ensure results directory exists at project root before running pipeline
     results_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "results"))
     os.makedirs(results_dir, exist_ok=True)
+    
+    # Generate timestamp for all files
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    
     camera_config = load_json(CONFIG_CAMERA_TO_WORKLOAD)
     workload_map = load_json(CONFIG_WORKLOAD_TO_PIPELINE)["workload_pipeline_map"]
     pipelines = []
@@ -170,7 +175,7 @@ def main():
     for idx, cam in enumerate(camera_config["lane_config"]["cameras"]):
         workloads = [w.lower() for w in cam["workloads"]]
         norm_workload_map = {k.lower(): v for k, v in workload_map.items()}
-        pipeline = build_dynamic_gstlaunch_command(cam, workloads, norm_workload_map, branch_idx=idx, model_instance_map=model_instance_map, model_instance_counter=model_instance_counter)
+        pipeline = build_dynamic_gstlaunch_command(cam, workloads, norm_workload_map, branch_idx=idx, model_instance_map=model_instance_map, model_instance_counter=model_instance_counter, timestamp=timestamp)
         pipelines.append(pipeline.strip())
     # Print gst-launch-1.0 -e and all pipelines without extra newline after the command
     print("gst-launch-1.0 -e \\\n", end="")
