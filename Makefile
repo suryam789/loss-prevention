@@ -33,11 +33,11 @@ run-model-downloader:
 		-e SAMPLES_DIR=/workspace/sample-media \
 		-v "$(shell pwd)/models:/workspace/models" \
 		model-downloader:lp
-		@echo "assets downloader completed"
+	@echo "assets downloader completed"
 
 
 build-pipeline-runner:
-	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} -t pipeline-runner:latest -f docker/Dockerfile.pipeline .
+	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} -t pipeline-runner:lp -f docker/Dockerfile.pipeline .
 
 
 run-pipeline-runner:
@@ -64,10 +64,33 @@ update-submodules:
 	git submodule update --remote --merge
 	@echo "Submodules updated (if any present)."
 
-run-loss-prevention: | build-assets-downloader build-pipeline-runner update-submodules download-sample-videos
-	@echo "Building automated self checkout app"
-	$(MAKE) build
-	@echo Running automated self checkout pipeline
+build-benchmark:
+	cd performance-tools && $(MAKE) build-benchmark-docker
+
+benchmark: build-benchmark
+	cd performance-tools/benchmark-scripts && python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipeline $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR)
+
+
+run-lp: | download-sample-videos
+	@echo downloading the models
+	$(MAKE) build-model-downloader
+	$(MAKE) run-model-downloader
+	@echo builing pipeline runner
+	$(MAKE) build-pipeline-runner
+	@echo Running loss prevention pipeline
 	$(MAKE) run-render-mode
 
+down-lp:
+	docker compose -f src/docker-compose.yml down
 
+run-render-mode:
+	@if [ -z "$(DISPLAY)" ] || ! echo "$(DISPLAY)" | grep -qE "^:[0-9]+(\.[0-9]+)?$$"; then \
+		echo "ERROR: Invalid or missing DISPLAY environment variable."; \
+		echo "Please set DISPLAY in the format ':<number>' (e.g., ':0')."; \
+		echo "Usage: make <target> DISPLAY=:<number>"; \
+		echo "Example: make $@ DISPLAY=:0"; \
+		exit 1; \
+	fi
+	@echo "Using DISPLAY=$(DISPLAY)"
+	@xhost +local:docker
+	@RENDER_MODE=1 docker compose -f src/docker-compose.yml up -d

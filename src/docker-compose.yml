@@ -1,0 +1,29 @@
+services:
+  model-downloader:
+    image: model-downloader:lp
+    container_name: model-downloader
+    environment:
+      - MODELS_DIR=/workspace/models
+    volumes:
+      - ../models:/workspace/models
+      - ../results:/workspace/results
+    command: ["/bin/bash", "-c", "/workspace/scripts/downloadModels.sh"]
+
+  pipeline-runner:
+    image: pipeline-runner:lp
+    container_name: pipeline-runner
+    depends_on:
+      model-downloader:
+        condition: service_completed_successfully
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+    volumes:
+      - ../models:/home/pipeline-server/models
+      - ../performance-tools/sample-media:/home/pipeline-server/sample-media
+      - ../results:/home/pipeline-server/results
+      - ../configs:/home/pipeline-server/configs
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    network_mode: host
+    privileged: true
+    stdin_open: true
+    tty: true

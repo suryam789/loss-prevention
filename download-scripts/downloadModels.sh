@@ -68,7 +68,26 @@ for TYPE_KEY in "${!TYPE_MODELS[@]}"; do
         fi
         echo "[INFO] ########### Processing $MODEL_NAME ($TYPE_KEY) ..."
         case "$TYPE_KEY" in
-            gvadetect|object_detection)
+            gvadetect|object_detection) 
+                # Get precision from workload_to_pipeline.json for this model
+                PRECISION=$(jq -r --arg model "$MODEL_NAME" '
+                  .workload_pipeline_map[] | 
+                  .[] | 
+                  select(.model == $model and .type == "gvadetect") | 
+                  .precision // "INT8"
+                ' "$CONFIG_JSON" | head -1)
+                
+                # Default to INT8 if no precision found
+                if [[ -z "$PRECISION" || "$PRECISION" == "null" ]]; then
+                    PRECISION="INT8"
+                fi                
+                echo "[INFO] ########### Using precision: $PRECISION for model: $MODEL_NAME #########"                
+                # Check if model already exists with the specified precision
+                MODEL_XML_PATH="$MODELS_PATH/object_detection/$MODEL_NAME/$PRECISION/$MODEL_NAME.xml"
+                if [ -f "$MODEL_XML_PATH" ]; then
+                    echo "[INFO] ###### Model $MODEL_NAME with precision $PRECISION already exists at $MODEL_XML_PATH, skipping download."
+                    continue
+                fi
                 echo "[INFO] ######  Downloading and converting model: $MODEL_NAME"
                 python3 "$SCRIPT_BASE_PATH/model_convert.py" export_yolo "$MODEL_NAME" "$MODELS_PATH"
                 # Quantize if needed
@@ -81,6 +100,29 @@ for TYPE_KEY in "${!TYPE_MODELS[@]}"; do
                 ;;
             gvaclassify|object_classification)
                 echo "[INFO] ######  Downloading and converting object classification model: $MODEL_NAME"
+                
+                # Get precision from workload_to_pipeline.json for this model
+                PRECISION=$(jq -r --arg model "$MODEL_NAME" '
+                  .workload_pipeline_map[] | 
+                  .[] | 
+                  select(.model == $model and .type == "gvaclassify") | 
+                  .precision // "INT8"
+                ' "$CONFIG_JSON" | head -1)
+                
+                # Default to INT8 if no precision found
+                if [[ -z "$PRECISION" || "$PRECISION" == "null" ]]; then
+                    PRECISION="INT8"
+                fi
+                
+                echo "[INFO] ########### Using precision: $PRECISION for model: $MODEL_NAME #########"
+                
+                # Check if model already exists with the specified precision
+                MODEL_XML_PATH="$MODELS_PATH/object_classification/$MODEL_NAME/$PRECISION/$MODEL_NAME.xml"
+                if [ -f "$MODEL_XML_PATH" ]; then
+                    echo "[INFO] ###### Model $MODEL_NAME with precision $PRECISION already exists at $MODEL_XML_PATH, skipping download."
+                    continue
+                fi
+                
                 python3 "$SCRIPT_BASE_PATH/efnetv2b0_download_quant.py" "$MODEL_NAME" "$MODELS_PATH"
                 ;;
             face_detection)
