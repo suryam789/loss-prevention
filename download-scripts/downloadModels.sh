@@ -24,27 +24,28 @@ if ! command -v jq &>/dev/null; then
     exit 1
 fi
 
-# Extract all type/model from all arrays in the JSON (handle nested arrays in objects)
-mapfile -t MODEL_PAIRS < <(jq -r '
-  to_entries[] |
-  if (.value | type == "array") then
-    .value[] | select(.type and .model) | [.type, .model] | @tsv
-  elif (.value | type == "object") then
-    .value[]? | select(type == "array") | .[] | select(.type and .model) | [.type, .model] | @tsv
-  else
-    empty
-  end
+# Extract all type/model pairs from the JSON
+mapfile -t MODEL_DATA < <(jq -r '
+  .workload_pipeline_map[] | 
+  .[] | 
+  [.type, .model, .device, .precision] | @tsv
 ' "$CONFIG_JSON" | sort -u)
+
+echo "[INFO] Found ${#MODEL_DATA[@]} model configurations to process."
 
 declare -A TYPE_MODELS
 
 # Build associative array: TYPE_MODELS[type]="model1,model2,..."
-for PAIR in "${MODEL_PAIRS[@]}"; do
-    TYPE_RAW="$(echo "$PAIR" | cut -f1)"
-    MODEL_NAME_RAW="$(echo "$PAIR" | cut -f2)"
+for DATA in "${MODEL_DATA[@]}"; do
+    TYPE_RAW="$(echo "$DATA" | cut -f1)"
+    MODEL_NAME_RAW="$(echo "$DATA" | cut -f2)"
+    DEVICE="$(echo "$DATA" | cut -f3)"
+    PRECISION="$(echo "$DATA" | cut -f4)"
+    
     MODEL_NAME="${MODEL_NAME_RAW%.xml}"
     TYPE_KEY="$(echo "$TYPE_RAW" | tr '[:upper:]' '[:lower:]')"
     ENTRY="$MODEL_NAME"
+    
     if [[ -z "${TYPE_MODELS[$TYPE_KEY]+x}" ]]; then
         TYPE_MODELS[$TYPE_KEY]="$ENTRY"
     else
@@ -53,7 +54,6 @@ for PAIR in "${MODEL_PAIRS[@]}"; do
             TYPE_MODELS[$TYPE_KEY]+=",$ENTRY"
         fi
     fi
-
 done
 
 echo "####### MODEL_TYPES ====  "${!TYPE_MODELS[@]}""

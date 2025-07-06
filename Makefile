@@ -1,23 +1,21 @@
 # Copyright © 2025 Intel Corporation. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-.PHONY: update-submodules download-models download-samples download-sample-videos build-assets-downloader run-assets-downloader build-pipeline-runner run-loss-prevention
+.PHONY: update-submodules download-models download-samples download-sample-videos build-assets-downloader run-assets-downloader build-pipeline-runner run-loss-prevention clean-images clean-all validate-config validate-camera-config validate-all-configs
 
-# Asset directories (shared between containers)
-ASSETS_DIR ?= /opt/retail-assets
-MODELS_DIR := $(ASSETS_DIR)/models
-SAMPLES_DIR := $(ASSETS_DIR)/sample-media
 
 # Default values for benchmark
 PIPELINE_COUNT ?= 1
 RESULTS_DIR ?= ../results
 
 
-download-sample-videos:
+download-sample-videos: | validate-camera-config
 	cd performance-tools/benchmark-scripts && ./download_sample_videos.sh
 
-build-model-downloader:
+
+build-model-downloader: | validate-pipeline-config
 	@echo "Building assets downloader"
+	@docker rmi model-downloader:lp 2>/dev/null || true
 	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} -t model-downloader:lp -f docker/Dockerfile.downloader .
 	@echo "assets downloader completed"
 
@@ -36,7 +34,10 @@ run-model-downloader:
 
 
 build-pipeline-runner:
+	@echo "Building pipeline runner"
+	@docker rmi pipeline-runner:lp 2>/dev/null || true
 	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} -t pipeline-runner:lp -f docker/Dockerfile.pipeline .
+	@echo "pipeline runner build completed"
 
 
 run-pipeline-runner:
@@ -66,12 +67,16 @@ update-submodules:
 build-benchmark:
 	cd performance-tools && $(MAKE) build-benchmark-docker
 
-benchmark: build-benchmark build-model-downloader build-pipeline-runner
+benchmark: build-benchmark
+	@if [ -n "$(DEVICE_ENV)" ]; then \
+		echo "Loading device environment from $(DEVICE_ENV)"; \
+		cd performance-tools/benchmark-scripts && bash -c "set -a; source ../../src/$(DEVICE_ENV); set +a; python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR)"; \
+	else \
 		cd performance-tools/benchmark-scripts && python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR); \
-	
+	fi
 
 
-run-lp: | download-sample-videos
+run-lp: | validate-pipeline-config download-sample-videos validate-all-configs
 	@echo downloading the models
 	$(MAKE) build-model-downloader
 	$(MAKE) run-model-downloader
@@ -79,9 +84,21 @@ run-lp: | download-sample-videos
 	$(MAKE) build-pipeline-runner
 	@echo Running loss prevention pipeline
 	$(MAKE) run-render-mode
+	@echo Cleaning up dangling images...
+	@docker image prune -f
 
 down-lp:
 	docker compose -f src/docker-compose.yml down
+
+clean-images:
+	@echo "Cleaning up dangling Docker images..."
+	docker image prune -f
+	@echo "Dangling images cleaned up"
+
+clean-all:
+	@echo "Cleaning up all unused Docker resources..."
+	docker system prune -f
+	@echo "All unused Docker resources cleaned up"
 
 run-render-mode:
 	@if [ -z "$(DISPLAY)" ] || ! echo "$(DISPLAY)" | grep -qE "^:[0-9]+(\.[0-9]+)?$$"; then \
@@ -96,22 +113,15 @@ run-render-mode:
 	@RENDER_MODE=1 docker compose -f src/docker-compose.yml up -d
 
 
-consolidate-metrics:
-	cd performance-tools/benchmark-scripts && \
-	( \
-	python3 -m venv venv && \
-	. venv/bin/activate && \
-	pip install -r requirements.txt && \
-	python3 consolidate_multiple_run_of_metrics.py --root_directory $(RESULTS_DIR) --output $(RESULTS_DIR)/metrics.csv && \
-	deactivate \
-	)
 
-plot-metrics:
-	cd performance-tools/benchmark-scripts && \
-	( \
-	python3 -m venv venv && \
-	. venv/bin/activate && \
-	pip install -r requirements.txt && \
-	python3 usage_graph_plot.py --dir $(RESULTS_DIR)  && \
-	deactivate \
-	)
+validate-pipeline-config:
+	@echo "Validating pipeline configuration..."
+	@python3 src/validate_configs.py --validate-pipeline
+
+validate-camera-config:
+	@echo "Validating camera configuration..."
+	@python3 src/validate_configs.py --validate-camera
+
+validate-all-configs:
+	@echo "Validating all configuration files..."
+	@python3 src/validate_configs.py --validate-all

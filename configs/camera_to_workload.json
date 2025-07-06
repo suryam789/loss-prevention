@@ -5,7 +5,7 @@
         "camera_id": "cam1",
         "width": 1920,
         "height": 1080,
-        "fps": 30,
+        "fps": 15,
         "fileSrc":"items-in-basket-32658421.mp4|https://www.pexels.com/download/video/32658421", 
         "workloads": ["items_in_basket"] 
       },
@@ -13,7 +13,7 @@
         "camera_id": "cam2", 
         "width": 1920,
         "height": 1080,
-        "fps": 30,
+        "fps": 15,
         "fileSrc":"fake-detection-video-32658412.mp4|https://www.pexels.com/download/video/32658412", 
         "workloads": ["fake_scan_detection"] 
       }
