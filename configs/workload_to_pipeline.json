@@ -31,7 +31,7 @@
         "type": "gvadetect",
         "model": "yolo11n",       
         "device": "CPU",
-        "precision": "INT8",          
+        "precision": "INT128",          
         "region_of_interest" : {
           "x": 500,
           "y": 700,

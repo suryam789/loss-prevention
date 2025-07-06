@@ -85,7 +85,13 @@ class ConfigValidator:
             
             value = model_config[field]
             if not isinstance(value, str) or not value.strip():
-                self.add_error(f"Field '{field}' must be a non-empty string in {context}")
+                # Provide specific error messages for device and precision fields
+                if field == 'device':
+                    self.add_error(f"Field 'device' must be a non-empty string in {context}. Supported values: CPU, GPU, NPU")
+                elif field == 'precision':
+                    self.add_error(f"Field 'precision' must be a non-empty string in {context}. Supported values: INT8, FP16, FP32")
+                else:
+                    self.add_error(f"Field '{field}' must be a non-empty string in {context}")
                 return 0
         
         # Additional validation for device field - must be CPU, GPU, or NPU
@@ -93,7 +99,15 @@ class ConfigValidator:
             device_value = model_config['device'].strip().upper()
             valid_devices = ['CPU', 'GPU', 'NPU']
             if device_value not in valid_devices:
-                self.add_error(f"Invalid device value '{model_config['device']}' in {context}. Must be one of: {', '.join(valid_devices)}")
+                self.add_error(f"Invalid device value '{model_config['device']}' in {context}. Supported values: {', '.join(valid_devices)}")
+                return 0
+        
+        # Additional validation for precision field - must be INT8, FP16, or FP32
+        if 'precision' in model_config:
+            precision_value = model_config['precision'].strip().upper()
+            valid_precisions = ['INT8', 'FP16', 'FP32']
+            if precision_value not in valid_precisions:
+                self.add_error(f"Invalid precision value '{model_config['precision']}' in {context}. Supported values: {', '.join(valid_precisions)}")
                 return 0
         
         return 1
