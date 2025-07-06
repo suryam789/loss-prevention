@@ -84,8 +84,8 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
     width = camera.get("width", 1920)
     fps = camera.get("fps", 15)
     video_file = download_video_if_missing(video_name, width, fps)
-    # Add videorate and set framerate to 10/1 as in the example
-    pipeline = f"filesrc location={video_file} ! decodebin !  videoconvert"
+    # Add videorate and set framerate to 15/1 as in the example
+    pipeline = f"filesrc location={video_file} ! decodebin ! videorate drop-only=true ! video/x-raw,framerate=15/1 ! videoconvert"
     all_steps = []
     for w in workloads:
         if w in workload_map:
@@ -116,13 +116,13 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
             detect_count += 1
             elem = build_gst_element(step)
             elem = elem.replace("gvadetect", f"gvadetect model-instance-id={model_instance_id}")
-            pipeline += f" ! {elem} "
+            pipeline += f" ! {elem} ! gvatrack tracking-type=short-term-imageless ! queue max-size-buffers=15"
         elif step["type"] == "gvaclassify":
             model_instance_id = f"classify{branch_idx+1}_{classify_count}"
             classify_count += 1
             elem = build_gst_element(step)
             elem = elem.replace("gvaclassify", f"gvaclassify model-instance-id={model_instance_id}")
-            pipeline += f" ! {elem} "
+            pipeline += f" ! {elem} ! queue max-size-buffers=15"
         else:
             pipeline += f" ! {build_gst_element(step)}"
         if i < len(all_steps) - 1:
