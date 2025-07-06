@@ -1,7 +1,7 @@
 # Copyright © 2025 Intel Corporation. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-.PHONY: update-submodules download-models download-samples download-sample-videos build-assets-downloader run-assets-downloader build-pipeline-runner run-loss-prevention clean-images clean-all validate-config validate-camera-config validate-all-configs
+.PHONY: update-submodules download-models download-samples download-sample-videos build-assets-downloader run-assets-downloader build-pipeline-runner run-loss-prevention clean-images clean-containers clean-all clean-project-images validate-config validate-camera-config validate-all-configs
 
 
 # Default values for benchmark
@@ -15,7 +15,6 @@ download-sample-videos: | validate-camera-config
 
 build-model-downloader: | validate-pipeline-config
 	@echo "Building assets downloader"
-	@docker rmi model-downloader:lp 2>/dev/null || true
 	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} -t model-downloader:lp -f docker/Dockerfile.downloader .
 	@echo "assets downloader completed"
 
@@ -35,7 +34,6 @@ run-model-downloader:
 
 build-pipeline-runner:
 	@echo "Building pipeline runner"
-	@docker rmi pipeline-runner:lp 2>/dev/null || true
 	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} -t pipeline-runner:lp -f docker/Dockerfile.pipeline .
 	@echo "pipeline runner build completed"
 
@@ -76,7 +74,7 @@ benchmark: build-benchmark
 	fi
 
 
-run-lp: | validate-pipeline-config download-sample-videos validate-all-configs
+run-lp: | download-sample-videos
 	@echo downloading the models
 	$(MAKE) build-model-downloader
 	$(MAKE) run-model-downloader
@@ -85,20 +83,34 @@ run-lp: | validate-pipeline-config download-sample-videos validate-all-configs
 	@echo Running loss prevention pipeline
 	$(MAKE) run-render-mode
 	@echo Cleaning up dangling images...
-	@docker image prune -f
+	$(MAKE) clean-images
 
 down-lp:
 	docker compose -f src/docker-compose.yml down
 
 clean-images:
 	@echo "Cleaning up dangling Docker images..."
-	docker image prune -f
+	@docker image prune -f
+	@echo "Cleaning up unused Docker images..."
+	@docker images -f "dangling=true" -q | xargs -r docker rmi
 	@echo "Dangling images cleaned up"
+
+clean-containers:
+	@echo "Cleaning up stopped containers..."
+	@docker container prune -f
+	@echo "Stopped containers cleaned up"
 
 clean-all:
 	@echo "Cleaning up all unused Docker resources..."
-	docker system prune -f
+	@docker system prune -f
+	@echo "Cleaning up build cache..."
+	@docker builder prune -f
 	@echo "All unused Docker resources cleaned up"
+
+clean-project-images:
+	@echo "Cleaning up project-specific images..."
+	@docker rmi model-downloader:lp pipeline-runner:lp 2>/dev/null || true
+	@echo "Project images cleaned up"
 
 run-render-mode:
 	@if [ -z "$(DISPLAY)" ] || ! echo "$(DISPLAY)" | grep -qE "^:[0-9]+(\.[0-9]+)?$$"; then \
