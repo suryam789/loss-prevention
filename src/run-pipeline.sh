@@ -47,10 +47,6 @@ else
     echo "################# ERROR: Failed to create pipeline file: $pipeline_file ###################"
 fi
 
-echo "################# Generated Pipeline Command ###################"
-echo "$gst_cmd"
-echo "################################################################"
-
 # Append logging pipeline to gst_cmd with proper line breaks
 gst_cmd=$(printf "%s \\\\\n\\\\\n%s" "$gst_cmd" "2>&1 | tee /home/pipeline-server/results/pipeline_${timestamp}.log | (stdbuf -oL sed -n -E 's/.*total=([0-9]+\.[0-9]+) fps.*/\1/p' > /home/pipeline-server/results/fps_${timestamp}.log)")
 

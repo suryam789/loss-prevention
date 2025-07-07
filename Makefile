@@ -6,12 +6,12 @@
 
 # Default values for benchmark
 PIPELINE_COUNT ?= 1
-RESULTS_DIR ?= ../results
+MKDOCS_IMAGE ?= asc-mkdocs
+RESULTS_DIR ?= $(PWD)/benchmark
 
-
-download-sample-videos: | validate-camera-config
-	cd performance-tools/benchmark-scripts && ./download_sample_videos.sh
-
+download-camera-videos: | validate-camera-config
+	@echo "Downloading and formatting videos for all cameras in camera_to_workload.json..."
+	python3 download-scripts/download-video.py --camera-config configs/camera_to_workload.json --format-script performance-tools/benchmark-scripts/format_avc_mp4.sh
 
 build-model-downloader: | validate-pipeline-config
 	@echo "Building assets downloader"
@@ -26,7 +26,6 @@ run-model-downloader:
 		-e http_proxy=${HTTP_PROXY} \
 		-e https_proxy=${HTTPS_PROXY} \
 		-e MODELS_DIR=/workspace/models \
-		-e SAMPLES_DIR=/workspace/sample-media \
 		-v "$(shell pwd)/models:/workspace/models" \
 		model-downloader:lp
 	@echo "assets downloader completed"
@@ -65,7 +64,7 @@ update-submodules:
 build-benchmark:
 	cd performance-tools && $(MAKE) build-benchmark-docker
 
-benchmark: build-benchmark
+benchmark: build-benchmark download-camera-videos build-run-model-downloader
 	@if [ -n "$(DEVICE_ENV)" ]; then \
 		echo "Loading device environment from $(DEVICE_ENV)"; \
 		cd performance-tools/benchmark-scripts && bash -c "set -a; source ../../src/$(DEVICE_ENV); set +a; python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR)"; \
@@ -73,11 +72,15 @@ benchmark: build-benchmark
 		cd performance-tools/benchmark-scripts && python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR); \
 	fi
 
-
-run-lp: | download-sample-videos
+build-run-model-downloader:
 	@echo downloading the models
 	$(MAKE) build-model-downloader
 	$(MAKE) run-model-downloader
+
+
+run-lp: | update-submodules download-camera-videos
+	@echo downloading the models
+	$(MAKE) build-run-model-downloader
 	@echo builing pipeline runner
 	$(MAKE) build-pipeline-runner
 	@echo Running loss prevention pipeline
@@ -124,16 +127,64 @@ run-render-mode:
 	@xhost +local:docker
 	@RENDER_MODE=1 docker compose -f src/docker-compose.yml up -d
 
+docs: clean-docs
+	mkdocs build
+	mkdocs serve -a localhost:8008
 
+docs-builder-image:
+	docker build \
+		-f Dockerfile.docs \
+		-t $(MKDOCS_IMAGE) \
+		.
+
+build-docs: docs-builder-image
+	docker run --rm \
+		-u $(shell id -u):$(shell id -g) \
+		-v $(PWD):/docs \
+		-w /docs \
+		$(MKDOCS_IMAGE) \
+		build
+
+serve-docs: docs-builder-image
+	docker run --rm \
+		-it \
+		-u $(shell id -u):$(shell id -g) \
+		-p 8008:8000 \
+		-v $(PWD):/docs \
+		-w /docs \
+		$(MKDOCS_IMAGE)
+
+clean-docs:
+	rm -rf docs/
 
 validate-pipeline-config:
 	@echo "Validating pipeline configuration..."
-	@python3 src/validate_configs.py --validate-pipeline
+	@python3 src/validate-configs.py --validate-pipeline
 
 validate-camera-config:
 	@echo "Validating camera configuration..."
-	@python3 src/validate_configs.py --validate-camera
+	@python3 src/validate-configs.py --validate-camera
 
 validate-all-configs:
 	@echo "Validating all configuration files..."
-	@python3 src/validate_configs.py --validate-all
+	@python3 src/validate-configs.py --validate-all
+
+consolidate-metrics:
+	cd performance-tools/benchmark-scripts && \
+	( \
+	python3 -m venv venv && \
+	. venv/bin/activate && \
+	pip install -r requirements.txt && \
+	python3 consolidate_multiple_run_of_metrics.py --root_directory $(RESULTS_DIR) --output $(RESULTS_DIR)/metrics.csv && \
+	deactivate \
+	)
+
+plot-metrics:
+	cd performance-tools/benchmark-scripts && \
+	( \
+	python3 -m venv venv && \
+	. venv/bin/activate && \
+	pip install -r requirements.txt && \
+	python3 usage_graph_plot.py --dir $(RESULTS_DIR)  && \
+	deactivate \
+	)
