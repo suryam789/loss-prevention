@@ -59,7 +59,7 @@ def build_gst_element(cfg):
     model = cfg["model"]
     device = cfg["device"]
     precision = cfg.get("precision", "")
-    # Add inference-region=1 if region_of_interest is present in cfg (from workload_to_pipeline.json)
+    # Add inference-region=1 if region_of_interest is present in cfg (from camera_to_workload.json)
     inference_region = ""
     if cfg["type"] == "gvadetect" and cfg.get("region_of_interest") is not None:
         inference_region = " inference-region=1"
@@ -90,7 +90,11 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
     for w in workloads:
         if w in workload_map:
             all_steps.extend(workload_map[w])
-    # Do NOT deduplicate steps: allow all steps from all workloads, even if models are the same
+    # Attach ROI from camera config to each step if present
+    roi = camera.get("region_of_interest")
+    if roi:
+        for step in all_steps:
+            step["region_of_interest"] = roi
     rois = []
     seen_rois = set()
     for step in all_steps:

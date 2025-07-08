@@ -5,25 +5,13 @@
         "type": "gvadetect",
         "model": "yolo11n",       
         "device": "CPU",
-        "precision": "INT8",          
-        "region_of_interest" : {
-          "x": 550,
-          "y": 500,
-          "width": 1800,
-          "height": 750
-        }
+        "precision": "INT8"
       },
       {
         "type": "gvaclassify",
         "model": "efficientnet-v2-b0",
         "device": "CPU",
-        "precision": "INT8",
-        "region_of_interest" : {
-          "x": 550,
-          "y": 500,
-          "width": 1800,
-          "height": 750
-        }
+        "precision": "INT8"
       }
     ],
     "fake_scan_detection": [
@@ -31,25 +19,13 @@
         "type": "gvadetect",
         "model": "yolo11n",       
         "device": "CPU",
-        "precision": "INT8",          
-        "region_of_interest" : {
-          "x": 500,
-          "y": 700,
-          "width": 1300,
-          "height": 1100
-        }
+        "precision": "INT8"
       },
       {
         "type": "gvaclassify",
         "model": "efficientnet-v2-b0",
         "device": "CPU",
-        "precision": "INT8",
-        "region_of_interest" : {
-          "x": 500,
-          "y": 700,
-          "width": 1300,
-          "height": 1100
-        }
+        "precision": "INT8"
       }
     ],
     "multi_product_identification": [
@@ -57,27 +33,42 @@
         "type": "gvadetect",
         "model": "yolo11n",
         "device": "CPU",
-        "precision": "INT8",
-        "region_of_interest" : {
-          "x": 500,
-          "y": 700,
-          "width": 1300,
-          "height": 1100
-        }
+        "precision": "INT8"
       },
       {
         "type": "gvaclassify",
         "model": "efficientnet-v2-b0",
         "device": "CPU",
-        "precision": "INT8",
-        "region_of_interest" : {
-          "x": 500,
-          "y": 700,
-          "width": 1300,
-          "height": 1100
-        }
+        "precision": "INT8"
+      }
+    ],
+    "product_switching": [
+      {
+        "type": "gvadetect",
+        "model": "yolo11n",
+        "device": "CPU",
+        "precision": "INT8"
+      },
+      {
+        "type": "gvaclassify",
+        "model": "efficientnet-v2-b0",
+        "device": "CPU",
+        "precision": "INT8"
+      }
+    ],
+    "hidden_items": [
+      {
+        "type": "gvadetect",
+        "model": "yolo11n",
+        "device": "CPU",
+        "precision": "INT8"
+      },
+      {
+        "type": "gvaclassify",
+        "model": "efficientnet-v2-b0",
+        "device": "CPU",
+        "precision": "INT8"
       }
     ]
   }
-    
 }

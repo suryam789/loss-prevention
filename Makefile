@@ -64,7 +64,7 @@ update-submodules:
 build-benchmark:
 	cd performance-tools && $(MAKE) build-benchmark-docker
 
-benchmark: build-benchmark download-camera-videos build-run-model-downloader
+benchmark: build-benchmark 
 	@if [ -n "$(DEVICE_ENV)" ]; then \
 		echo "Loading device environment from $(DEVICE_ENV)"; \
 		cd performance-tools/benchmark-scripts && bash -c "set -a; source ../../src/$(DEVICE_ENV); set +a; python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR)"; \
@@ -188,3 +188,7 @@ plot-metrics:
 	python3 usage_graph_plot.py --dir $(RESULTS_DIR)  && \
 	deactivate \
 	)
+
+detect-lp:
+	@echo "Running loss prevention detection script..."
+	python3 src/loss-prevention-detection.py --results_folder $(RESULTS_FOLDER)
