@@ -77,7 +77,7 @@ benchmark: build-benchmark
 		cd performance-tools/benchmark-scripts && python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR); \
 	fi
 
-run-lp: 
+run-lp: | update-submodules  download-camera-videos 
 	@echo downloading the models
 	$(MAKE) download-models
 	@echo builing pipeline runner
