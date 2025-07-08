@@ -79,67 +79,83 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
         model_instance_map = {}
     if model_instance_counter is None:
         model_instance_counter = [0]  # Use list for mutability in nested scope
-    file_src = camera["fileSrc"]
-    video_name = file_src.split("|")[0].strip()
-    width = camera.get("width", 1920)
-    fps = camera.get("fps", 15)
-    video_file = download_video_if_missing(video_name, width, fps)
-    # Add videorate and set framerate to 15/1 as in the example
-    pipeline = f"filesrc location={video_file} ! decodebin ! videoconvert"
-    all_steps = []
+    # For each workload, build its steps and signature
+    workload_steps = []
+    workload_signatures = []
+    video_files = []
     for w in workloads:
         if w in workload_map:
-            all_steps.extend(workload_map[w])
-    # Attach ROI from camera config to each step if present
-    roi = camera.get("region_of_interest")
-    if roi:
-        for step in all_steps:
-            step["region_of_interest"] = roi
-    rois = []
-    seen_rois = set()
-    for step in all_steps:
-        roi = step.get("region_of_interest")
-        if roi:
-            roi_tuple = (roi.get('x', 0), roi.get('y', 0), roi.get('width', 1), roi.get('height', 1))
-            if roi_tuple not in seen_rois:
-                seen_rois.add(roi_tuple)
-                rois.append(roi)
-    if rois:
-        roi_strs = [f"roi={r['x']},{r['y']},{r['width']},{r['height']}" for r in rois]
-        gvaattachroi_elem = "gvaattachroi " + " ".join(roi_strs)
-        pipeline += f" ! {gvaattachroi_elem}"
-    inference_types = {"gvadetect", "gvaclassify"}
-    # Use unique model-instance-id per step in the stream
-    detect_count = 1
-    classify_count = 1
-    for i, step in enumerate(all_steps):
-        if not rois and i == 0 and step["type"] in inference_types:
-            pipeline += " ! gvaattachroi"
-        if step["type"] == "gvadetect":
-            model_instance_id = f"detect{branch_idx+1}_{detect_count}"
-            detect_count += 1
-            elem = build_gst_element(step)
-            elem = elem.replace("gvadetect", f"gvadetect model-instance-id={model_instance_id} threshold=0.5")
-            pipeline += f" ! {elem} ! gvatrack "
-        elif step["type"] == "gvaclassify":
-            model_instance_id = f"classify{branch_idx+1}_{classify_count}"
-            classify_count += 1
-            elem = build_gst_element(step)
-            elem = elem.replace("gvaclassify", f"gvaclassify model-instance-id={model_instance_id}")
-            pipeline += f" ! {elem} "
-        else:
-            pipeline += f" ! {build_gst_element(step)}"
-        if i < len(all_steps) - 1:
-            pipeline += " ! queue"
-    # Save results to /home/pipeline-server/results in the container (which should be mounted to host results dir)
-    tee_name = f"t{branch_idx+1}"
-    results_dir = "/home/pipeline-server/results"
-    out_file = f"{results_dir}/rs-{branch_idx+1}_{timestamp}.jsonl"
-    # GStreamer: no backslash after tee, only after each branch
-    pipeline += f" ! gvametaconvert format=json ! tee name={tee_name} "
-    pipeline += f"    {tee_name}. ! queue ! gvametapublish method=file file-path={out_file} ! gvafpscounter ! fakesink sync=false async=false \\\n"
-    pipeline += f"    {tee_name}. ! queue ! gvawatermark ! videoconvert ! fpsdisplaysink video-sink=autovideosink text-overlay=true signal-fps-measurements=true"
-    return pipeline
+            steps = []
+            for step in workload_map[w]:
+                roi = camera.get("region_of_interest")
+                step = step.copy()
+                if roi:
+                    step["region_of_interest"] = roi
+                steps.append(step)
+            workload_steps.append(steps)
+            # Signature for all steps in this workload
+            sig = json.dumps([pipeline_cfg_signature(s) for s in steps], sort_keys=True)
+            workload_signatures.append(sig)
+            # Each workload can have its own video (if needed in future)
+            file_src = camera["fileSrc"]
+            video_name = file_src.split("|")[0].strip()
+            width = camera.get("width", 1920)
+            fps = camera.get("fps", 15)
+            video_file = download_video_if_missing(video_name, width, fps)
+            video_files.append(video_file)
+    # Group workloads by unique signature (so identical workloads share a filesrc)
+    sig_to_idx = {}
+    for idx, steps in enumerate(workload_steps):
+        sig = json.dumps([pipeline_cfg_signature(s) for s in steps], sort_keys=True)
+        if sig not in sig_to_idx:
+            sig_to_idx[sig] = idx
+    unique_idxs = list(sig_to_idx.values())
+    pipelines = []
+    for unique_idx in unique_idxs:
+        steps = workload_steps[unique_idx]
+        video_file = video_files[unique_idx]
+        pipeline = f"filesrc location={video_file} ! decodebin ! videoconvert"
+        rois = []
+        seen_rois = set()
+        for step in steps:
+            roi = step.get("region_of_interest")
+            if roi:
+                roi_tuple = (roi.get('x', 0), roi.get('y', 0), roi.get('width', 1), roi.get('height', 1))
+                if roi_tuple not in seen_rois:
+                    seen_rois.add(roi_tuple)
+                    rois.append(roi)
+        if rois:
+            roi_strs = [f"roi={r['x']},{r['y']},{r['width']},{r['height']}" for r in rois]
+            gvaattachroi_elem = "gvaattachroi " + " ".join(roi_strs)
+            pipeline += f" ! {gvaattachroi_elem}"
+        inference_types = {"gvadetect", "gvaclassify"}
+        detect_count = 1
+        classify_count = 1
+        for i, step in enumerate(steps):
+            if not rois and i == 0 and step["type"] in inference_types:
+                pipeline += " ! gvaattachroi"
+            if step["type"] == "gvadetect":
+                model_instance_id = f"detect{branch_idx+1}_{unique_idx+1}"
+                elem = build_gst_element(step)
+                elem = elem.replace("gvadetect", f"gvadetect model-instance-id={model_instance_id} threshold=0.5")
+                pipeline += f" ! {elem} ! gvatrack ! queue"
+            elif step["type"] == "gvaclassify":
+                model_instance_id = f"classify{branch_idx+1}_{unique_idx+1}"
+                elem = build_gst_element(step)
+                elem = elem.replace("gvaclassify", f"gvaclassify model-instance-id={model_instance_id}")
+                pipeline += f" ! {elem} "
+            else:
+                pipeline += f" ! {build_gst_element(step)}"
+            if i < len(steps) - 1:
+                pipeline += " ! queue"
+        tee_name = f"t{branch_idx+1}_{unique_idx+1}"
+        results_dir = "/home/pipeline-server/results"
+        out_file = f"{results_dir}/rs-{branch_idx+1}_{unique_idx+1}_{timestamp}.jsonl"
+        pipeline += f" ! gvametaconvert format=json ! tee name={tee_name} "
+        pipeline += f"    {tee_name}. ! queue ! gvametapublish method=file file-path={out_file} ! gvafpscounter ! fakesink sync=false async=false "
+        pipeline += f"    {tee_name}. ! queue ! gvawatermark ! videoconvert ! fpsdisplaysink video-sink=autovideosink text-overlay=true signal-fps-measurements=true"
+        pipelines.append(pipeline)
+    return " \\\n  ".join(pipelines)
 
 def format_pipeline_multiline(pipeline):
     # Split pipeline into elements

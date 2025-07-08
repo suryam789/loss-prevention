@@ -3,9 +3,9 @@
     "cameras": [
       { 
         "camera_id": "cam1",
-        "fps": 15,
+        "fps": 10,
         "fileSrc":"items-in-basket-32658421.mp4|https://www.pexels.com/download/video/32658421", 
-        "workloads": ["items_in_basket"],
+        "workloads": ["items_in_basket", "multi_product_identification"],
         "region_of_interest": {
           "x": 550,
           "y": 500,
@@ -17,9 +17,9 @@
         "camera_id": "cam2", 
         "width": 1920,
         "height": 1080,
-        "fps": 15,
-        "fileSrc":"fake-detection-video-32658412.mp4|https://www.pexels.com/download/video/32658412", 
-        "workloads": ["fake_scan_detection"],
+        "fps": 10,
+        "fileSrc":"hidden-video-32658412.mp4|https://www.pexels.com/download/video/32658412", 
+        "workloads": ["hidden_items"],
         "region_of_interest": {
           "x": 500,
           "y": 700,
@@ -31,14 +31,14 @@
         "camera_id": "cam3", 
         "width": 1920,
         "height": 1080,
-        "fps": 10,
-        "fileSrc":"grocery-checkout-with-fresh-produce-29824278.mp4|https://videos.pexels.com/video-files/29824278/12809924_4096_2160_25fps.mp4", 
-        "workloads": ["hidden_items"],
-        "region_of_interest": {
-          "x": 300,
+        "fps": 15,
+        "fileSrc":"fake-scan-video.mp4|https://www.pexels.com/download/video/32658411/", 
+        "workloads": ["fake_scan_detection"] ,
+         "region_of_interest": {
+          "x": 50,
           "y": 500,
-          "width": 1300,
-          "height": 1100
+          "width": 1600,
+          "height": 1400
         }
       }
     ]

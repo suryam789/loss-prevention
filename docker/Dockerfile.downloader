@@ -13,7 +13,6 @@ WORKDIR /workspace
 
 # Copy your scripts and requirements
 COPY download-scripts/* /workspace/scripts/
-COPY configs/* /workspace/configs/
 
 # Make the script executable
 RUN chmod +x /workspace/scripts/downloadModels.sh
@@ -23,6 +22,6 @@ RUN chmod +x /workspace/scripts/downloadModels.sh
 RUN pip3 install --upgrade pip -v --no-cache-dir && \
     pip3 install -v --no-cache-dir -r /workspace/scripts/requirements.txt    
 
-
+COPY configs/* /workspace/configs/
 # Default command: run both scripts in sequence
 CMD ["/bin/bash", "-c", "/workspace/scripts/downloadModels.sh"]

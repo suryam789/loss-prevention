@@ -56,3 +56,5 @@ echo "$gst_cmd"
 eval "$gst_cmd"
 
 echo "############# GST COMMAND COMPLETED SUCCESSFULLY #############"
+
+sleep 10m

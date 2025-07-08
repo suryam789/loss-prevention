@@ -9,12 +9,17 @@ PIPELINE_COUNT ?= 1
 MKDOCS_IMAGE ?= asc-mkdocs
 RESULTS_DIR ?= $(PWD)/benchmark
 
+download-models:
+	@echo ".....Downloading models....."
+	$(MAKE) build-model-downloader
+	$(MAKE) run-model-downloader
+
 download-camera-videos: | validate-camera-config
 	@echo "Downloading and formatting videos for all cameras in camera_to_workload.json..."
 	python3 download-scripts/download-video.py --camera-config configs/camera_to_workload.json --format-script performance-tools/benchmark-scripts/format_avc_mp4.sh
 
 build-model-downloader: | validate-pipeline-config
-	@echo "Building assets downloader"
+	@echo "Building model downloader"
 	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} -t model-downloader:lp -f docker/Dockerfile.downloader .
 	@echo "assets downloader completed"
 
@@ -72,21 +77,13 @@ benchmark: build-benchmark
 		cd performance-tools/benchmark-scripts && python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR); \
 	fi
 
-build-run-model-downloader:
+run-lp: 
 	@echo downloading the models
-	$(MAKE) build-model-downloader
-	$(MAKE) run-model-downloader
-
-
-run-lp: | update-submodules download-camera-videos
-	@echo downloading the models
-	$(MAKE) build-run-model-downloader
+	$(MAKE) download-models
 	@echo builing pipeline runner
 	$(MAKE) build-pipeline-runner
 	@echo Running loss prevention pipeline
 	$(MAKE) run-render-mode
-	@echo Cleaning up dangling images...
-	$(MAKE) clean-images
 
 down-lp:
 	docker compose -f src/docker-compose.yml down
@@ -188,7 +185,3 @@ plot-metrics:
 	python3 usage_graph_plot.py --dir $(RESULTS_DIR)  && \
 	deactivate \
 	)
-
-detect-lp:
-	@echo "Running loss prevention detection script..."
-	python3 src/loss-prevention-detection.py --results_folder $(RESULTS_FOLDER)
