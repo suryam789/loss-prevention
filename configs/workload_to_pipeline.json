@@ -31,7 +31,7 @@
     "multi_product_identification": [
       {
         "type": "gvadetect",
-        "model": "yolo11n",
+        "model": "yolov8n",
         "device": "CPU",
         "precision": "INT8"
       },

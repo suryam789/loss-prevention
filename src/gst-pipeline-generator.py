@@ -124,6 +124,7 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
                 if roi_tuple not in seen_rois:
                     seen_rois.add(roi_tuple)
                     rois.append(roi)
+        # Only add gvaattachroi if region_of_interest exists in the camera config
         if rois:
             roi_strs = [f"roi={r['x']},{r['y']},{r['width']},{r['height']}" for r in rois]
             gvaattachroi_elem = "gvaattachroi " + " ".join(roi_strs)
@@ -132,8 +133,9 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
         detect_count = 1
         classify_count = 1
         for i, step in enumerate(steps):
-            if not rois and i == 0 and step["type"] in inference_types:
-                pipeline += " ! gvaattachroi"
+            # Remove fallback: do not add gvaattachroi if region_of_interest is not present
+            # if not rois and i == 0 and step["type"] in inference_types:
+            #     pipeline += " ! gvaattachroi"
             if step["type"] == "gvadetect":
                 model_instance_id = f"detect{branch_idx+1}_{unique_idx+1}"
                 elem = build_gst_element(step)
