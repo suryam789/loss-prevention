@@ -60,9 +60,10 @@ def build_gst_element(cfg):
     device = cfg["device"]
     precision = cfg.get("precision", "")
     workload_name = cfg.get("workload_name")
+    camera_id = cfg.get("camera_id", "")
     # Add inference-region=1 if region_of_interest is present in cfg (from camera_to_workload.json)
     inference_region = ""
-    name_str = f"name={workload_name}" if workload_name and cfg["type"] == "gvadetect" else ""
+    name_str = f"name={workload_name}_{camera_id}" if workload_name and camera_id and cfg["type"] == "gvadetect" else ""
     if cfg["type"] == "gvadetect" and cfg.get("region_of_interest") is not None:
         inference_region = " inference-region=1"
     if cfg["type"] == "gvadetect":
@@ -71,9 +72,11 @@ def build_gst_element(cfg):
     elif cfg["type"] == "gvaclassify":
         model_path, label_path, proc_path = download_model_if_missing(model, "gvaclassify", precision)
         elem = f"gvaclassify {name_str} model={model_path} device={device} labels={label_path} model-proc={proc_path}"
+    elif cfg["type"] in ["gvatrack", "gvaattachroi", "gvametaconvert", "gvametapublish", "gvawatermark", "gvafpscounter", "fpsdisplaysink", "queue", "videoconvert", "decodebin", "filesrc", "fakesink"]:
+        # These are valid GStreamer elements that may not need model/device
+        elem = cfg["type"]
     else:
-        model_path = download_model_if_missing(model)
-        elem = f"{cfg['type']} model={model_path} device={device}"
+        raise ValueError(f"Unknown or unsupported GStreamer element type: {cfg['type']}")
     return elem
 
 def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=0, model_instance_map=None, model_instance_counter=None, timestamp=None):
@@ -85,6 +88,7 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
     workload_steps = []
     workload_signatures = []
     video_files = []
+    camera_id = camera.get("camera_id", f"cam{branch_idx+1}")
     for w in workloads:
         if w in workload_map:
             steps = []
@@ -93,8 +97,9 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
                 step = step.copy()
                 if roi:
                     step["region_of_interest"] = roi
-                # Add workload_name to step for later use in gvadetect name
+                # Add workload_name and camera_id to step for later use in gvadetect name
                 step["workload_name"] = w
+                step["camera_id"] = camera_id
                 steps.append(step)
             workload_steps.append(steps)
             # Signature for all steps in this workload
@@ -131,7 +136,7 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
         if rois:
             roi_strs = [f"roi={r['x']},{r['y']},{r['width']},{r['height']}" for r in rois]
             gvaattachroi_elem = "gvaattachroi " + " ".join(roi_strs)
-            pipeline += f" ! {gvaattachroi_elem}"
+            pipeline += f" ! {gvaattachroi_elem} ! queue"
         inference_types = {"gvadetect", "gvaclassify"}
         detect_count = 1
         classify_count = 1
