@@ -3,9 +3,9 @@
     "cameras": [
       { 
         "camera_id": "cam1",
-        "fps": 10,
+        "fps": 15,
         "fileSrc":"items-in-basket-32658421.mp4|https://www.pexels.com/download/video/32658421", 
-        "workloads": ["items_in_basket", "multi_product_identification"],
+        "workloads": ["items_in_basket","multi_product_identification"],
         "region_of_interest": {
           "x": 550,
           "y": 500,
@@ -17,14 +17,14 @@
         "camera_id": "cam2", 
         "width": 1920,
         "height": 1080,
-        "fps": 10,
-        "fileSrc":"hidden-video-32658412.mp4|https://www.pexels.com/download/video/32658412", 
-        "workloads": ["hidden_items"],
+        "fps": 15,
+        "fileSrc":"hidden-items-product-switching-32658426.mp4|https://www.pexels.com/download/video/32658426", 
+        "workloads": ["hidden_items", "product_switching"],
         "region_of_interest": {
           "x": 500,
-          "y": 700,
-          "width": 1300,
-          "height": 1100
+          "y": 480,
+          "width": 1800,
+          "height": 800
         }
       },
       { 
@@ -32,13 +32,13 @@
         "width": 1920,
         "height": 1080,
         "fps": 15,
-        "fileSrc":"fake-scan-video.mp4|https://www.pexels.com/download/video/32658411/", 
-        "workloads": ["fake_scan_detection"] ,
-         "region_of_interest": {
-          "x": 50,
-          "y": 500,
-          "width": 1600,
-          "height": 1400
+        "fileSrc":"fake-scan-detection-32658412.mp4|https://www.pexels.com/download/video/32658412", 
+        "workloads": ["fake_scan_detection"],
+        "region_of_interest": {
+          "x": 500,
+          "y": 700,
+          "width": 1300,
+          "height": 1100
         }
       }
     ]

@@ -31,7 +31,7 @@
     "multi_product_identification": [
       {
         "type": "gvadetect",
-        "model": "yolov8n",
+        "model": "yolo11n",
         "device": "CPU",
         "precision": "INT8"
       },
@@ -59,7 +59,7 @@
     "hidden_items": [
       {
         "type": "gvadetect",
-        "model": "yolo11n",
+        "model": "yolov8n",
         "device": "CPU",
         "precision": "INT8"
       },

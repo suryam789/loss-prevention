@@ -123,6 +123,7 @@ run-render-mode:
 	@echo "Using DISPLAY=$(DISPLAY)"
 	@xhost +local:docker
 	@RENDER_MODE=1 docker compose -f src/docker-compose.yml up -d
+	$(MAKE) clean-images
 
 docs: clean-docs
 	mkdocs build

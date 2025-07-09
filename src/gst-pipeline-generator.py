@@ -89,6 +89,8 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
     workload_signatures = []
     video_files = []
     camera_id = camera.get("camera_id", f"cam{branch_idx+1}")
+    signature_to_steps = {}
+    signature_to_video = {}
     for w in workloads:
         if w in workload_map:
             steps = []
@@ -101,28 +103,26 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
                 step["workload_name"] = w
                 step["camera_id"] = camera_id
                 steps.append(step)
-            workload_steps.append(steps)
-            # Signature for all steps in this workload
-            sig = json.dumps([pipeline_cfg_signature(s) for s in steps], sort_keys=True)
-            workload_signatures.append(sig)
-            # Each workload can have its own video (if needed in future)
-            file_src = camera["fileSrc"]
-            video_name = file_src.split("|")[0].strip()
-            width = camera.get("width", 1920)
-            fps = camera.get("fps", 15)
-            video_file = download_video_if_missing(video_name, width, fps)
-            video_files.append(video_file)
-    # Group workloads by unique signature (so identical workloads share a filesrc)
-    sig_to_idx = {}
-    for idx, steps in enumerate(workload_steps):
-        sig = json.dumps([pipeline_cfg_signature(s) for s in steps], sort_keys=True)
-        if sig not in sig_to_idx:
-            sig_to_idx[sig] = idx
-    unique_idxs = list(sig_to_idx.values())
+            # Normalize steps for signature (remove workload_name, camera_id)
+            norm_steps = []
+            for s in steps:
+                s_norm = s.copy()
+                s_norm.pop('workload_name', None)
+                s_norm.pop('camera_id', None)
+                norm_steps.append(s_norm)
+            sig = json.dumps([pipeline_cfg_signature(s) for s in norm_steps], sort_keys=True)
+            if sig not in signature_to_steps:
+                signature_to_steps[sig] = steps
+                # Each unique signature gets a video file
+                file_src = camera["fileSrc"]
+                video_name = file_src.split("|")[0].strip()
+                width = camera.get("width", 1920)
+                fps = camera.get("fps", 15)
+                video_file = download_video_if_missing(video_name, width, fps)
+                signature_to_video[sig] = video_file
     pipelines = []
-    for unique_idx in unique_idxs:
-        steps = workload_steps[unique_idx]
-        video_file = video_files[unique_idx]
+    for idx, (sig, steps) in enumerate(signature_to_steps.items()):
+        video_file = signature_to_video[sig]
         pipeline = f"filesrc location={video_file} ! decodebin ! videoconvert"
         rois = []
         seen_rois = set()
@@ -144,13 +144,13 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
             if not rois and i == 0 and step["type"] in inference_types:
                 pipeline += " ! gvaattachroi"
             if step["type"] == "gvadetect":
-                model_instance_id = f"detect{branch_idx+1}_{unique_idx+1}"
+                model_instance_id = f"detect{branch_idx+1}_{idx+1}"
                 elem = build_gst_element(step)
                 elem = elem.replace("gvadetect", f"gvadetect model-instance-id={model_instance_id} threshold=0.5")
                 pipeline += f" ! {elem} ! gvatrack ! queue"
                 last_added_queue = True
             elif step["type"] == "gvaclassify":
-                model_instance_id = f"classify{branch_idx+1}_{unique_idx+1}"
+                model_instance_id = f"classify{branch_idx+1}_{idx+1}"
                 elem = build_gst_element(step)
                 elem = elem.replace("gvaclassify", f"gvaclassify model-instance-id={model_instance_id}")
                 pipeline += f" ! {elem} "
@@ -162,14 +162,14 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
             if i < len(steps) - 1:
                 if not (step["type"] == "gvadetect"):
                     pipeline += " ! queue"
-        tee_name = f"t{branch_idx+1}_{unique_idx+1}"
+        tee_name = f"t{branch_idx+1}_{idx+1}"
         results_dir = "/home/pipeline-server/results"
-        out_file = f"{results_dir}/rs-{branch_idx+1}_{unique_idx+1}_{timestamp}.jsonl"
+        out_file = f"{results_dir}/rs-{branch_idx+1}_{idx+1}_{timestamp}.jsonl"
         pipeline += f" ! gvametaconvert format=json ! tee name={tee_name} "
         pipeline += f"    {tee_name}. ! queue ! gvametapublish method=file file-path={out_file} ! gvafpscounter ! fakesink sync=false async=false "
         pipeline += f"    {tee_name}. ! queue ! gvawatermark ! videoconvert ! fpsdisplaysink video-sink=autovideosink text-overlay=true signal-fps-measurements=true"
         pipelines.append(pipeline)
-    return " \\\n  ".join(pipelines)
+    return pipelines
 
 def format_pipeline_multiline(pipeline):
     # Split pipeline into elements
@@ -209,16 +209,13 @@ def main():
     for idx, cam in enumerate(camera_config["lane_config"]["cameras"]):
         workloads = [w.lower() for w in cam["workloads"]]
         norm_workload_map = {k.lower(): v for k, v in workload_map.items()}
-        pipeline = build_dynamic_gstlaunch_command(cam, workloads, norm_workload_map, branch_idx=idx, model_instance_map=model_instance_map, model_instance_counter=model_instance_counter, timestamp=timestamp)
-        pipelines.append(pipeline.strip())
-    # Print gst-launch-1.0 -e and all pipelines without extra newline after the command
-    print("gst-launch-1.0 -e \\\n", end="")
+        cam_pipelines = build_dynamic_gstlaunch_command(cam, workloads, norm_workload_map, branch_idx=idx, model_instance_map=model_instance_map, model_instance_counter=model_instance_counter, timestamp=timestamp)
+        pipelines.extend([p.strip() for p in cam_pipelines])
+    # Print gst-launch-1.0 -e and all pipelines, each filesrc on a new line, with a backslash at the end except the last
+    print("gst-launch-1.0 -e \\")
     for idx, p in enumerate(pipelines):
         end = " \\" if idx < len(pipelines) - 1 else ""
-        print(f"  {p}{end}", end="")
-        if idx < len(pipelines) - 1:
-            print()
-    print()
+        print(f"  {p}{end}")
 
 if __name__ == "__main__":
     main()
