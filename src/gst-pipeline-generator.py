@@ -59,16 +59,18 @@ def build_gst_element(cfg):
     model = cfg["model"]
     device = cfg["device"]
     precision = cfg.get("precision", "")
+    workload_name = cfg.get("workload_name")
     # Add inference-region=1 if region_of_interest is present in cfg (from camera_to_workload.json)
     inference_region = ""
+    name_str = f"name={workload_name}" if workload_name and cfg["type"] == "gvadetect" else ""
     if cfg["type"] == "gvadetect" and cfg.get("region_of_interest") is not None:
         inference_region = " inference-region=1"
     if cfg["type"] == "gvadetect":
         model_path = download_model_if_missing(model, "gvadetect", precision)
-        elem = f"gvadetect{inference_region} model={model_path} device={device}"
+        elem = f"gvadetect {name_str} {inference_region} model={model_path} device={device}"
     elif cfg["type"] == "gvaclassify":
         model_path, label_path, proc_path = download_model_if_missing(model, "gvaclassify", precision)
-        elem = f"gvaclassify model={model_path} device={device} labels={label_path} model-proc={proc_path}"
+        elem = f"gvaclassify {name_str} model={model_path} device={device} labels={label_path} model-proc={proc_path}"
     else:
         model_path = download_model_if_missing(model)
         elem = f"{cfg['type']} model={model_path} device={device}"
@@ -91,6 +93,8 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
                 step = step.copy()
                 if roi:
                     step["region_of_interest"] = roi
+                # Add workload_name to step for later use in gvadetect name
+                step["workload_name"] = w
                 steps.append(step)
             workload_steps.append(steps)
             # Signature for all steps in this workload
@@ -124,7 +128,6 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
                 if roi_tuple not in seen_rois:
                     seen_rois.add(roi_tuple)
                     rois.append(roi)
-        # Only add gvaattachroi if region_of_interest exists in the camera config
         if rois:
             roi_strs = [f"roi={r['x']},{r['y']},{r['width']},{r['height']}" for r in rois]
             gvaattachroi_elem = "gvaattachroi " + " ".join(roi_strs)
@@ -133,23 +136,27 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
         detect_count = 1
         classify_count = 1
         for i, step in enumerate(steps):
-            # Remove fallback: do not add gvaattachroi if region_of_interest is not present
-            # if not rois and i == 0 and step["type"] in inference_types:
-            #     pipeline += " ! gvaattachroi"
+            if not rois and i == 0 and step["type"] in inference_types:
+                pipeline += " ! gvaattachroi"
             if step["type"] == "gvadetect":
                 model_instance_id = f"detect{branch_idx+1}_{unique_idx+1}"
                 elem = build_gst_element(step)
                 elem = elem.replace("gvadetect", f"gvadetect model-instance-id={model_instance_id} threshold=0.5")
                 pipeline += f" ! {elem} ! gvatrack ! queue"
+                last_added_queue = True
             elif step["type"] == "gvaclassify":
                 model_instance_id = f"classify{branch_idx+1}_{unique_idx+1}"
                 elem = build_gst_element(step)
                 elem = elem.replace("gvaclassify", f"gvaclassify model-instance-id={model_instance_id}")
                 pipeline += f" ! {elem} "
+                last_added_queue = False
             else:
                 pipeline += f" ! {build_gst_element(step)}"
+                last_added_queue = False
+            # Only add queue if not just added by gvadetect/gvatrack
             if i < len(steps) - 1:
-                pipeline += " ! queue"
+                if not (step["type"] == "gvadetect"):
+                    pipeline += " ! queue"
         tee_name = f"t{branch_idx+1}_{unique_idx+1}"
         results_dir = "/home/pipeline-server/results"
         out_file = f"{results_dir}/rs-{branch_idx+1}_{unique_idx+1}_{timestamp}.jsonl"
