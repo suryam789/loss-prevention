@@ -14,7 +14,7 @@ download-models:
 	$(MAKE) build-model-downloader
 	$(MAKE) run-model-downloader
 
-download-camera-videos: | validate-camera-config
+download-camera-videos: | validate-camera-config update-submodules
 	@echo "Downloading and formatting videos for all cameras in camera_to_workload.json..."
 	python3 download-scripts/download-video.py --camera-config configs/camera_to_workload.json --format-script performance-tools/benchmark-scripts/format_avc_mp4.sh
 
@@ -69,7 +69,7 @@ update-submodules:
 build-benchmark:
 	cd performance-tools && $(MAKE) build-benchmark-docker
 
-benchmark: build-benchmark 
+benchmark: build-benchmark download-camera-videos download-models
 	@if [ -n "$(DEVICE_ENV)" ]; then \
 		echo "Loading device environment from $(DEVICE_ENV)"; \
 		cd performance-tools/benchmark-scripts && bash -c "set -a; source ../../src/$(DEVICE_ENV); set +a; python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR)"; \
@@ -77,7 +77,7 @@ benchmark: build-benchmark
 		cd performance-tools/benchmark-scripts && python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR); \
 	fi
 
-run-lp: | update-submodules  download-camera-videos 
+run-lp: | download-camera-videos 
 	@echo downloading the models
 	$(MAKE) download-models
 	@echo builing pipeline runner

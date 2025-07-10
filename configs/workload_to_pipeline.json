@@ -59,7 +59,7 @@
     "hidden_items": [
       {
         "type": "gvadetect",
-        "model": "yolov8n",
+        "model": "yolo11n",
         "device": "CPU",
         "precision": "INT8"
       },
