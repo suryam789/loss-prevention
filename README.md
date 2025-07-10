@@ -45,6 +45,13 @@ make run-lp
 make down-lp
 ```
 
+### 4. Run benchmarking on CPU/NPU/GPU
+```sh
+make  DEVICE_ENV=res/all-cpu.env RENDER_MODE=1 benchmark
+make  DEVICE_ENV=res/all-npu.env RENDER_MODE=1 benchmark
+make  DEVICE_ENV=res/all-gpu.env RENDER_MODE=1 benchmark
+```
+
 
 
 ## 🛠️ Other Useful Make Commands
