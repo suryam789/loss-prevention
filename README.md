@@ -1,8 +1,8 @@
-# Loss Prevention Proxy Pipeline System
+# Loss Prevention Pipeline System
 
 ## Overview
 
-The Loss Prevention Proxy Pipeline System is an open-source reference implementation for building and deploying video analytics pipelines for retail loss prevention use cases. It leverages Intel® hardware and software, GStreamer, and OpenVINO™ to enable scalable, real-time object detection and classification at the edge.
+The Loss Prevention Pipeline System is an open-source reference implementation for building and deploying video analytics pipelines for retail loss prevention use cases. It leverages Intel® hardware and software, GStreamer, and OpenVINO™ to enable scalable, real-time object detection and classification at the edge.
 
 ## 📋 Prerequisites
 
