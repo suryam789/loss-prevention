@@ -32,9 +32,11 @@ make download-sample-videos
 make run-render-mode
 ```
 
-> OR , User can directly run single make command that internally called all above command and run the Loss Prevention application.
 
-### 3. Run Loss Prevention pipeline runner
+> **User can directly run single make command that internally called all above command and run the Loss Prevention application.**
+
+
+### 3. Run Loss Prevention appliaction with single command
 
 ```sh
 make run-lp
@@ -47,7 +49,7 @@ make down-lp
 ```
 
 ### 4. Run benchmarking on CPU/NPU/GPU
-> By default, the configuration is set to use the CPU. If you want to benchmark the application on GPU or NPU, please update the device value in workload_to_pipeline.json.”
+>*By default, the configuration is set to use the CPU. If you want to benchmark the application on GPU or NPU, please update the device value in workload_to_pipeline.json.*
 
 ```sh
 make  benchmark
@@ -64,10 +66,11 @@ cat benchmark/metrics.csv
 
 ## 🛠️ Other Useful Make Commands
 
+- `make validate-all-configs` — Validate all configuration files
 - `make clean-images` — Remove dangling Docker images
 - `make clean-containers` — Remove stopped containers
 - `make clean-all` — Remove all unused Docker resources
-- `make validate-all-configs` — Validate all configuration files
+
 
 ## ⚙️ Configuration
 
