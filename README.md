@@ -18,17 +18,12 @@ The Loss Prevention Pipeline System is an open-source reference implementation f
 > The first run will download models, videos, and build Docker images. This may take some time.
 
 
-### 1. Download models and videos 
+### 1. Download models and videos, and run the Loss Prevention application.
 
 ```sh
 make download-models
 make update-submodules
 make download-sample-videos
-```
-
-### 2. Run loss prevention application
-
-```sh
 make run-render-mode
 ```
 
@@ -36,7 +31,7 @@ make run-render-mode
 > **User can directly run single make command that internally called all above command and run the Loss Prevention application.**
 
 
-### 3. Run Loss Prevention appliaction with single command
+### 3. Run Loss Prevention appliaction with single command.
 
 ```sh
 make run-lp
@@ -48,14 +43,14 @@ make run-lp
 make down-lp
 ```
 
-### 4. Run benchmarking on CPU/NPU/GPU
+### 4. Run benchmarking on CPU/NPU/GPU.
 >*By default, the configuration is set to use the CPU. If you want to benchmark the application on GPU or NPU, please update the device value in workload_to_pipeline.json.*
 
 ```sh
 make  benchmark
 ```
 
-### 5. See the benchmarking results
+### 5. See the benchmarking results.
 
 ```sh
 make  consolidate-metrics
@@ -64,7 +59,7 @@ cat benchmark/metrics.csv
 ```
 
 
-## 🛠️ Other Useful Make Commands
+## 🛠️ Other Useful Make Commands.
 
 - `make validate-all-configs` — Validate all configuration files
 - `make clean-images` — Remove dangling Docker images
