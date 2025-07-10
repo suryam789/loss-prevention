@@ -58,8 +58,6 @@ make  DEVICE_ENV=res/all-gpu.env RENDER_MODE=1 benchmark
 
 - `make clean-images` — Remove dangling Docker images
 - `make clean-containers` — Remove stopped containers
-- `make clean-images` — Remove dangling Docker images
-- `make clean-containers` — Remove stopped containers
 - `make clean-all` — Remove all unused Docker resources
 - `make validate-all-configs` — Validate all configuration files
 
