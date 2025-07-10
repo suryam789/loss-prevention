@@ -48,10 +48,19 @@ make down-lp
 ```
 
 ### 4. Run benchmarking on CPU/NPU/GPU
+> By default, the configuration is set to use the CPU. If you want to benchmark the application on GPU or NPU, please update the device value in workload_to_pipeline.json.”
+
 ```sh
-make  DEVICE_ENV=res/all-cpu.env RENDER_MODE=1 benchmark
+make  benchmark
 ```
 
+### 5. See the benchmarking results
+
+```sh
+make  consolidate-metrics
+
+cat benchmark/metrics.csv
+```
 
 
 ## 🛠️ Other Useful Make Commands
@@ -112,6 +121,4 @@ The application is highly configurable via JSON files in the `configs/` director
 - `Makefile` — Build automation and workflow commands
 
 ---
-
-For advanced usage, benchmarks, and troubleshooting, see the `docs/` directory.
 

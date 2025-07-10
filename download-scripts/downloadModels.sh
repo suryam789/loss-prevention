@@ -94,7 +94,7 @@ for TYPE_KEY in "${!TYPE_MODELS[@]}"; do
                 quant_dataset="$MODELS_PATH/datasets/coco128.yaml"
                 if [ ! -f "$quant_dataset" ]; then
                     mkdir -p "$(dirname "$quant_dataset")"
-                    wget --timeout=30 --tries=2 "https://raw.githubusercontent.com/ultralytics/ultralytics/v8.1.0/ultralytics/cfg/datasets/coco128.yaml" -O "$quant_dataset"
+                    wget --no-check-certificate --timeout=30 --tries=2 "https://raw.githubusercontent.com/ultralytics/ultralytics/v8.1.0/ultralytics/cfg/datasets/coco128.yaml" -O "$quant_dataset"
                 fi
                 python3 "$SCRIPT_BASE_PATH/model_convert.py" quantize_yolo "$MODEL_NAME" "$quant_dataset" "$MODELS_PATH"
                 ;;
