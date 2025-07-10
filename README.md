@@ -18,13 +18,12 @@ The Loss Prevention Pipeline System is an open-source reference implementation f
 > The first run will download models, videos, and build Docker images. This may take some time.
 
 
-### 1. Download models, videos and build pipeliner runner
+### 1. Download models and videos 
 
 ```sh
 make download-models
 make update-submodules
-make download-camera-videos
-make build-pipeline-runner
+make download-sample-videos
 ```
 
 ### 2. Run loss prevention application

@@ -80,8 +80,6 @@ benchmark: build-benchmark download-camera-videos download-models
 run-lp: | update-submodules download-camera-videos 
 	@echo downloading the models
 	$(MAKE) download-models
-	@echo builing pipeline runner
-	$(MAKE) build-pipeline-runner
 	@echo Running loss prevention pipeline
 	$(MAKE) run-render-mode
 
