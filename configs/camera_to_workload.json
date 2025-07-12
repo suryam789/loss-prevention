@@ -12,6 +12,34 @@
           "width": 1800,
           "height": 750
         }
+      },
+      { 
+        "camera_id": "cam2", 
+        "width": 1920,
+        "height": 1080,
+        "fps": 15,
+        "fileSrc":"hidden-items-product-switching-32658426.mp4|https://www.pexels.com/download/video/32658426", 
+        "workloads": ["hidden_items", "product_switching"],
+        "region_of_interest": {
+          "x": 500,
+          "y": 480,
+          "width": 1800,
+          "height": 800
+        }
+      },
+      { 
+        "camera_id": "cam3", 
+        "width": 1920,
+        "height": 1080,
+        "fps": 15,
+        "fileSrc":"fake-scan-detection-32658412.mp4|https://www.pexels.com/download/video/32658412", 
+        "workloads": ["fake_scan_detection"],
+        "region_of_interest": {
+          "x": 500,
+          "y": 700,
+          "width": 1300,
+          "height": 1100
+        }
       }
     ]
   }
