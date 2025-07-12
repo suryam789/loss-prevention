@@ -33,6 +33,7 @@ services:
         condition: service_completed_successfully
     environment:
       - DISPLAY=${DISPLAY:-:0}
+      - RENDER_MODE=${RENDER_MODE:-1}      
     volumes:
       - ../models:/home/pipeline-server/models
       - ../performance-tools/sample-media:/home/pipeline-server/sample-media

@@ -8,7 +8,7 @@
 # Get dynamic gst-launch command from Python script
 
 echo "############# Generating GStreamer pipeline command ##########"
- 
+echo "################### RENDER_MODE #################"$RENDER_MODE 
 gst_cmd=$(python3 "$(dirname "$0")/gst-pipeline-generator.py")
 echo "#############  GStreamer pipeline command generated succussfully ##########"
 

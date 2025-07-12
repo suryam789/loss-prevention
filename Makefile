@@ -86,6 +86,20 @@ run-lp: | update-submodules download-sample-videos
 down-lp:
 	docker compose -f src/docker-compose.yml down
 
+run-render-mode:
+	@if [ -z "$(DISPLAY)" ] || ! echo "$(DISPLAY)" | grep -qE "^:[0-9]+(\.[0-9]+)?$$"; then \
+		echo "ERROR: Invalid or missing DISPLAY environment variable."; \
+		echo "Please set DISPLAY in the format ':<number>' (e.g., ':0')."; \
+		echo "Usage: make <target> DISPLAY=:<number>"; \
+		echo "Example: make $@ DISPLAY=:0"; \
+		exit 1; \
+	fi
+	@echo "Using DISPLAY=$(DISPLAY)"
+	@xhost +local:docker
+	docker compose -f src/docker-compose.yml build pipeline-runner
+	@RENDER_MODE=$(RENDER_MODE) docker compose -f src/docker-compose.yml up -d
+	$(MAKE) clean-images
+
 clean-images:
 	@echo "Cleaning up dangling Docker images..."
 	@docker image prune -f
@@ -109,19 +123,6 @@ clean-project-images:
 	@echo "Cleaning up project-specific images..."
 	@docker rmi model-downloader:lp pipeline-runner:lp 2>/dev/null || true
 	@echo "Project images cleaned up"
-
-run-render-mode:
-	@if [ -z "$(DISPLAY)" ] || ! echo "$(DISPLAY)" | grep -qE "^:[0-9]+(\.[0-9]+)?$$"; then \
-		echo "ERROR: Invalid or missing DISPLAY environment variable."; \
-		echo "Please set DISPLAY in the format ':<number>' (e.g., ':0')."; \
-		echo "Usage: make <target> DISPLAY=:<number>"; \
-		echo "Example: make $@ DISPLAY=:0"; \
-		exit 1; \
-	fi
-	@echo "Using DISPLAY=$(DISPLAY)"
-	@xhost +local:docker
-	@RENDER_MODE=1 docker compose -f src/docker-compose.yml up -d
-	$(MAKE) clean-images
 
 docs: clean-docs
 	mkdocs build
