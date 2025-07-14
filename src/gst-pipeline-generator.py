@@ -26,17 +26,15 @@ def download_video_if_missing(video_name, width=None, fps=None):
     return video_path
 
 def download_model_if_missing(model_name, model_type=None, precision=None):
-    if model_type == "gvadetect" and precision:
+    if model_type == "gvadetect":
         precision_lower = precision.lower()
         return f"{MODELSERVER_MODELS_DIR}/object_detection/{model_name}/{precision}/{model_name}.xml"
-    elif model_type == "gvaclassify" and precision and precision == "INT8":
+    elif model_type == "gvaclassify" and precision == "INT8":
         base_path = f"{MODELSERVER_MODELS_DIR}/object_classification/{model_name}"
         model_path = f"{base_path}/{precision}/{model_name}.xml"
         label_path = f"{base_path}/{precision}/{model_name}.txt"
         proc_path = f"{base_path}/{precision}/{model_name}.json"
         return model_path, label_path, proc_path
-    elif model_type == "gvadetect":
-        return f"{MODELSERVER_MODELS_DIR}/object_detection/{model_name}/{precision}/{model_name}.xml"
     elif model_type == "gvaclassify":
         base_path = f"{MODELSERVER_MODELS_DIR}/object_classification/{model_name}"
         model_path = f"{base_path}/{precision}/{model_name}.xml"       
@@ -46,8 +44,18 @@ def download_model_if_missing(model_name, model_type=None, precision=None):
         return os.path.join(MODELSERVER_MODELS_DIR, model_name)
 
 def load_json(path):
-    with open(path, "r") as f:
-        return json.load(f)
+    try:
+        with open(path, "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print(f"Error: File not found: {path}")
+        return None
+    except json.JSONDecodeError as e:
+        print(f"Error: Failed to decode JSON in {path}: {e}")
+        return None
+    except Exception as e:
+        print(f"Error: Unexpected error reading {path}: {e}")
+        return None
 
 def pipeline_cfg_signature(cfg):
     # Remove fields that don't affect pipeline structure (like device, ROI order doesn't matter)
@@ -141,11 +149,10 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
     pipelines = []
     for idx, (sig, steps) in enumerate(signature_to_steps.items()):
         video_file = signature_to_video[sig]
-        # Get device from first step (assume all steps use same device for pipeline)
-        device = steps[0]["device"]
-        # Get DECODE for this device
-        env_vars = get_env_vars_for_device(device)
-        DECODE = env_vars.get("DECODE") or "decodebin"
+        # Get DECODE for the first step's device
+        first_device = steps[0]["device"]
+        first_env_vars = get_env_vars_for_device(first_device)
+        DECODE = first_env_vars.get("DECODE") or "decodebin"
         pipeline = f"filesrc location={video_file} ! {DECODE} ! videoconvert"
         rois = []
         seen_rois = set()
@@ -164,6 +171,9 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
         detect_count = 1
         classify_count = 1
         for i, step in enumerate(steps):
+            # Get env vars for each step's device
+            step_env_vars = get_env_vars_for_device(step["device"])
+            # If you want to use step_env_vars for other options, you can do so here
             if not rois and i == 0 and step["type"] in inference_types:
                 pipeline += " ! gvaattachroi"
             if step["type"] == "gvadetect":
