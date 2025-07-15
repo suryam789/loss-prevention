@@ -29,15 +29,11 @@ def download_model_if_missing(model_name, model_type=None, precision=None):
     if model_type == "gvadetect":
         precision_lower = precision.lower()
         return f"{MODELSERVER_MODELS_DIR}/object_detection/{model_name}/{precision}/{model_name}.xml"
-    elif model_type == "gvaclassify" and precision == "INT8":
-        base_path = f"{MODELSERVER_MODELS_DIR}/object_classification/{model_name}"
-        model_path = f"{base_path}/{precision}/{model_name}.xml"
-        label_path = f"{base_path}/{precision}/{model_name}.txt"
-        proc_path = f"{base_path}/{precision}/{model_name}.json"
-        return model_path, label_path, proc_path
     elif model_type == "gvaclassify":
         base_path = f"{MODELSERVER_MODELS_DIR}/object_classification/{model_name}"
-        model_path = f"{base_path}/{precision}/{model_name}.xml"       
+        model_path = f"{base_path}/{precision}/{model_name}.xml"
+        label_path = f"{base_path}/{model_name}.txt"
+        proc_path = f"{base_path}/{model_name}.json"
         return model_path, label_path, proc_path
     else:
         # fallback
