@@ -149,7 +149,7 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
         first_device = steps[0]["device"]
         first_env_vars = get_env_vars_for_device(first_device)
         DECODE = first_env_vars.get("DECODE") or "decodebin"
-        pipeline = f"filesrc location={video_file} ! {DECODE} ! videoconvert"
+        pipeline = f"filesrc location={video_file} ! {DECODE} "
         rois = []
         seen_rois = set()
         for step in steps:
