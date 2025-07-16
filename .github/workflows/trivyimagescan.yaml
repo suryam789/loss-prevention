@@ -32,10 +32,11 @@ jobs:
         - name: Update Sub Module Performance-Tools
           run: make update-submodules
           
-        - name: Build Model Downloader image from Dockerfile
+        - name: Build and Run Model Downloader image from Dockerfile
           run: |
             echo "running make build-model-downloader"
             make build-model-downloader
+            make run-model-downloader
 
         - name: Build Pipeline Runner image from Dockerfile
           run: |
