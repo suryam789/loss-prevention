@@ -17,6 +17,8 @@ jobs:
       steps:
           - name: Checkout code
             uses: actions/checkout@v4
+          - name: Update Sub Module Performance-Tools
+            run: make update-submodules
           - name: Download the Models
             run: make download-models
           - name: Build the Pipeline Runner
