@@ -30,20 +30,40 @@ jobs:
           with:
             ref: main
 
-        - name: Build an image from Dockerfile
+        - name: Build Model Downloader image from Dockerfile
           run: |
-            echo "running make build benchmark"
-            make build
-        - name: Run Trivy vulnerability scanner
+            echo "running make build-model-downloader"
+            make build-model-downloader
+
+        - name: Build Pipeline Runner image from Dockerfile
+          run: |
+            echo "running make build-pipeline-runner"
+            make build-pipeline-runner
+
+        - name: Run Trivy vulnerability scanner on model-downloader
           uses: aquasecurity/trivy-action@0.28.0
           with:
-            image-ref: 'dlstreamer:dev'
+            image-ref: 'model-downloader:lp'
             format: 'template'
             template: '@/contrib/sarif.tpl'
-            output: 'trivy-results.sarif'
+            output: 'trivy-results-model-downloader.sarif'
             severity: 'CRITICAL,HIGH'
 
-        - name: Upload Trivy scan results to GitHub Security tab
+        - name: Run Trivy vulnerability scanner on pipeline-runner
+          uses: aquasecurity/trivy-action@0.28.0
+          with:
+            image-ref: 'pipeline-runner:lp'
+            format: 'template'
+            template: '@/contrib/sarif.tpl'
+            output: 'trivy-results-pipeline-runner.sarif'
+            severity: 'CRITICAL,HIGH'
+
+        - name: Upload Trivy scan results for model-downloader to GitHub Security tab
           uses: github/codeql-action/upload-sarif@v3.28.13
           with:
-            sarif_file: 'trivy-results.sarif'
+            sarif_file: 'trivy-results-model-downloader.sarif'
+
+        - name: Upload Trivy scan results for pipeline-runner to GitHub Security tab
+          uses: github/codeql-action/upload-sarif@v3.28.13
+          with:
+            sarif_file: 'trivy-results-pipeline-runner.sarif'
