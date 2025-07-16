@@ -1,148 +1,128 @@
-# Copyright © 2024 Intel Corporation. All rights reserved.
+# Copyright © 2025 Intel Corporation. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-.PHONY: build build-realsense run down
-.PHONY: build-telegraf run-telegraf run-portainer clean-all clean-results clean-telegraf clean-models down-portainer
-.PHONY: download-models clean-test run-demo run-headless download-yolov8s logs
-.PHONY: clean-benchmark-results
+.PHONY: update-submodules download-models download-samples download-sample-videos build-assets-downloader run-assets-downloader build-pipeline-runner run-loss-prevention clean-images clean-containers clean-all clean-project-images validate-config validate-camera-config validate-all-configs
 
-MKDOCS_IMAGE ?= asc-mkdocs
+
+# Default values for benchmark
 PIPELINE_COUNT ?= 1
-TARGET_FPS ?= 14.95
-CONTAINER_NAMES ?= gst0
-DOCKER_COMPOSE ?= docker-compose.yml
-RESULTS_DIR ?= $(PWD)/results
-RETAIL_USE_CASE_ROOT ?= $(PWD)
-BENCHMARK_DURATION ?= 45
-DENSITY_INCREMENT ?= 1
+MKDOCS_IMAGE ?= asc-mkdocs
+RESULTS_DIR ?= $(PWD)/benchmark
 
-download-models: download-yolov8s
-	./download_models/downloadModels.sh	
-	
-download-yolov8s:
-	@if [ ! -d "$(PWD)/models/object_detection/yolov8s/" ]; then \
-		echo "The yolov8s folder doesn't exist. Creating it and downloading the model..."; \
-		mkdir -p $(PWD)/models/object_detection/yolov8s/; \
-		docker run --user 1000:1000 -e HTTPS_PROXY=${HTTPS_PROXY} -e HTTP_PROXY=${HTTPS_PROXY} --rm \
-			-e YOLO_DEBUG=1 \
-			-v $(PWD)/models/object_detection/yolov8s:/models \
-			ultralytics/ultralytics:8.2.101-cpu \
-			bash -c "cd /models && yolo export model=yolov8s.pt format=openvino"; \
-		mv $(PWD)/models/object_detection/yolov8s/yolov8s_openvino_model $(PWD)/models/object_detection/yolov8s/FP32; \
-	else \
-		echo "yolov8s already exists."; \
-	fi
-	
-download-sample-videos:
-	cd performance-tools/benchmark-scripts && ./download_sample_videos.sh
+download-models:
+	@echo ".....Downloading models....."
+	$(MAKE) build-model-downloader
+	$(MAKE) run-model-downloader
 
-clean-models:
-	@find ./models/ -mindepth 1 -maxdepth 1 -type d -exec sudo rm -r {} \;
+download-sample-videos: | validate-camera-config
+	@echo "Downloading and formatting videos for all cameras in camera_to_workload.json..."
+	python3 download-scripts/download-video.py --camera-config configs/camera_to_workload.json --format-script performance-tools/benchmark-scripts/format_avc_mp4.sh
 
-run-smoke-tests: | download-models update-submodules download-sample-videos
-	@echo "Running smoke tests for OVMS profiles"
-	@./smoke_test.sh > smoke_tests_output.log
-	@echo "results of smoke tests recorded in the file smoke_tests_output.log"
-	@grep "Failed" ./smoke_tests_output.log || true
-	@grep "===" ./smoke_tests_output.log || true
+build-model-downloader: | validate-pipeline-config
+	@echo "Building model downloader"
+	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} -t model-downloader:lp -f docker/Dockerfile.downloader .
+	@echo "assets downloader completed"
+
+run-model-downloader:
+	@echo "Running assets downloader"
+	docker run --rm \
+		-e HTTP_PROXY=${HTTP_PROXY} \
+		-e HTTPS_PROXY=${HTTPS_PROXY} \
+		-e http_proxy=${HTTP_PROXY} \
+		-e https_proxy=${HTTPS_PROXY} \
+		-e MODELS_DIR=/workspace/models \
+		-v "$(shell pwd)/models:/workspace/models" \
+		model-downloader:lp
+	@echo "assets downloader completed"
+
+
+build-pipeline-runner:
+	@echo "Building pipeline runner"
+	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} -t pipeline-runner:lp -f docker/Dockerfile.pipeline .
+	@echo "pipeline runner build completed"
+
+
+run-pipeline-runner:
+	@echo "Running pipeline runner"
+	xhost +local:root
+	docker run -it \
+		--env DISPLAY=$(DISPLAY) \
+		--env XDG_RUNTIME_DIR=$(XDG_RUNTIME_DIR) \
+		--volume /tmp/.X11-unix:/tmp/.X11-unix \
+		-e HTTP_PROXY=${HTTP_PROXY} \
+		-e HTTPS_PROXY=${HTTPS_PROXY} \
+		-e http_proxy=${HTTP_PROXY} \
+		-e https_proxy=${HTTPS_PROXY} \
+		--volume $(PWD)/results:/home/pipeline-server/results \
+		pipeline-runner:latest
+	xhost -local:root
+	@echo "pipeline runner container completed successfully"
+
 
 update-submodules:
-	@git submodule update --init --recursive
-	@git submodule update --remote --merge
-
-build: build-scale
-	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} --target build-default -t dlstreamer:dev -f src/Dockerfile src/
-	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} -t loss-prevention:dev -f src/app/Dockerfile src/app
-
-build-sensors: build-scale build-barcode
-
-build-scale:
-	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} -t lp-scale:dev -f src/weightScale/Dockerfile src/weightScale
-
-build-barcode:
-	cd src/barcode-scanner-service && $(MAKE) build
-
-build-sensor-simulate:
-	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} -t lp-sensor:dev -f src/sensor-simulate/Dockerfile src/sensor-simulate
-
-build-realsense:
-	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} --target build-realsense -t dlstreamer:realsense -f src/Dockerfile src/
-
-run:
-	docker compose -f src/$(DOCKER_COMPOSE) up -d
-
-run-render-mode:
-	xhost +local:docker
-	INPUTSRC=https://github.com/openvinotoolkit/openvino_build_deploy/raw/refs/heads/master/ai_ref_kits/automated_self_checkout/data/example.mp4 RENDER_MODE=1 docker compose -f src/$(DOCKER_COMPOSE) up -d
-
-down:
-	docker compose -f src/$(DOCKER_COMPOSE) down
-
-run-demo: | download-models update-submodules download-sample-videos
-	@echo "Building Loss Prevention app"	
-	$(MAKE) build
-	$(MAKE) build-scale
-	@echo Running Loss Prevention pipeline
-	$(MAKE) run-render-mode
-
-run-headless: | download-models update-submodules download-sample-videos
-	@echo "Building Loss Prevention app"
-	$(MAKE) build
-	$(MAKE) build-scale
-	@echo Running Loss Prevention pipeline
-	$(MAKE) run
+	@echo "Cloning performance tool repositories"
+	git submodule deinit -f .
+	git submodule update --init --recursive
+	git submodule update --remote --merge
+	@echo "Submodules updated (if any present)."
 
 build-benchmark:
 	cd performance-tools && $(MAKE) build-benchmark-docker
 
-benchmark: build-benchmark download-models
-	cd performance-tools/benchmark-scripts && python benchmark.py --compose_file ../../src/$(DOCKER_COMPOSE) \
-	--pipeline $(PIPELINE_COUNT) --duration $(BENCHMARK_DURATION) --results_dir $(RESULTS_DIR)
-# consolidate to show the summary csv
-	@cd performance-tools/benchmark-scripts && ROOT_DIRECTORY=$(RESULTS_DIR) $(MAKE) --no-print-directory consolidate && \
-	echo "Loss Prevention benchmark results are saved in $(RESULTS_DIR)/summary.csv file" && \
-	echo "====== Loss prevention benchmark results summary: " && cat $(RESULTS_DIR)/summary.csv
+benchmark: build-benchmark download-sample-videos download-models
+	@if [ -n "$(DEVICE_ENV)" ]; then \
+		echo "Loading device environment from $(DEVICE_ENV)"; \
+		cd performance-tools/benchmark-scripts && bash -c "set -a; source ../../src/$(DEVICE_ENV); set +a; python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR)"; \
+	else \
+		cd performance-tools/benchmark-scripts && python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR); \
+	fi
 
-benchmark-stream-density: build-benchmark download-models
-# example commands:
-# 1. for single container pipeline stream density
-# ```console
-#     make PIPELINE_SCRIPT=yolov8s_roi.sh benchmark-stream-density
-# ```
-# 2. for multiple container pipelines stream density:
-# ```console
-#     make DOCKER_COMPOSE=docker-compose-2-clients.yml BENCHMARK_DURATION=90 TARGET_FPS="10.95 2.95" CONTAINER_NAMES="gst1 gst2" \
-#				benchmark-stream-density
-# ```
-#
-	cd performance-tools/benchmark-scripts && python benchmark.py --compose_file ../../src/$(DOCKER_COMPOSE) \
-	--target_fps $(TARGET_FPS) --container_names $(CONTAINER_NAMES) \
-	--density_increment $(DENSITY_INCREMENT) --results_dir $(RESULTS_DIR)
+run-lp: | update-submodules download-sample-videos
+	@echo downloading the models
+	$(MAKE) download-models
+	@echo Running loss prevention pipeline
+	$(MAKE) run-render-mode
 
-clean-benchmark-results:
-	cd performance-tools/benchmark-scripts && rm -rf $(RESULTS_DIR)/* || true
+down-lp:
+	docker compose -f src/docker-compose.yml down
 
-build-telegraf:
-	cd telegraf && $(MAKE) build
+run-render-mode:
+	@if [ -z "$(DISPLAY)" ] || ! echo "$(DISPLAY)" | grep -qE "^:[0-9]+(\.[0-9]+)?$$"; then \
+		echo "ERROR: Invalid or missing DISPLAY environment variable."; \
+		echo "Please set DISPLAY in the format ':<number>' (e.g., ':0')."; \
+		echo "Usage: make <target> DISPLAY=:<number>"; \
+		echo "Example: make $@ DISPLAY=:0"; \
+		exit 1; \
+	fi
+	@echo "Using DISPLAY=$(DISPLAY)"
+	@xhost +local:docker
+	docker compose -f src/docker-compose.yml build pipeline-runner
+	@RENDER_MODE=$(RENDER_MODE) docker compose -f src/docker-compose.yml up -d
+	$(MAKE) clean-images
 
-run-telegraf:
-	cd telegraf && $(MAKE) run
+clean-images:
+	@echo "Cleaning up dangling Docker images..."
+	@docker image prune -f
+	@echo "Cleaning up unused Docker images..."
+	@docker images -f "dangling=true" -q | xargs -r docker rmi
+	@echo "Dangling images cleaned up"
 
-clean-telegraf: 
-	./clean-containers.sh influxdb2
-	./clean-containers.sh telegraf
+clean-containers:
+	@echo "Cleaning up stopped containers..."
+	@docker container prune -f
+	@echo "Stopped containers cleaned up"
 
-run-portainer:
-	docker compose -p portainer -f docker-compose-portainer.yml up -d
+clean-all:
+	@echo "Cleaning up all unused Docker resources..."
+	@docker system prune -f
+	@echo "Cleaning up build cache..."
+	@docker builder prune -f
+	@echo "All unused Docker resources cleaned up"
 
-down-portainer:
-	docker compose -p portainer -f docker-compose-portainer.yml down
-
-clean-results:
-	rm -rf results/*
-
-clean-all: 
-	docker rm -f $(docker ps -aq)
+clean-project-images:
+	@echo "Cleaning up project-specific images..."
+	@docker rmi model-downloader:lp pipeline-runner:lp 2>/dev/null || true
+	@echo "Project images cleaned up"
 
 docs: clean-docs
 	mkdocs build
@@ -174,16 +154,34 @@ serve-docs: docs-builder-image
 clean-docs:
 	rm -rf docs/
 
-helm-package:
-	helm package helm/ -u -d .deploy
-	helm package helm/
-	helm repo index .
-	helm repo index --url https://github.com/intel-retail/loss-prevention .
+validate-pipeline-config:
+	@echo "Validating pipeline configuration..."
+	@python3 src/validate-configs.py --validate-pipeline
 
-logs:
-	@CONTAINER_ID=$(shell docker ps --filter "name=loss-prevention" --format "{{.ID}}") && \
-	if [ -n "$$CONTAINER_ID" ]; then \
-		docker logs -f $$CONTAINER_ID; \
-	else \
-		echo "No running container found with name containing 'loss-prevention'"; \
-	fi
+validate-camera-config:
+	@echo "Validating camera configuration..."
+	@python3 src/validate-configs.py --validate-camera
+
+validate-all-configs:
+	@echo "Validating all configuration files..."
+	@python3 src/validate-configs.py --validate-all
+
+consolidate-metrics:
+	cd performance-tools/benchmark-scripts && \
+	( \
+	python3 -m venv venv && \
+	. venv/bin/activate && \
+	pip install -r requirements.txt && \
+	python3 consolidate_multiple_run_of_metrics.py --root_directory $(RESULTS_DIR) --output $(RESULTS_DIR)/metrics.csv && \
+	deactivate \
+	)
+
+plot-metrics:
+	cd performance-tools/benchmark-scripts && \
+	( \
+	python3 -m venv venv && \
+	. venv/bin/activate && \
+	pip install -r requirements.txt && \
+	python3 usage_graph_plot.py --dir $(RESULTS_DIR)  && \
+	deactivate \
+	)

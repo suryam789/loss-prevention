@@ -1,95 +1,126 @@
-# Loss Prevention
+# Loss Prevention Pipeline System
 
-![Integration](https://github.com/intel-retail/loss-prevention/actions/workflows/integration.yaml/badge.svg?branch=main)
-![CodeQL](https://github.com/intel-retail/loss-prevention/actions/workflows/codeql.yaml/badge.svg?branch=main)
-![GolangTest](https://github.com/intel-retail/loss-prevention/actions/workflows/gotest.yaml/badge.svg?branch=main)
-![DockerImageBuild](https://github.com/intel-retail/loss-prevention/actions/workflows/build.yaml/badge.svg?branch=main) 
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/intel-retail/loss-prevention/badge)](https://api.securityscorecards.dev/projects/github.com/intel-retail/loss-prevention)
-[![GitHub Latest Stable Tag](https://img.shields.io/github/v/tag/intel-retail/loss-prevention?sort=semver&label=latest-stable)](https://github.com/intel-retail/loss-prevention/releases)
-[![Discord](https://discord.com/api/guilds/1150892043120414780/widget.png?style=shield)](https://discord.gg/2SpNRF4SCn)
+## Overview
 
-> **Warning**  
-> The **main** branch of this repository contains work-in-progress development code for the upcoming release, and is **not guaranteed to be stable or working**.
->
-> **The source for the latest release can be found at [Releases](https://github.com/intel-retail/loss-prevention/releases).**
-
-# Table of Contents 📑
-
-- [📋 Prerequisites](#-prerequisites)
-- [🚀 QuickStart](#-quickstart)
-  - [Run pipeline with Grafana](#run-pipeline-with-grafana)
-  - [Run pipeline with classification model on iGPU]
-- [📊 Benchmarks](#-benchmarks)
-- [📖 Advanced Documentation](#-advanced-documentation)
-- [🌀 Join the community](#-join-the-community)
-- [References](#references)
-- [Disclaimer](#disclaimer)
-- [Datasets & Models Disclaimer](#datasets--models-disclaimer)
-- [License](#license)
+The Loss Prevention Pipeline System is an open-source reference implementation for building and deploying video analytics pipelines for retail loss prevention use cases. It leverages Intel® hardware and software, GStreamer, and OpenVINO™ to enable scalable, real-time object detection and classification at the edge.
 
 ## 📋 Prerequisites
 
-- [Docker](https://docs.docker.com/engine/install/ubuntu/) 
-- [Manage Docker as a non-root user](https://docs.docker.com/engine/install/linux-postinstall/)
-- [Docker Compose v2](https://docs.docker.com/compose/) (Optional)
-- Make (sudo apt install make)
-- Intel hardware (CPU, GPU, dGPU)
+- Ubuntu 24.04 or newer (Linux recommended)
+- [Docker](https://docs.docker.com/engine/install/)
+- [Make](https://www.gnu.org/software/make/) (`sudo apt install make`)
+- Intel hardware (CPU, iGPU, dGPU, NPU)
+- Intel drivers (see [Intel GPU drivers](https://dgpu-docs.intel.com/driver/client/overview.html))
+- Sufficient disk space for models, videos, and results
 
 ## 🚀 QuickStart
 
-(If this is the first time, it will take some time to download videos, models, docker images and build containers)
+> The first run will download models, videos, and build Docker images. This may take some time.
 
-```
-make run-demo
-```
 
-stop containers:
+### 1. Download models and videos, and run the Loss Prevention application.
 
-```
-make down
-```
-
-## Run Pipeline with Grafana
-
-```
-RTSP=1 make run-demo
+```sh
+make download-models
+make update-submodules
+make download-sample-videos
+make run-render-mode
 ```
 
-Open grafana dashboard:
 
-🔗 [Grafana Dashboard](http://127.0.0.1:3000/d/ce428u65d0irkf/loss-prevention?from=now-6h&to=now&timezone=browser&refresh=2s)
-
-![Grafana](<grafana.jpg>)
-
-## 📊 Benchmarks
-
-Go here for [the documentation of loss prevention pipeline benchmarking](./benchmark.md)
+> **User can directly run single make command that internally called all above command and run the Loss Prevention application.**
 
 
-## 📖 Advanced Documentation
+### 3. Run Loss Prevention appliaction with single command.
+By default, RENDER_MODE=1, which displays the output video window. To disable the output video window, set RENDER_MODE=0
 
-[Loss Prevention Documentation Guide](https://intel-retail.github.io/documentation/use-cases/loss-prevention/loss-prevention.html)
+```sh
+make run-lp
 
-## 🌀 Join the community 
-[![Discord Banner 1](https://discordapp.com/api/guilds/1150892043120414780/widget.png?style=banner2)](https://discord.gg/2SpNRF4SCn)
+Disable output window
 
-## References
+make run-lp RENDER_MODE=0
+```
 
-- [Developer focused website to enable developers to engage and build our partner community](https://www.intel.com/content/www/us/en/developer/articles/reference-implementation/loss-prevention.html)
+### 4. Stop all containers
 
-- [LinkedIn blog illustrating the Loss Prevention use case more in detail](https://www.linkedin.com/pulse/retail-innovation-unlocked-open-source-vision-enabled-mohideen/)
+```sh
+make down-lp
+```
 
-## Disclaimer
+### 4. Run benchmarking on CPU/NPU/GPU.
+>*By default, the configuration is set to use the CPU. If you want to benchmark the application on GPU or NPU, please update the device value in workload_to_pipeline.json.*
 
-GStreamer is an open source framework licensed under LGPL. See https://gstreamer.freedesktop.org/documentation/frequently-asked-questions/licensing.html?gi-language=c.  You are solely responsible for determining if your use of Gstreamer requires any additional licenses.  Intel is not responsible for obtaining any such licenses, nor liable for any licensing fees due, in connection with your use of Gstreamer.
+```sh
+make  benchmark
+```
 
-Certain third-party software or hardware identified in this document only may be used upon securing a license directly from the third-party software or hardware owner. The identification of non-Intel software, tools, or services in this document does not constitute a sponsorship, endorsement, or warranty by Intel.
+### 5. See the benchmarking results.
 
-## Datasets & Models Disclaimer
+```sh
+make  consolidate-metrics
 
-To the extent that any data, datasets or models are referenced by Intel or accessed using tools or code on this site such data, datasets and models are provided by the third party indicated as the source of such content. Intel does not create the data, datasets, or models, provide a license to any third-party data, datasets, or models referenced, and does not warrant their accuracy or quality.  By accessing such data, dataset(s) or model(s) you agree to the terms associated with that content and that your use complies with the applicable license.
+cat benchmark/metrics.csv
+```
 
-Intel expressly disclaims the accuracy, adequacy, or completeness of any data, datasets or models, and is not liable for any errors, omissions, or defects in such content, or for any reliance thereon. Intel also expressly disclaims any warranty of non-infringement with respect to such data, dataset(s), or model(s). Intel is not liable for any liability or damages relating to your use of such data, datasets or models.
 
-## License
-This project is Licensed under an Apache [License](./LICENSE.md).
+## 🛠️ Other Useful Make Commands.
+
+- `make validate-all-configs` — Validate all configuration files
+- `make clean-images` — Remove dangling Docker images
+- `make clean-containers` — Remove stopped containers
+- `make clean-all` — Remove all unused Docker resources
+
+
+## ⚙️ Configuration
+
+The application is highly configurable via JSON files in the `configs/` directory:
+
+- **`camera_to_workload.json`**: Maps each camera to one or more workloads. To add or remove a camera, edit the `lane_config.cameras` array in this file. Each camera entry can specify its video source, region of interest, and assigned workloads.
+    - Example:
+      ```json
+      {
+        "lane_config": {
+          "cameras": [
+            {
+              "camera_id": "cam1",
+              "fileSrc": "sample-media/video1.mp4",
+              "region_of_interest": {"x": 100, "y": 100, "width": 800, "height": 600},
+              "workloads": ["items_in_basket", "multi_product_identification"]
+            },
+            ...
+          ]
+        }
+      }
+      ```
+- **`workload_to_pipeline.json`**: Maps each workload name to a pipeline definition (sequence of GStreamer elements and models). To add or update a workload, edit the `workload_pipeline_map` in this file.
+    - Example:
+      ```json
+      {
+        "workload_pipeline_map": {
+          "items_in_basket": [
+            {"type": "gvadetect", "model": "yolo11n", "precision": "INT8", "device": "CPU"},
+            {"type": "gvaclassify", "model": "efficientnet-v2-b0", "precision": "INT8", "device": "CPU"}
+          ],
+          ...
+        }
+      }
+      ```
+
+**To try a new camera or workload:**
+1. Edit `configs/camera_to_workload.json` to add your camera and assign workloads.
+2. Edit `configs/workload_to_pipeline.json` to define or update the pipeline for your workload.
+3. (Optional) Place your video files in the appropriate directory and update the `fileSrc` path.
+4. Re-run the pipeline as described above.
+
+## 📁 Project Structure
+
+- `configs/` — Configuration files (camera/workload mapping, pipeline mapping)
+- `docker/` — Dockerfiles for downloader and pipeline containers
+- `docs/` — Documentation (HLD, LLD, system design)
+- `download-scripts/` — Scripts for downloading models and videos
+- `src/` — Main source code and pipeline runner scripts
+- `Makefile` — Build automation and workflow commands
+
+---
+

@@ -1,0 +1,18 @@
+FROM intel/dlstreamer:2025.0.1.3-ubuntu24
+
+USER root
+WORKDIR /
+
+COPY configs/workload_to_pipeline.json /home/pipeline-server/configs/workload_to_pipeline.json
+COPY configs/camera_to_workload.json /home/pipeline-server/configs/camera_to_workload.json
+COPY models /home/pipeline-server/models
+COPY performance-tools/sample-media /home/pipeline-server/sample-media
+COPY src/run-pipeline.sh scripts/
+COPY src/gst-pipeline-generator.py scripts/
+COPY src/res/* res/
+
+
+RUN chmod +x scripts/run-pipeline.sh
+RUN pip install --no-cache-dir python-dotenv
+
+ENTRYPOINT ["scripts/run-pipeline.sh"]

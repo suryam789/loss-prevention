@@ -1,0 +1,27 @@
+# syntax=docker/dockerfile:1
+FROM python:3.10-slim
+
+# Proxy args with defaults to avoid unset variable issues
+
+# Install system dependencies and CA certificates for SSL
+RUN apt-get update && \
+    apt-get install -y wget curl bash ca-certificates libgl1 libglib2.0-0 jq && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Set workdir
+WORKDIR /workspace
+
+# Copy your scripts and requirements
+COPY download-scripts/* /workspace/scripts/
+
+# Make the script executable
+RUN chmod +x /workspace/scripts/downloadModels.sh
+
+
+# Install Python dependencies with verbose output for logs
+RUN pip3 install --upgrade pip -v --no-cache-dir && \
+    pip3 install -v --no-cache-dir -r /workspace/scripts/requirements.txt    
+
+COPY configs/* /workspace/configs/
+# Default command: run both scripts in sequence
+CMD ["/bin/bash", "-c", "/workspace/scripts/downloadModels.sh"]
