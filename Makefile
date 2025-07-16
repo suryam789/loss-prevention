@@ -44,7 +44,7 @@ build-pipeline-runner:
 
 run-pipeline-runner:
 	@echo "Running pipeline runner"
-	docker run -it \
+	docker run \
 		--env DISPLAY=$(DISPLAY) \
 		--env XDG_RUNTIME_DIR=$(XDG_RUNTIME_DIR) \
 		--volume /tmp/.X11-unix:/tmp/.X11-unix \
