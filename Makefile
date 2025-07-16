@@ -44,7 +44,6 @@ build-pipeline-runner:
 
 run-pipeline-runner:
 	@echo "Running pipeline runner"
-	xhost +local:root
 	docker run -it \
 		--env DISPLAY=$(DISPLAY) \
 		--env XDG_RUNTIME_DIR=$(XDG_RUNTIME_DIR) \
@@ -55,7 +54,6 @@ run-pipeline-runner:
 		-e https_proxy=${HTTPS_PROXY} \
 		--volume $(PWD)/results:/home/pipeline-server/results \
 		pipeline-runner:latest
-	xhost -local:root
 	@echo "pipeline runner container completed successfully"
 
 
