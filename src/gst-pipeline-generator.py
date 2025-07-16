@@ -245,8 +245,8 @@ def main():
         norm_workload_map = {k.lower(): v for k, v in workload_map.items()}
         cam_pipelines = build_dynamic_gstlaunch_command(cam, workloads, norm_workload_map, branch_idx=idx, model_instance_map=model_instance_map, model_instance_counter=model_instance_counter, timestamp=timestamp)
         pipelines.extend([p.strip() for p in cam_pipelines])
-    # Print gst-launch-1.0 -e and all pipelines, each filesrc on a new line, with a backslash at the end except the last
-    print("gst-launch-1.0 -e \\")
+    # Print gst-launch-1.0 --verbose and all pipelines, each filesrc on a new line, with a backslash at the end except the last
+    print("gst-launch-1.0 --verbose \\")
     for idx, p in enumerate(pipelines):
         end = " \\" if idx < len(pipelines) - 1 else ""
         print(f"  {p}{end}")
