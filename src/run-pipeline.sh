@@ -6,6 +6,7 @@
 #
 
 # Get dynamic gst-launch command from Python script
+set -eo pipefail
 
 echo "############# Generating GStreamer pipeline command ##########"
 echo "################### RENDER_MODE #################"$RENDER_MODE 
@@ -56,3 +57,5 @@ echo "GST_DEBUG=\"GST_TRACER:7\" GST_TRACERS='latency_tracer(flags=pipeline)' $g
 eval "GST_DEBUG=\"GST_TRACER:7\" GST_TRACERS='latency_tracer(flags=pipeline)' $gst_cmd"
 
 echo "############# GST COMMAND COMPLETED SUCCESSFULLY #############"
+
+sleep 30m

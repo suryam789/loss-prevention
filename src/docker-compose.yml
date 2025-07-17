@@ -45,3 +45,4 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
     network_mode: host
     privileged: true
+    restart: on-failure
