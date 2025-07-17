@@ -49,7 +49,7 @@ else
 fi
 
 # Append logging pipeline to gst_cmd with proper line breaks
-gst_cmd=$(printf "%s \\\\\n\\\\\n%s" "$gst_cmd" "2>&1 | tee /home/pipeline-server/results/gst-launch_${timestamp}.log | (stdbuf -oL sed -n -E 's/.*total=([0-9]+\.[0-9]+) fps.*/\1/p' > /home/pipeline-server/results/pipeline_${timestamp}.log)")
+gst_cmd=$(printf "%s \\\\\n\\\\\n%s" "$gst_cmd" "2>&1 | tee /home/pipeline-server/results/gst-launch_${timestamp}.log | (stdbuf -oL sed -n -E 's/.*total=([0-9]+\.[0-9]+) fps.*/\1/p' > /home/pipeline-server/results/pipeline${timestamp}.log)")
 
 # Print and run the pipeline command
 echo "################# Running Pipeline ###################"

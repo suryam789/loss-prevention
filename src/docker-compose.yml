@@ -39,7 +39,7 @@ services:
     volumes:
       - ../models:/home/pipeline-server/models
       - ../performance-tools/sample-media:/home/pipeline-server/sample-media
-      - ../results:/home/pipeline-server/results
+      - ${RESULTS_DIR:-../results}:/home/pipeline-server/results
       - ../configs:/home/pipeline-server/configs
       - ../src/pipelines:/home/pipeline-server/pipelines
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
