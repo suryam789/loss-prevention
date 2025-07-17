@@ -175,7 +175,7 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
             if step["type"] == "gvadetect":
                 model_instance_id = f"detect{branch_idx+1}_{idx+1}"
                 elem, _ = build_gst_element(step)
-                elem = elem.replace("gvadetect", f"gvadetect model-instance-id={model_instance_id} threshold=0.5")
+                elem = elem.replace("gvadetect", f"gvadetect model-instance-id={model_instance_id} threshold=0.3")
                 pipeline += f" ! {elem} ! gvatrack ! queue"
                 last_added_queue = True
             elif step["type"] == "gvaclassify":
