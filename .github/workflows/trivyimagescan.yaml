@@ -65,8 +65,10 @@ jobs:
           uses: github/codeql-action/upload-sarif@v3.28.13
           with:
             sarif_file: 'trivy-results-model-downloader.sarif'
+            category: 'model-downloader'
 
         - name: Upload Trivy scan results for pipeline-runner to GitHub Security tab
           uses: github/codeql-action/upload-sarif@v3.28.13
           with:
             sarif_file: 'trivy-results-pipeline-runner.sarif'
+            category: 'pipeline-runner'
