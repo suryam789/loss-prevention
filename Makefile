@@ -53,7 +53,7 @@ run-pipeline-runner:
 		-e http_proxy=${HTTP_PROXY} \
 		-e https_proxy=${HTTPS_PROXY} \
 		--volume $(PWD)/results:/home/pipeline-server/results \
-		pipeline-runner:latest
+		pipeline-runner:lp
 	@echo "pipeline runner container completed successfully"
 
 
