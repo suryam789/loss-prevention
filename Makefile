@@ -97,7 +97,7 @@ run-render-mode:
 	@echo "Using DISPLAY=$(DISPLAY)"
 	@xhost +local:docker
 	docker compose -f src/docker-compose.yml build pipeline-runner
-	@RENDER_MODE=$(RENDER_MODE) docker compose -f src/docker-compose.yml up -d
+	@RENDER_MODE=1 docker compose -f src/docker-compose.yml up -d
 	$(MAKE) clean-images
 
 benchmark-stream-density: build-benchmark download-models

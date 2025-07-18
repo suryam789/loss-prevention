@@ -20,7 +20,7 @@
          "fps": 15,
         "width": 1080,
         "height": 1920,
-        "fileSrc":"hidden-items-product-switching-32658426.mp4|https://www.pexels.com/download/video/32658426", 
+        "fileSrc":"hidden-items-product-switching-32658426.mp4|https://www.pexels.com/download/video/32658421", 
         "workloads": ["hidden_items", "product_switching"],
         "region_of_interest": {
           "x": 335,
@@ -34,13 +34,13 @@
         "width": 1920,
         "height": 1080,
         "fps": 15,
-        "fileSrc":"fake-scan-detection-32658412.mp4|https://www.pexels.com/download/video/32658412", 
+        "fileSrc":"fake-scan-detection-32658425.mp4|https://www.pexels.com/download/video/32658425", 
         "workloads": ["fake_scan_detection"],
         "region_of_interest": {
-          "x": 535,
-          "y": 700,
+          "x": 25,
+          "y": 535,
           "x2": 1300,
-          "y2": 1100
+          "y2": 1085
         }
       }
     ]
