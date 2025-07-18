@@ -233,8 +233,8 @@ def main():
     os.makedirs(results_dir, exist_ok=True)
     
     # Generate timestamp for all files
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
+    timestamp = os.environ.get("TIMESTAMP")
+  
     camera_config = load_json(CONFIG_CAMERA_TO_WORKLOAD)
     workload_map = load_json(CONFIG_WORKLOAD_TO_PIPELINE)["workload_pipeline_map"]
     pipelines = []

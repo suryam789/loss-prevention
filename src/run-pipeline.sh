@@ -8,13 +8,22 @@
 # Get dynamic gst-launch command from Python script
 set -eo pipefail
 
+# Use TIMESTAMP env variable if set, otherwise fallback to date
+cid=$(date +%Y%m%d%H%M%S)$(date +%6N | cut -c1-6)
+export TIMESTAMP=$cid
+echo "===============TIMESTAMP===================: $TIMESTAMP"
+CONTAINER_NAME="${CONTAINER_NAME//\"/}" # Ensure to remove all double quotes from CONTAINER_NAME
+cid="${cid}"_${CONTAINER_NAME}
+echo "==================CONTAINER_NAME: ${CONTAINER_NAME}"
+echo "cid: $cid"
+
 echo "############# Generating GStreamer pipeline command ##########"
 echo "################### RENDER_MODE #################"$RENDER_MODE 
 gst_cmd=$(python3 "$(dirname "$0")/gst-pipeline-generator.py")
 echo "#############  GStreamer pipeline command generated succussfully ##########"
 
 # Generate timestamp for log files
-timestamp=$(date +"%Y%m%d%H%M%S")
+
 
 # Create pipelines directory if it doesn't exist (use absolute path)
 pipelines_dir="/home/pipeline-server/pipelines"
@@ -49,7 +58,7 @@ else
 fi
 
 # Append logging pipeline to gst_cmd with proper line breaks
-gst_cmd=$(printf "%s \\\\\n\\\\\n%s" "$gst_cmd" "2>&1 | tee /home/pipeline-server/results/gst-launch_${timestamp}.log | (stdbuf -oL sed -n -E 's/.*total=([0-9]+\.[0-9]+) fps.*/\1/p' > /home/pipeline-server/results/pipeline${timestamp}.log)")
+gst_cmd=$(printf "%s \\\\\n\\\\\n%s" "$gst_cmd" "2>&1 | tee /home/pipeline-server/results/gst-launch_\$cid.log | (stdbuf -oL sed -n -E 's/.*total=([0-9]+\.[0-9]+) fps.*/\1/p' > /home/pipeline-server/results/pipeline\$cid.log)")
 
 # Print and run the pipeline command
 echo "################# Running Pipeline ###################"
