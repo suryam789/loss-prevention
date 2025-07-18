@@ -155,12 +155,12 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
         for step in steps:
             roi = step.get("region_of_interest")
             if roi:
-                roi_tuple = (roi.get('x', 0), roi.get('y', 0), roi.get('width', 1), roi.get('height', 1))
+                roi_tuple = (roi.get('x', 0), roi.get('y', 0), roi.get('x2', 1), roi.get('y2', 1))
                 if roi_tuple not in seen_rois:
                     seen_rois.add(roi_tuple)
                     rois.append(roi)
         if rois:
-            roi_strs = [f"roi={r['x']},{r['y']},{r['width']},{r['height']}" for r in rois]
+            roi_strs = [f"roi={r['x']},{r['y']},{r['x2']},{r['y2']}" for r in rois]
             gvaattachroi_elem = "gvaattachroi " + " ".join(roi_strs)
             pipeline += f" ! {gvaattachroi_elem} ! queue"
         inference_types = {"gvadetect", "gvaclassify"}
@@ -175,7 +175,7 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
             if step["type"] == "gvadetect":
                 model_instance_id = f"detect{branch_idx+1}_{idx+1}"
                 elem, _ = build_gst_element(step)
-                elem = elem.replace("gvadetect", f"gvadetect model-instance-id={model_instance_id} threshold=0.3")
+                elem = elem.replace("gvadetect", f"gvadetect model-instance-id={model_instance_id} threshold=0.5")
                 pipeline += f" ! {elem} ! gvatrack ! queue"
                 last_added_queue = True
             elif step["type"] == "gvaclassify":
