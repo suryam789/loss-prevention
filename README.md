@@ -82,8 +82,8 @@ The application is highly configurable via JSON files in the `configs/` director
             {
               "camera_id": "cam1",
               "fileSrc": "sample-media/video1.mp4",
-              "region_of_interest": {"x": 100, "y": 100, "width": 800, "height": 600},
-              "workloads": ["items_in_basket", "multi_product_identification"]
+              "workloads": ["items_in_basket", "multi_product_identification"],
+              "region_of_interest": {"x": 100, "y": 100, "x2": 800, "y2": 600}              
             },
             ...
           ]
