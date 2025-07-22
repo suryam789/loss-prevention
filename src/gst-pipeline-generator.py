@@ -64,7 +64,8 @@ def get_env_vars_for_device(device):
     device_env_map = {
         "CPU": "/res/all-cpu.env",
         "NPU": "/res/all-npu.env",
-        "GPU": "/res/all-gpu.env"
+        "GPU": "/res/all-gpu.env",
+        "GPU.1": "/res/all-dgpu.env"
     }
     env_file = device_env_map.get(device.upper())
     if not env_file or not os.path.exists(env_file):
@@ -82,6 +83,7 @@ def build_gst_element(cfg):
     DECODE = env_vars.get("DECODE") or "decodebin"
     PRE_PROCESS = env_vars.get("PRE_PROCESS", "")
     DETECTION_OPTIONS = env_vars.get("DETECTION_OPTIONS", "")
+    PRE_PROCESS_CONFIG = env_vars.get("PRE_PROCESS_CONFIG", "")
     CLASSIFICATION_PRE_PROCESS = env_vars.get("CLASSIFICATION_PRE_PROCESS", "")
     # Add inference-region=1 if region_of_interest is present in cfg (from camera_to_workload.json)
     inference_region = ""
@@ -90,7 +92,7 @@ def build_gst_element(cfg):
         inference_region = " inference-region=1"
     if cfg["type"] == "gvadetect":
         model_path = download_model_if_missing(model, "gvadetect", precision)
-        elem = f"gvadetect {name_str} batch-size=1 {inference_region} model={model_path} device={device} {PRE_PROCESS} {DETECTION_OPTIONS}"
+        elem = f"gvadetect {name_str} batch-size=1 {inference_region} model={model_path} device={device} {PRE_PROCESS} {DETECTION_OPTIONS} {PRE_PROCESS_CONFIG}"
     elif cfg["type"] == "gvaclassify":
         model_path, label_path, proc_path = download_model_if_missing(model, "gvaclassify", precision)
         elem = f"gvaclassify {name_str} batch-size=1 model={model_path} device={device} labels={label_path} model-proc={proc_path} {CLASSIFICATION_PRE_PROCESS}"
@@ -132,7 +134,17 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
                 s_norm.pop('workload_name', None)
                 s_norm.pop('camera_id', None)
                 norm_steps.append(s_norm)
-            sig = json.dumps([pipeline_cfg_signature(s) for s in norm_steps], sort_keys=True)
+            # Build a unique signature that includes model and precision for all steps
+            # This ensures that if any step has a different model or precision, it will be a new stream
+            model_prec_signature = json.dumps([
+                {
+                    'type': s.get('type'),
+                    'model': s.get('model'),
+                    'precision': s.get('precision'),
+                    'device': s.get('device')
+                } for s in steps
+            ], sort_keys=True)
+            sig = model_prec_signature
             if sig not in signature_to_steps:
                 signature_to_steps[sig] = steps
                 # Each unique signature gets a video file
@@ -176,7 +188,7 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
                 model_instance_id = f"detect{branch_idx+1}_{idx+1}"
                 elem, _ = build_gst_element(step)
                 elem = elem.replace("gvadetect", f"gvadetect model-instance-id={model_instance_id} threshold=0.5")
-                pipeline += f" ! {elem} ! gvatrack ! queue"
+                pipeline += f" ! {elem} ! gvatrack tracking-type=zero-term-imageless ! queue"
                 last_added_queue = True
             elif step["type"] == "gvaclassify":
                 model_instance_id = f"classify{branch_idx+1}_{idx+1}"

@@ -11,17 +11,23 @@ RUN apt-get update && \
 # Set workdir
 WORKDIR /workspace
 
-# Copy your scripts and requirements
-COPY download-scripts/* /workspace/scripts/
 
-# Make the script executable
-RUN chmod +x /workspace/scripts/downloadModels.sh
-
+COPY download-scripts/requirements.txt   /workspace/scripts/
 
 # Install Python dependencies with verbose output for logs
 RUN pip3 install --upgrade pip -v --no-cache-dir && \
     pip3 install -v --no-cache-dir -r /workspace/scripts/requirements.txt    
 
+# Copy your scripts and requirements
+COPY download-scripts/download-video.py /workspace/scripts/
+COPY download-scripts/downloadModels.sh /workspace/scripts/
+COPY download-scripts/efnetv2b0_download_quant.py /workspace/scripts/
+COPY download-scripts/model_convert.py /workspace/scripts/
+
+# Make the script executable
+RUN chmod +x /workspace/scripts/downloadModels.sh
+
 COPY configs/* /workspace/configs/
+
 # Default command: run both scripts in sequence
 CMD ["/bin/bash", "-c", "/workspace/scripts/downloadModels.sh"]
