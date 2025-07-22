@@ -91,10 +91,12 @@ def build_gst_element(cfg):
     if cfg["type"] == "gvadetect" and cfg.get("region_of_interest") is not None:
         inference_region = " inference-region=1"
     if cfg["type"] == "gvadetect":
-        model_path = download_model_if_missing(model, "gvadetect", precision)
+        # Always use the precision from the current step config
+        model_path = download_model_if_missing(model, "gvadetect", cfg.get("precision", ""))
         elem = f"gvadetect {name_str} batch-size=1 {inference_region} model={model_path} device={device} {PRE_PROCESS} {DETECTION_OPTIONS} {PRE_PROCESS_CONFIG}"
     elif cfg["type"] == "gvaclassify":
-        model_path, label_path, proc_path = download_model_if_missing(model, "gvaclassify", precision)
+        # Always use the precision from the current step config
+        model_path, label_path, proc_path = download_model_if_missing(model, "gvaclassify", cfg.get("precision", ""))
         elem = f"gvaclassify {name_str} batch-size=1 model={model_path} device={device} labels={label_path} model-proc={proc_path} {CLASSIFICATION_PRE_PROCESS}"
     elif cfg["type"] in ["gvatrack", "gvaattachroi", "gvametaconvert", "gvametapublish", "gvawatermark", "gvafpscounter", "fpsdisplaysink", "queue", "videoconvert", "decodebin", "filesrc", "fakesink"]:
         # These are valid GStreamer elements that may not need model/device
