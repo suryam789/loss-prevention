@@ -177,15 +177,16 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
             roi_strs = [f"roi={r['x']},{r['y']},{r['x2']},{r['y2']}" for r in rois]
             gvaattachroi_elem = "gvaattachroi " + " ".join(roi_strs)
             pipeline += f" ! {gvaattachroi_elem} ! queue"
+        # Only add gvaattachroi if region_of_interest is present (i.e., rois is not empty)
+        # Remove unconditional gvaattachroi for first inference step
         inference_types = {"gvadetect", "gvaclassify"}
         detect_count = 1
         classify_count = 1
         for i, step in enumerate(steps):
             # Get env vars for each step's device
             step_env_vars = get_env_vars_for_device(step["device"])
-            # If you want to use step_env_vars for other options, you can do so here
-            if not rois and i == 0 and step["type"] in inference_types:
-                pipeline += " ! gvaattachroi"
+            # Do not add gvaattachroi if no region_of_interest
+            # (was: if not rois and i == 0 and step["type"] in inference_types: pipeline += " ! gvaattachroi")
             if step["type"] == "gvadetect":
                 model_instance_id = f"detect{branch_idx+1}_{idx+1}"
                 elem, _ = build_gst_element(step)
