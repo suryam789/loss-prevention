@@ -64,8 +64,7 @@ def get_env_vars_for_device(device):
     device_env_map = {
         "CPU": "/res/all-cpu.env",
         "NPU": "/res/all-npu.env",
-        "GPU": "/res/all-gpu.env",
-        "GPU.1": "/res/all-dgpu.env"
+        "GPU": "/res/all-gpu.env"
     }
     env_file = device_env_map.get(device.upper())
     if not env_file or not os.path.exists(env_file):
