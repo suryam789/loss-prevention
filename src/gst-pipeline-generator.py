@@ -84,6 +84,7 @@ def build_gst_element(cfg):
     PRE_PROCESS = env_vars.get("PRE_PROCESS", "")
     DETECTION_OPTIONS = env_vars.get("DETECTION_OPTIONS", "")
     PRE_PROCESS_CONFIG = env_vars.get("PRE_PROCESS_CONFIG", "")
+    BATCH_SIZE = env_vars.get("BATCH_SIZE", 1)
     CLASSIFICATION_PRE_PROCESS = env_vars.get("CLASSIFICATION_PRE_PROCESS", "")
     # Add inference-region=1 if region_of_interest is present in cfg (from camera_to_workload.json)
     inference_region = ""
@@ -92,10 +93,10 @@ def build_gst_element(cfg):
         inference_region = " inference-region=1"
     if cfg["type"] == "gvadetect":
         model_path = download_model_if_missing(model, "gvadetect", precision)
-        elem = f"gvadetect {name_str} batch-size=1 {inference_region} model={model_path} device={device} {PRE_PROCESS} {DETECTION_OPTIONS} {PRE_PROCESS_CONFIG}"
+        elem = f"gvadetect {name_str} batch-size={BATCH_SIZE} {inference_region} model={model_path} device={device} {PRE_PROCESS} {DETECTION_OPTIONS} {PRE_PROCESS_CONFIG}"
     elif cfg["type"] == "gvaclassify":
         model_path, label_path, proc_path = download_model_if_missing(model, "gvaclassify", precision)
-        elem = f"gvaclassify {name_str} batch-size=1 model={model_path} device={device} labels={label_path} model-proc={proc_path} {CLASSIFICATION_PRE_PROCESS}"
+        elem = f"gvaclassify {name_str} batch-size={BATCH_SIZE} model={model_path} device={device} labels={label_path} model-proc={proc_path} {CLASSIFICATION_PRE_PROCESS}"
     elif cfg["type"] in ["gvatrack", "gvaattachroi", "gvametaconvert", "gvametapublish", "gvawatermark", "gvafpscounter", "fpsdisplaysink", "queue", "videoconvert", "decodebin", "filesrc", "fakesink"]:
         # These are valid GStreamer elements that may not need model/device
         elem = cfg["type"]

@@ -60,6 +60,13 @@ make  consolidate-metrics
 cat benchmark/metrics.csv
 ```
 
+### 6. See the dynamically generated gst pipeline.
+
+```sh
+
+src/pipelines/pipeline.sh
+
+```
 
 ## 🛠️ Other Useful Make Commands.
 
