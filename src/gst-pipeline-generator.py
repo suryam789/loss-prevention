@@ -98,6 +98,11 @@ def build_gst_element(cfg):
         # Always use the precision from the current step config
         model_path, label_path, proc_path = download_model_if_missing(model, "gvaclassify", cfg.get("precision", ""))
         elem = f"gvaclassify {name_str} batch-size={BATCH_SIZE} model={model_path} device={device} labels={label_path} model-proc={proc_path} {CLASSIFICATION_PRE_PROCESS}"
+    elif cfg["type"] == "gvapython":
+        # Support for gvapython custom python module
+        module = cfg.get("module", "src/custom_reid.py")
+        function = cfg.get("function", "assign_person_id")
+        elem = f"gvapython module={module} function={function}"
     elif cfg["type"] in ["gvatrack", "gvaattachroi", "gvametaconvert", "gvametapublish", "gvawatermark", "gvafpscounter", "fpsdisplaysink", "queue", "videoconvert", "decodebin", "filesrc", "fakesink"]:
         # These are valid GStreamer elements that may not need model/device
         elem = cfg["type"]

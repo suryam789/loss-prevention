@@ -56,7 +56,8 @@
         "precision": "INT8"
       }
     ],
-    "hidden_items": [
+
+    "sweet_heartening_obj": [
       {
         "type": "gvadetect",
         "model": "yolo11n",
@@ -68,6 +69,26 @@
         "model": "efficientnet-v2-b0",
         "device": "CPU",
         "precision": "INT8"
+      }
+    ],
+
+    "sweet_heartening_face": [
+      {
+        "type": "gvadetect",
+        "model": "face-detection-retail-0004",
+        "device": "CPU",
+        "precision": "FP16"
+      },
+      {
+        "type": "gvaclassify",
+        "model": "face-reidentification-retail-0095",
+        "device": "CPU",
+        "precision": "FP16"
+      },
+      {
+        "type": "gvapython",
+        "module": "src/custom_reid.py",
+        "function": "assign_person_id"
       }
     ]
   }
