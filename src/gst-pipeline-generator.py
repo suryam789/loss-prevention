@@ -188,8 +188,8 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
         detect_count = 1
         classify_count = 1
         for i, step in enumerate(steps):
-            # Get env vars for each step's device
-            step_env_vars = get_env_vars_for_device(step["device"])
+            # Get env vars for each step's device, if present
+            step_env_vars = get_env_vars_for_device(step["device"]) if "device" in step else {}
             # Do not add gvaattachroi if no region_of_interest
             # (was: if not rois and i == 0 and step["type"] in inference_types: pipeline += " ! gvaattachroi")
             if step["type"] == "gvadetect":

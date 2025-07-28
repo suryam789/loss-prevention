@@ -77,23 +77,26 @@ class ConfigValidator:
         if not isinstance(model_config, dict):
             self.add_error(f"Invalid model configuration in {context}: expected object, got {type(model_config).__name__}")
             return 0
-        
+
+        # If type is gvapython, skip all checks
+        if 'type' in model_config and str(model_config['type']).strip().lower() == 'gvapython':
+            return 1
+
         for field in required_fields:
             if field not in model_config:
                 self.add_error(f"Missing required field '{field}' in {context}")
                 return 0
-            
             value = model_config[field]
             if not isinstance(value, str) or not value.strip():
                 # Provide specific error messages for device and precision fields
                 if field == 'device':
                     self.add_error(f"Field 'device' must be a non-empty string in {context}. Supported values: CPU, GPU, NPU, GPU.1")
                 elif field == 'precision':
-                    self.add_error(f"Field 'precision' must be a non-empty string in {context}. Supported values: INT8, FP16, FP32")
+                    self.add_error(f"Field 'precision' must be a non-empty string in {context}. Supported values: INT8, FP16, FP32, FP16-INT8")
                 else:
                     self.add_error(f"Field '{field}' must be a non-empty string in {context}")
                 return 0
-        
+
         # Additional validation for device field - must be CPU, GPU, or NPU
         if 'device' in model_config:
             device_value = model_config['device'].strip().upper()
@@ -101,15 +104,15 @@ class ConfigValidator:
             if device_value not in valid_devices:
                 self.add_error(f"Invalid device value '{model_config['device']}' in {context}. Supported values: {', '.join(valid_devices)}")
                 return 0
-        
+
         # Additional validation for precision field - must be INT8, FP16, or FP32
         if 'precision' in model_config:
             precision_value = model_config['precision'].strip().upper()
-            valid_precisions = ['INT8', 'FP16', 'FP32']
+            valid_precisions = ['INT8', 'FP16', 'FP32', 'FP16-INT8']
             if precision_value not in valid_precisions:
                 self.add_error(f"Invalid precision value '{model_config['precision']}' in {context}. Supported values: {', '.join(valid_precisions)}")
                 return 0
-        
+
         return 1
     
     def validate_camera_config(self, config_path: str) -> bool:

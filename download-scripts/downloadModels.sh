@@ -88,19 +88,24 @@ for TYPE_KEY in "${!TYPE_MODELS[@]}"; do
                     echo "[INFO] ###### Model $MODEL_NAME with precision $PRECISION already exists at $MODEL_XML_PATH, skipping download."
                     continue
                 fi
-                echo "[INFO] ######  Downloading and converting model: $MODEL_NAME"
-                python3 "$SCRIPT_BASE_PATH/model_convert.py" export_yolo "$MODEL_NAME" "$MODELS_PATH"
-                # Quantize if needed
-                quant_dataset="$MODELS_PATH/datasets/coco128.yaml"
-                if [ ! -f "$quant_dataset" ]; then
-                    mkdir -p "$(dirname "$quant_dataset")"
-                    wget --no-check-certificate --timeout=30 --tries=2 "https://raw.githubusercontent.com/ultralytics/ultralytics/v8.1.0/ultralytics/cfg/datasets/coco128.yaml" -O "$quant_dataset"
+                # If model is a face model, call face-model-download.sh, else use model_convert.py
+                if [[ "$MODEL_NAME" == face-detection-retail-* ]]; then
+                    echo "[INFO] ######  Downloading face model: $MODEL_NAME using face-model-download.sh"
+                    "$SCRIPT_BASE_PATH/face-model-download.sh" "$MODEL_NAME" "$MODELS_PATH/object_detection"
+                else
+                    echo "[INFO] ######  Downloading and converting model: $MODEL_NAME"
+                    python3 "$SCRIPT_BASE_PATH/model_convert.py" export_yolo "$MODEL_NAME" "$MODELS_PATH"
+                    # Quantize if needed
+                    quant_dataset="$MODELS_PATH/datasets/coco128.yaml"
+                    if [ ! -f "$quant_dataset" ]; then
+                        mkdir -p "$(dirname "$quant_dataset")"
+                        wget --no-check-certificate --timeout=30 --tries=2 "https://raw.githubusercontent.com/ultralytics/ultralytics/v8.1.0/ultralytics/cfg/datasets/coco128.yaml" -O "$quant_dataset"
+                    fi
+                    python3 "$SCRIPT_BASE_PATH/model_convert.py" quantize_yolo "$MODEL_NAME" "$quant_dataset" "$MODELS_PATH"
                 fi
-                python3 "$SCRIPT_BASE_PATH/model_convert.py" quantize_yolo "$MODEL_NAME" "$quant_dataset" "$MODELS_PATH"
                 ;;
             gvaclassify|object_classification)
                 echo "[INFO] ######  Downloading and converting object classification model: $MODEL_NAME"
-                
                 # Get precision from workload_to_pipeline.json for this model
                 PRECISION=$(jq -r --arg model "$MODEL_NAME" '
                   .workload_pipeline_map[] | 
@@ -108,22 +113,24 @@ for TYPE_KEY in "${!TYPE_MODELS[@]}"; do
                   select(.model == $model and .type == "gvaclassify") | 
                   .precision // "INT8"
                 ' "$CONFIG_JSON" | head -1)
-                
                 # Default to INT8 if no precision found
                 if [[ -z "$PRECISION" || "$PRECISION" == "null" ]]; then
                     PRECISION="INT8"
                 fi
-                
                 echo "[INFO] ########### Using precision: $PRECISION for model: $MODEL_NAME #########"
-                
                 # Check if model already exists with the specified precision
                 MODEL_XML_PATH="$MODELS_PATH/object_classification/$MODEL_NAME/$PRECISION/$MODEL_NAME.xml"
                 if [ -f "$MODEL_XML_PATH" ]; then
                     echo "[INFO] ###### Model $MODEL_NAME with precision $PRECISION already exists at $MODEL_XML_PATH, skipping download."
                     continue
                 fi
-                
-                python3 "$SCRIPT_BASE_PATH/efnetv2b0_download_quant.py" "$MODEL_NAME" "$MODELS_PATH"
+                # If model is a face reidentification model, call face-model-download.sh, else use efnetv2b0_download_quant.py
+                if [[ "$MODEL_NAME" == face-reidentification-retail-* ]]; then
+                    echo "[INFO] ######  Downloading face reidentification model: $MODEL_NAME using face-model-download.sh"
+                    "$SCRIPT_BASE_PATH/face-model-download.sh" "$MODEL_NAME" "$MODELS_PATH/object_classification"
+                else
+                    python3 "$SCRIPT_BASE_PATH/efnetv2b0_download_quant.py" "$MODEL_NAME" "$MODELS_PATH"
+                fi
                 ;;
             face_detection)
                 python3 "$SCRIPT_BASE_PATH/model_convert.py" face_detection "$MODEL_NAME" "$MODELS_PATH"

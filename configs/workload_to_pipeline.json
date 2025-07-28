@@ -77,13 +77,13 @@
         "type": "gvadetect",
         "model": "face-detection-retail-0004",
         "device": "CPU",
-        "precision": "FP16"
+        "precision": "FP16-INT8"
       },
       {
         "type": "gvaclassify",
         "model": "face-reidentification-retail-0095",
         "device": "CPU",
-        "precision": "FP16"
+        "precision": "FP16-INT8"
       },
       {
         "type": "gvapython",
