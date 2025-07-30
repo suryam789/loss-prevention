@@ -132,10 +132,9 @@ for TYPE_KEY in "${!TYPE_MODELS[@]}"; do
                     python3 "$SCRIPT_BASE_PATH/efnetv2b0_download_quant.py" "$MODEL_NAME" "$MODELS_PATH"
                 fi
                 ;;
-            face_detection)
-                python3 "$SCRIPT_BASE_PATH/model_convert.py" face_detection "$MODEL_NAME" "$MODELS_PATH"
-                ;;
-            *)
+            gvainference|object_classification)
+                echo "[INFO] ######  Downloading face reidentification model: $MODEL_NAME using face-model-download.sh"
+                "$SCRIPT_BASE_PATH/face-model-download.sh" "$MODEL_NAME" "$MODELS_PATH/object_classification"
                 echo "[WARN] Unsupported type: $TYPE_KEY, skipping..."
                 ;;
         esac

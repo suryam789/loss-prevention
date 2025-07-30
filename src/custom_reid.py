@@ -1,34 +1,42 @@
-import numpy as np
+import json
+from gstgva import VideoFrame
 
-gallery = []
-ids = []
-next_id = 1
+class ReIDHandler:
+    def __init__(self):
+        self.person_id_counter = 0
 
-# This function will be called by gvapython for each frame
-# frame_meta is a GVA FrameMeta object
-# buffer is the GStreamer buffer
+    def process_frame(self, frame: VideoFrame) -> bool:
+        output = {
+            "objects": [],
+            "resolution": {
+                "height": frame.video_info().height,
+                "width": frame.video_info().width
+            },
+            #"timestamp": frame._gst_buffer.pts  # in nanoseconds
+        }
 
-def assign_person_id(buffer, frame_meta):
-    global gallery, ids, next_id
-    for obj in frame_meta.objects:
-        # Check for embedding (from gvaclassify)
-        emb = getattr(obj, 'embedding', None)
-        if emb is not None:
-            emb = np.array(emb)
-            # Compare with gallery
-            if len(gallery) > 0:
-                sims = [np.dot(emb, g) / (np.linalg.norm(emb) * np.linalg.norm(g)) for g in gallery]
-                max_sim = max(sims)
-                if max_sim > 0.8:
-                    obj.person_id = ids[sims.index(max_sim)]
-                else:
-                    obj.person_id = next_id
-                    gallery.append(emb)
-                    ids.append(next_id)
-                    next_id += 1
-            else:
-                obj.person_id = next_id
-                gallery.append(emb)
-                ids.append(next_id)
-                next_id += 1
-    return True
+        for roi in frame.regions():
+            detection = {
+                "detection": {
+                    "bounding_box": {
+                        "x_min": roi.bbox().x,
+                        "y_min": roi.bbox().y,
+                        "x_max": roi.bbox().x + roi.bbox().w,
+                        "y_max": roi.bbox().y + roi.bbox().h,
+                    },
+                    "confidence": roi.confidence(),
+                    "label_id": roi.label_id()
+                },
+                "id": roi.object_id(),
+                "region_id": roi.region_id(),
+                "x": roi.bbox().x,
+                "y": roi.bbox().y,
+                "w": roi.bbox().w,
+                "h": roi.bbox().h
+            }
+            output["objects"].append(detection)
+
+        print(json.dumps(output))  # or write to .jsonl file
+        return True
+
+

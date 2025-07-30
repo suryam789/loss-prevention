@@ -4,8 +4,6 @@
       { 
         "camera_id": "cam1",
         "fps": 15,
-        "width": 1080,
-        "height": 1920,
         "fileSrc":"face-detection-32658421.mp4|https://videos.pexels.com/video-files/5207408/5207408-hd_1920_1080_25fps.mp4", 
         "workloads": ["sweet_heartening_face"]
         

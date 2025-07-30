@@ -29,6 +29,11 @@ def download_model_if_missing(model_name, model_type=None, precision=None):
     if model_type == "gvadetect":
         precision_lower = precision.lower()
         return f"{MODELSERVER_MODELS_DIR}/object_detection/{model_name}/{precision}/{model_name}.xml"
+    elif model_type == "gvainference":
+        base_path = f"{MODELSERVER_MODELS_DIR}/object_classification/{model_name}"
+        model_path = f"{base_path}/{precision}/{model_name}.xml"
+        proc_path = f"{base_path}/{model_name}.json"
+        return model_path, proc_path
     elif model_type == "gvaclassify":
         base_path = f"{MODELSERVER_MODELS_DIR}/object_classification/{model_name}"
         model_path = f"{base_path}/{precision}/{model_name}.xml"
@@ -72,39 +77,56 @@ def get_env_vars_for_device(device):
     return dotenv_values(env_file)
 
 def build_gst_element(cfg):
-    model = cfg["model"]
-    device = cfg["device"]
+    model = cfg.get("model")
+    device = cfg.get("device")
     precision = cfg.get("precision", "")
     workload_name = cfg.get("workload_name")
     camera_id = cfg.get("camera_id", "")
     # Load env vars for this device
-    env_vars = get_env_vars_for_device(device)
+    env_vars = get_env_vars_for_device(device) if device else {}
     DECODE = env_vars.get("DECODE") or "decodebin"
     PRE_PROCESS = env_vars.get("PRE_PROCESS", "")
     DETECTION_OPTIONS = env_vars.get("DETECTION_OPTIONS", "")
     PRE_PROCESS_CONFIG = env_vars.get("PRE_PROCESS_CONFIG", "")
     BATCH_SIZE = env_vars.get("BATCH_SIZE", 1)
     CLASSIFICATION_PRE_PROCESS = env_vars.get("CLASSIFICATION_PRE_PROCESS", "")
+    CAPS = env_vars.get("CAPS", "")
     # Add inference-region=1 if region_of_interest is present in cfg (from camera_to_workload.json)
     inference_region = ""
-    name_str = f"name={workload_name}_{camera_id}" if workload_name and camera_id and cfg["type"] == "gvadetect" else ""
-    if cfg["type"] == "gvadetect" and cfg.get("region_of_interest") is not None:
-        inference_region = " inference-region=1"
+    # For name assignment
+    name_str = ""
+    if cfg["type"] == "gvadetect":
+        # Use fdX for face-detection, else detectX
+        if "face-detection" in (model or ""):
+            name_str = f"name=fd{camera_id}"
+        else:
+            name_str = f"name=detect{camera_id}"
+    elif cfg["type"] == "gvaclassify":
+        if "reidentification" in (model or ""):
+            name_str = f"name=reid{camera_id}"
+        else:
+            name_str = f"name=cls{camera_id}"
+
     if cfg["type"] == "gvadetect":
         # Always use the precision from the current step config
-        model_path = download_model_if_missing(model, "gvadetect", cfg.get("precision", ""))
+        model_path = download_model_if_missing(model, "gvadetect", precision)
         elem = f"gvadetect {name_str} batch-size={BATCH_SIZE} {inference_region} model={model_path} device={device} {PRE_PROCESS} {DETECTION_OPTIONS} {PRE_PROCESS_CONFIG}"
     elif cfg["type"] == "gvaclassify":
-        # Always use the precision from the current step config
-        model_path, label_path, proc_path = download_model_if_missing(model, "gvaclassify", cfg.get("precision", ""))
-        elem = f"gvaclassify {name_str} batch-size={BATCH_SIZE} model={model_path} device={device} labels={label_path} model-proc={proc_path} {CLASSIFICATION_PRE_PROCESS}"
+        model_path, label_path, proc_path = download_model_if_missing(model, "gvaclassify", precision)
+        # Only add model-proc and labels if model-proc-label-required is not explicitly false
+        if cfg.get("model-proc-label-required", True) is False:
+            elem = f"gvaclassify {name_str} batch-size={BATCH_SIZE} model={model_path} device={device} {CLASSIFICATION_PRE_PROCESS} ! {CAPS}"
+        else:
+            elem = f"gvaclassify {name_str} batch-size={BATCH_SIZE} model={model_path} device={device} labels={label_path} model-proc={proc_path} {CLASSIFICATION_PRE_PROCESS}"
+    elif cfg["type"] == "gvainference":
+        # Only model-proc, no labels
+        model_path, proc_path = download_model_if_missing(model, "gvainference", precision)
+        elem = f"gvainference  model={model_path} device={device} "
     elif cfg["type"] == "gvapython":
-        # Support for gvapython custom python module
-        module = cfg.get("module", "src/custom_reid.py")
-        function = cfg.get("function", "assign_person_id")
-        elem = f"gvapython module={module} function={function}"
+        module = "custom_reid"
+        function = "process_frame"
+        elem = f"gvapython module={module} class=ReIDHandler  function={function}  "
     elif cfg["type"] in ["gvatrack", "gvaattachroi", "gvametaconvert", "gvametapublish", "gvawatermark", "gvafpscounter", "fpsdisplaysink", "queue", "videoconvert", "decodebin", "filesrc", "fakesink"]:
-        # These are valid GStreamer elements that may not need model/device
         elem = cfg["type"]
     else:
         raise ValueError(f"Unknown or unsupported GStreamer element type: {cfg['type']}")
@@ -164,11 +186,11 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
     pipelines = []
     for idx, (sig, steps) in enumerate(signature_to_steps.items()):
         video_file = signature_to_video[sig]
-        # Get DECODE for the first step's device
-        first_device = steps[0]["device"]
-        first_env_vars = get_env_vars_for_device(first_device)
+        # Get DECODE for the first step's device, if present
+        first_device = steps[0].get("device")
+        first_env_vars = get_env_vars_for_device(first_device) if first_device else {}
         DECODE = first_env_vars.get("DECODE") or "decodebin"
-        pipeline = f"filesrc location={video_file} ! {DECODE} "
+        pipeline = f"filesrc location={video_file} ! {DECODE}  "
         rois = []
         seen_rois = set()
         for step in steps:
@@ -184,30 +206,27 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
             pipeline += f" ! {gvaattachroi_elem} ! queue"
         # Only add gvaattachroi if region_of_interest is present (i.e., rois is not empty)
         # Remove unconditional gvaattachroi for first inference step
-        inference_types = {"gvadetect", "gvaclassify"}
+        inference_types = {"gvadetect", "gvaclassify", "gvainference"}
         detect_count = 1
         classify_count = 1
         for i, step in enumerate(steps):
             # Get env vars for each step's device, if present
             step_env_vars = get_env_vars_for_device(step["device"]) if "device" in step else {}
-            # Do not add gvaattachroi if no region_of_interest
-            # (was: if not rois and i == 0 and step["type"] in inference_types: pipeline += " ! gvaattachroi")
             if step["type"] == "gvadetect":
-                model_instance_id = f"detect{branch_idx+1}_{idx+1}"
                 elem, _ = build_gst_element(step)
-                elem = elem.replace("gvadetect", f"gvadetect model-instance-id={model_instance_id} threshold=0.5")
-                pipeline += f" ! {elem} ! gvatrack tracking-type=zero-term-imageless ! queue"
-                last_added_queue = True
+                pipeline += f" ! {elem} ! gvatrack tracking-type=short-term-imageless "
             elif step["type"] == "gvaclassify":
-                model_instance_id = f"classify{branch_idx+1}_{idx+1}"
                 elem, _ = build_gst_element(step)
-                elem = elem.replace("gvaclassify", f"gvaclassify model-instance-id={model_instance_id}")
                 pipeline += f" ! {elem} "
-                last_added_queue = False
+            elif step["type"] == "gvainference":
+                elem, _ = build_gst_element(step)
+                pipeline += f" ! {elem} "    
+            elif step["type"] == "gvapython":
+                elem, _ = build_gst_element(step)
+                pipeline += f" ! {elem} "
             else:
                 elem, _ = build_gst_element(step)
                 pipeline += f" ! {elem}"
-                last_added_queue = False
             # Only add queue if not just added by gvadetect/gvatrack
             if i < len(steps) - 1:
                 if not (step["type"] == "gvadetect"):

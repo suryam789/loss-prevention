@@ -80,7 +80,7 @@
         "precision": "FP16-INT8"
       },
       {
-        "type": "gvaclassify",
+        "type": "gvainference",
         "model": "face-reidentification-retail-0095",
         "device": "CPU",
         "precision": "FP16-INT8"
@@ -88,7 +88,7 @@
       {
         "type": "gvapython",
         "module": "src/custom_reid.py",
-        "function": "assign_person_id"
+        "function": "process_frame"
       }
     ]
   }

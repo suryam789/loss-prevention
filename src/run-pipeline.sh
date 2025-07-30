@@ -7,7 +7,7 @@
 
 # Get dynamic gst-launch command from Python script
 set -eo pipefail
-
+export PYTHONPATH=/home/pipeline-server/src:$PYTHONPATH
 # Use TIMESTAMP env variable if set, otherwise fallback to date
 cid=$(date +%Y%m%d%H%M%S)$(date +%6N | cut -c1-6)
 export TIMESTAMP=$cid
@@ -66,3 +66,5 @@ echo "GST_DEBUG=\"GST_TRACER:7\" GST_TRACERS='latency_tracer(flags=pipeline)' $g
 eval "GST_DEBUG=\"GST_TRACER:7\" GST_TRACERS='latency_tracer(flags=pipeline)' $gst_cmd"
 
 echo "############# GST COMMAND COMPLETED SUCCESSFULLY #############"
+
+sleep 10m
