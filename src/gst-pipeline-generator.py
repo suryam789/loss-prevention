@@ -125,7 +125,7 @@ def build_gst_element(cfg):
     elif cfg["type"] == "gvapython":
         module = "custom_reid"
         function = "process_frame"
-        elem = f"gvapython module={module} class=ReIDHandler  function={function}  "
+        elem = f"gvapython module={module} function={function}  "
     elif cfg["type"] in ["gvatrack", "gvaattachroi", "gvametaconvert", "gvametapublish", "gvawatermark", "gvafpscounter", "fpsdisplaysink", "queue", "videoconvert", "decodebin", "filesrc", "fakesink"]:
         elem = cfg["type"]
     else:

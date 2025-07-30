@@ -1,42 +1,40 @@
+import uuid
 import json
-from gstgva import VideoFrame
 
-class ReIDHandler:
-    def __init__(self):
-        self.person_id_counter = 0
+frame_counter = 0
 
-    def process_frame(self, frame: VideoFrame) -> bool:
-        output = {
-            "objects": [],
-            "resolution": {
-                "height": frame.video_info().height,
-                "width": frame.video_info().width
+def process_frame(frame):
+    global frame_counter
+    frame_counter += 1
+
+    output = {
+        "event_id": str(uuid.uuid4()),
+        "frame_id": f"frame_{frame_counter:06d}",
+        "station_id": "self_checkout_01",
+        "camera_id": "camera_001",
+        "camera_name": "self_checkout_overhead",
+        "persons": []
+    }
+
+    # Optionally extract regions (ROIs) if available
+    for roi in frame.regions():
+        rect = roi.rect()  # returns normalized bbox
+        output["persons"].append({
+            "bbox": {
+                "x": rect.x,
+                "y": rect.y,
+                "w": rect.w,
+                "h": rect.h
             },
-            #"timestamp": frame._gst_buffer.pts  # in nanoseconds
-        }
+            "confidence": roi.confidence(),
+            "person_id": str(uuid.uuid4())  # or assign based on ReID
+        })
 
-        for roi in frame.regions():
-            detection = {
-                "detection": {
-                    "bounding_box": {
-                        "x_min": roi.bbox().x,
-                        "y_min": roi.bbox().y,
-                        "x_max": roi.bbox().x + roi.bbox().w,
-                        "y_max": roi.bbox().y + roi.bbox().h,
-                    },
-                    "confidence": roi.confidence(),
-                    "label_id": roi.label_id()
-                },
-                "id": roi.object_id(),
-                "region_id": roi.region_id(),
-                "x": roi.bbox().x,
-                "y": roi.bbox().y,
-                "w": roi.bbox().w,
-                "h": roi.bbox().h
-            }
-            output["objects"].append(detection)
-
-        print(json.dumps(output))  # or write to .jsonl file
-        return True
-
-
+    json_line = json.dumps(output)
+    #print(json_line)
+    try:
+        with open("/home/pipeline-server/results/person-data.jsonl", "a") as f:
+            f.write(json_line + "\n")
+    except Exception as e:
+        print(f"[custom_reid] ERROR: Failed to write to /home/pipeline-server/results/person-data.jsonl: {e}")
+    return True

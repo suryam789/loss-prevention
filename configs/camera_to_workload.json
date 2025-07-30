@@ -4,7 +4,7 @@
       { 
         "camera_id": "cam1",
         "fps": 15,
-        "fileSrc":"face-detection-32658421.mp4|https://videos.pexels.com/video-files/5207408/5207408-hd_1920_1080_25fps.mp4", 
+        "fileSrc":"face-detection-4122216.mp4|https://www.pexels.com/download/video/4122216", 
         "workloads": ["sweet_heartening_face"]
         
       }
