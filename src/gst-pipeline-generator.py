@@ -123,8 +123,9 @@ def build_gst_element(cfg):
         model_path, proc_path = download_model_if_missing(model, "gvainference", precision)
         elem = f"gvainference  model={model_path} device={device} "
     elif cfg["type"] == "gvapython":
-        module = "custom_reid"
-        function = "process_frame"
+        # Try to get module and function from cfg (populated from camera_to_workload.json)
+        module = cfg.get("module", "")
+        function = cfg.get("function", "")
         elem = f"gvapython module={module} function={function}  "
     elif cfg["type"] in ["gvatrack", "gvaattachroi", "gvametaconvert", "gvametapublish", "gvawatermark", "gvafpscounter", "fpsdisplaysink", "queue", "videoconvert", "decodebin", "filesrc", "fakesink"]:
         elem = cfg["type"]

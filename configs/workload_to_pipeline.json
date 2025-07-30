@@ -87,7 +87,7 @@
       },
       {
         "type": "gvapython",
-        "module": "src/custom_reid.py",
+        "module": "person_reid.py",
         "function": "process_frame"
       }
     ]

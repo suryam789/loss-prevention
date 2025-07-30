@@ -9,7 +9,7 @@ COPY configs/camera_to_workload.json /home/pipeline-server/configs/camera_to_wor
 COPY models /home/pipeline-server/models
 COPY performance-tools/sample-media /home/pipeline-server/sample-media
 COPY src/run-pipeline.sh scripts/
-COPY src/custom_reid.py /home/pipeline-server/src/
+COPY src/person_reid.py /home/pipeline-server/src/
 COPY src/gst-pipeline-generator.py scripts/
 COPY src/res/* res/
 
