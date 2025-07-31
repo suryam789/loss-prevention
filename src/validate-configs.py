@@ -189,6 +189,17 @@ class ConfigValidator:
         if len(cameras) == 0:
             self.add_error("'cameras' array cannot be empty")
             return False
+
+        # Check for unique camera_id
+        camera_ids = set()
+        for i, camera in enumerate(cameras):
+            cam_id = camera.get('camera_id')
+            if not cam_id or not isinstance(cam_id, str) or not cam_id.strip():
+                self.add_error(f"Missing or empty 'camera_id' in camera[{i}]")
+                continue
+            if cam_id in camera_ids:
+                self.add_error(f"Duplicate 'camera_id' found: '{cam_id}' in camera[{i}]")
+            camera_ids.add(cam_id)
         
         valid_count = 0
         for i, camera in enumerate(cameras):
