@@ -18,13 +18,13 @@
       {        
         "type": "gvadetect",
         "model": "yolo11n",       
-        "device": "CPU",
+        "device": "NPU",
         "precision": "INT8"
       },
       {
         "type": "gvaclassify",
         "model": "efficientnet-v2-b0",
-        "device": "CPU",
+        "device": "NPU",
         "precision": "INT8"
       }
     ],
@@ -46,32 +46,30 @@
       {
         "type": "gvadetect",
         "model": "yolo11n",
-        "device": "CPU",
+        "device": "GPU",
         "precision": "INT8"
       },
       {
         "type": "gvaclassify",
         "model": "efficientnet-v2-b0",
-        "device": "CPU",
+        "device": "GPU",
         "precision": "INT8"
       }
     ],
-
     "hidden_items": [
       {
         "type": "gvadetect",
         "model": "yolo11n",
-        "device": "CPU",
+        "device": "GPU",
         "precision": "INT8"
       },
       {
         "type": "gvaclassify",
         "model": "efficientnet-v2-b0",
-        "device": "CPU",
+        "device": "GPU",
         "precision": "INT8"
       }
     ],
-
     "sweet_heartening": [
       {
         "type": "gvadetect",

@@ -80,10 +80,11 @@ def process_frame(frame):
             "confidence": round(roi.confidence(), 2),
             "person_id": assigned_id
         })
-
+    
+    timestamp = os.environ.get("TIMESTAMP")
     json_line = json.dumps(output)
     # Use camera_id and workload in output filename
-    out_file = f"/home/pipeline-server/results/person-data-{camera_id}-{workload}.jsonl"
+    out_file = f"/home/pipeline-server/results/person-data_{timestamp}.jsonl"
     try:
         with open(out_file, "a") as f:
             f.write(json_line + "\n")
