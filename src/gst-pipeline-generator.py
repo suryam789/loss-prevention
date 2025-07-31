@@ -32,8 +32,7 @@ def download_model_if_missing(model_name, model_type=None, precision=None):
     elif model_type == "gvainference":
         base_path = f"{MODELSERVER_MODELS_DIR}/object_classification/{model_name}"
         model_path = f"{base_path}/{precision}/{model_name}.xml"
-        proc_path = f"{base_path}/{model_name}.json"
-        return model_path, proc_path
+        return model_path
     elif model_type == "gvaclassify":
         base_path = f"{MODELSERVER_MODELS_DIR}/object_classification/{model_name}"
         model_path = f"{base_path}/{precision}/{model_name}.xml"
@@ -90,7 +89,6 @@ def build_gst_element(cfg):
     PRE_PROCESS_CONFIG = env_vars.get("PRE_PROCESS_CONFIG", "")
     BATCH_SIZE = env_vars.get("BATCH_SIZE", 1)
     CLASSIFICATION_PRE_PROCESS = env_vars.get("CLASSIFICATION_PRE_PROCESS", "")
-    CAPS = env_vars.get("CAPS", "")
     # Add inference-region=1 if region_of_interest is present in cfg (from camera_to_workload.json)
     inference_region = ""
     # For name assignment
@@ -109,18 +107,13 @@ def build_gst_element(cfg):
 
     if cfg["type"] == "gvadetect":
         # Always use the precision from the current step config
-        model_path = download_model_if_missing(model, "gvadetect", precision)
+        model_path = download_model_if_missing(model, "gvadetect", cfg.get("precision", ""))
         elem = f"gvadetect {name_str} batch-size={BATCH_SIZE} {inference_region} model={model_path} device={device} {PRE_PROCESS} {DETECTION_OPTIONS} {PRE_PROCESS_CONFIG}"
     elif cfg["type"] == "gvaclassify":
-        model_path, label_path, proc_path = download_model_if_missing(model, "gvaclassify", precision)
-        # Only add model-proc and labels if model-proc-label-required is not explicitly false
-        if cfg.get("model-proc-label-required", True) is False:
-            elem = f"gvaclassify {name_str} batch-size={BATCH_SIZE} model={model_path} device={device} {CLASSIFICATION_PRE_PROCESS} ! {CAPS}"
-        else:
-            elem = f"gvaclassify {name_str} batch-size={BATCH_SIZE} model={model_path} device={device} labels={label_path} model-proc={proc_path} {CLASSIFICATION_PRE_PROCESS}"
+        model_path, label_path, proc_path = download_model_if_missing(model, "gvaclassify", cfg.get("precision", ""))     
+        elem = f"gvaclassify {name_str} batch-size={BATCH_SIZE} model={model_path} device={device} labels={label_path} model-proc={proc_path} {CLASSIFICATION_PRE_PROCESS}"
     elif cfg["type"] == "gvainference":
-        # Only model-proc, no labels
-        model_path, proc_path = download_model_if_missing(model, "gvainference", precision)
+        model_path = download_model_if_missing(model, "gvainference", cfg.get("precision", ""))
         elem = f"gvainference  model={model_path} device={device} "
     elif cfg["type"] == "gvapython":
         # Try to get module and function from cfg (populated from camera_to_workload.json)
@@ -191,7 +184,7 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
         first_device = steps[0].get("device")
         first_env_vars = get_env_vars_for_device(first_device) if first_device else {}
         DECODE = first_env_vars.get("DECODE") or "decodebin"
-        pipeline = f"filesrc location={video_file} ! {DECODE}  "
+        pipeline = f"filesrc location={video_file} ! {DECODE} "
         rois = []
         seen_rois = set()
         for step in steps:
