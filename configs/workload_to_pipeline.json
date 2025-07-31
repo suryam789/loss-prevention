@@ -57,7 +57,7 @@
       }
     ],
 
-    "sweet_heartening_obj": [
+    "hidden_items": [
       {
         "type": "gvadetect",
         "model": "yolo11n",
@@ -72,7 +72,7 @@
       }
     ],
 
-    "sweet_heartening_face": [
+    "sweet_heartening": [
       {
         "type": "gvadetect",
         "model": "face-detection-retail-0004",

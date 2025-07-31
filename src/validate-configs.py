@@ -12,6 +12,40 @@ from typing import Dict, List, Any, Optional
 
 
 class ConfigValidator:
+    def validate_workload_mapping(self, pipeline_config_path: str, camera_config_path: str) -> bool:
+        """Check that all workloads in camera_to_workload.json exist in workload_to_pipeline.json."""
+        print(f"Validating workload mapping between {camera_config_path} and {pipeline_config_path}")
+        # Load pipeline config
+        try:
+            with open(pipeline_config_path, 'r') as f:
+                pipeline_config = json.load(f)
+        except Exception as e:
+            self.add_error(f"Failed to read pipeline config {pipeline_config_path}: {e}")
+            return False
+        # Load camera config
+        try:
+            with open(camera_config_path, 'r') as f:
+                camera_config = json.load(f)
+        except Exception as e:
+            self.add_error(f"Failed to read camera config {camera_config_path}: {e}")
+            return False
+        # Get all valid workload names from pipeline config
+        valid_workloads = set([w.lower() for w in pipeline_config.get('workload_pipeline_map', {}).keys()])
+        # Get all workloads from camera config
+        lane_config = camera_config.get('lane_config', {})
+        cameras = lane_config.get('cameras', [])
+        missing_workloads = set()
+        for i, camera in enumerate(cameras):
+            workloads = camera.get('workloads', [])
+            for w in workloads:
+                if isinstance(w, str) and w.strip():
+                    if w.lower() not in valid_workloads:
+                        missing_workloads.add(w)
+        if missing_workloads:
+            self.add_error(f"Missing pipeline mapping for workload(s): {', '.join(sorted(missing_workloads))}")
+            return False
+        print("SUCCESS: All camera workloads have matching pipeline mappings.")
+        return True
     """Validates configuration files for the loss-prevention pipeline."""
     
     def __init__(self):
@@ -268,11 +302,13 @@ def main():
                        help='Validate only camera configuration')
     parser.add_argument('--validate-all', action='store_true',
                        help='Validate all configurations (default if no specific validation is requested)')
+    parser.add_argument('--validate-workload-mapping', dest='validate_workload_mapping', action='store_true',
+                       help='Validate that all camera workloads have matching pipeline mappings')
     
     args = parser.parse_args()
     
     # Default to validating all if no specific validation is requested
-    if not any([args.validate_pipeline, args.validate_camera, args.validate_all]):
+    if not any([args.validate_pipeline, args.validate_camera, args.validate_all, args.validate_workload_mapping]):
         args.validate_all = True
     
     validator = ConfigValidator()
@@ -283,7 +319,10 @@ def main():
     
     if args.validate_camera or args.validate_all:
         success &= validator.validate_camera_config(args.camera_config)
-    
+
+    if args.validate_workload_mapping:
+        success &= validator.validate_workload_mapping(args.pipeline_config, args.camera_config)
+
     success &= validator.print_results()
     
     sys.exit(0 if success else 1)

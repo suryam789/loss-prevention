@@ -233,10 +233,14 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
                 if not (step["type"] == "gvadetect"):
                     pipeline += " ! queue"
         tee_name = f"t{branch_idx+1}_{idx+1}"
-        results_dir = "/home/pipeline-server/results"
-        out_file = f"{results_dir}/rs-{branch_idx+1}_{idx+1}_{timestamp}.jsonl"
+        has_gvapython = any(step.get("type") == "gvapython" for step in steps)
         pipeline += f" ! gvametaconvert format=json ! tee name={tee_name} "
-        pipeline += f"    {tee_name}. ! queue ! gvametapublish method=file file-path={out_file} ! gvafpscounter ! fakesink sync=false async=false "
+        if not has_gvapython:
+            results_dir = "/home/pipeline-server/results"
+            out_file = f"{results_dir}/rs-{branch_idx+1}_{idx+1}_{timestamp}.jsonl"
+            pipeline += f"    {tee_name}. ! queue ! gvametapublish method=file file-path={out_file} ! gvafpscounter ! fakesink sync=false async=false "
+        else:
+            pipeline += f"    {tee_name}. ! queue ! gvafpscounter ! fakesink sync=false async=false "
         render_mode = os.environ.get("RENDER_MODE", "0")
         if render_mode == "1":
             pipeline += f"    {tee_name}. ! queue ! gvawatermark ! videoconvert ! fpsdisplaysink video-sink=autovideosink text-overlay=true signal-fps-measurements=true"
