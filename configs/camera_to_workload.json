@@ -42,12 +42,6 @@
           "x2": 1300,
           "y2": 1085
         }
-      },
-      { 
-        "camera_id": "cam4",
-        "fps": 15,
-        "fileSrc":"face-detection-3249935.mp4|https://www.pexels.com/download/video/3249935/", 
-        "workloads": ["sweet_heartening"]        
       }
     ]
   }
