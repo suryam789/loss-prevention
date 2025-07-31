@@ -100,6 +100,7 @@ def build_gst_element(cfg):
         model_path = download_model_if_missing(model, "gvadetect", cfg.get("precision", ""))
         elem = f"gvadetect {name_str} batch-size={BATCH_SIZE} {inference_region} model={model_path} device={device} {PRE_PROCESS} {DETECTION_OPTIONS} {PRE_PROCESS_CONFIG}"
     elif cfg["type"] == "gvaclassify":
+        # Always use the precision from the current step config
         model_path, label_path, proc_path = download_model_if_missing(model, "gvaclassify", cfg.get("precision", ""))     
         elem = f"gvaclassify {name_str} batch-size={BATCH_SIZE} model={model_path} device={device} labels={label_path} model-proc={proc_path} {CLASSIFICATION_PRE_PROCESS}"
     elif cfg["type"] == "gvainference":
