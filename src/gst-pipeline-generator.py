@@ -90,20 +90,10 @@ def build_gst_element(cfg):
     BATCH_SIZE = env_vars.get("BATCH_SIZE", 1)
     CLASSIFICATION_PRE_PROCESS = env_vars.get("CLASSIFICATION_PRE_PROCESS", "")
     # Add inference-region=1 if region_of_interest is present in cfg (from camera_to_workload.json)
-    inference_region = ""
-    # For name assignment
-    name_str = ""
-    if cfg["type"] == "gvadetect":
-        # Use fdX for face-detection, else detectX
-        if "face-detection" in (model or ""):
-            name_str = f"name=fd{camera_id}"
-        else:
-            name_str = f"name=detect{camera_id}"
-    elif cfg["type"] == "gvaclassify":
-        if "reidentification" in (model or ""):
-            name_str = f"name=reid{camera_id}"
-        else:
-            name_str = f"name=cls{camera_id}"
+    inference_region = ""   
+    name_str = f"name={workload_name}_{camera_id}" if workload_name and camera_id and cfg["type"] == "gvadetect" else ""
+    if cfg["type"] == "gvadetect" and cfg.get("region_of_interest") is not None:
+        inference_region = " inference-region=1"
 
     if cfg["type"] == "gvadetect":
         # Always use the precision from the current step config
@@ -207,20 +197,29 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
             # Get env vars for each step's device, if present
             step_env_vars = get_env_vars_for_device(step["device"]) if "device" in step else {}
             if step["type"] == "gvadetect":
+                model_instance_id = f"detect{branch_idx+1}_{idx+1}"
                 elem, _ = build_gst_element(step)
-                pipeline += f" ! {elem} ! gvatrack tracking-type=short-term-imageless "
+                elem = elem.replace("gvadetect", f"gvadetect model-instance-id={model_instance_id} threshold=0.5")
+                pipeline += f" ! {elem} ! gvatrack tracking-type=zero-term-imageless ! queue"
+                last_added_queue = True
             elif step["type"] == "gvaclassify":
+                model_instance_id = f"classify{branch_idx+1}_{idx+1}"
                 elem, _ = build_gst_element(step)
+                elem = elem.replace("gvaclassify", f"gvaclassify model-instance-id={model_instance_id}")
                 pipeline += f" ! {elem} "
+                last_added_queue = True
             elif step["type"] == "gvainference":
                 elem, _ = build_gst_element(step)
                 pipeline += f" ! {elem} "    
+                last_added_queue = True
             elif step["type"] == "gvapython":
                 elem, _ = build_gst_element(step)
                 pipeline += f" ! {elem} "
+                last_added_queue = False
             else:
                 elem, _ = build_gst_element(step)
                 pipeline += f" ! {elem}"
+                last_added_queue = False
             # Only add queue if not just added by gvadetect/gvatrack
             if i < len(steps) - 1:
                 if not (step["type"] == "gvadetect"):
