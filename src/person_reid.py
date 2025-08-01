@@ -2,6 +2,7 @@
 import uuid
 import json
 import math
+import os
 
 frame_counter = 0
 # In-memory person DB: {person_id: bbox}
@@ -23,16 +24,14 @@ def process_frame(frame):
     global frame_counter, person_db
     frame_counter += 1
 
-    # Load camera_id and workload from camera_to_workload.json
-    import os
-    import json as js
+    # Load camera_id and workload from camera_to_workload.json    
     camera_id = "camera_001"
     workload = "unknown"
     config_path = "/home/pipeline-server/configs/camera_to_workload.json"
     if os.path.exists(config_path):
         try:
             with open(config_path, "r") as f:
-                config = js.load(f)
+                config = json.load(f)
             # Assume lane_config->cameras is a list of dicts with camera_id and workloads
             cameras = config.get("lane_config", {}).get("cameras", [])
             if cameras:
