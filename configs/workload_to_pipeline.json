@@ -9,7 +9,7 @@
       },
       {
         "type": "gvaclassify",
-        "model": "efficientnet-v2-b0",
+        "model": "efficientnet-b0",
         "device": "CPU",
         "precision": "INT8"
       }
@@ -23,7 +23,7 @@
       },
       {
         "type": "gvaclassify",
-        "model": "efficientnet-v2-b0",
+        "model": "efficientnet-b0",
         "device": "NPU",
         "precision": "INT8"
       }
@@ -37,7 +37,7 @@
       },
       {
         "type": "gvaclassify",
-        "model": "efficientnet-v2-b0",
+        "model": "efficientnet-b0",
         "device": "CPU",
         "precision": "INT8"
       }
@@ -51,7 +51,7 @@
       },
       {
         "type": "gvaclassify",
-        "model": "efficientnet-v2-b0",
+        "model": "efficientnet-b0",
         "device": "GPU",
         "precision": "INT8"
       }
@@ -65,7 +65,7 @@
       },
       {
         "type": "gvaclassify",
-        "model": "efficientnet-v2-b0",
+        "model": "efficientnet-b0",
         "device": "GPU",
         "precision": "INT8"
       }
