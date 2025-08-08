@@ -122,7 +122,8 @@ for TYPE_KEY in "${!TYPE_MODELS[@]}"; do
                 echo "[INFO] ######  Downloading face reidentification model: $MODEL_NAME using face-model-download.sh"
                 "$SCRIPT_BASE_PATH/face-model-download.sh" "$MODEL_NAME" "$MODELS_PATH/object_classification"
             else
-                python3 "$SCRIPT_BASE_PATH/efnetv2b0_download_quant.py" "$MODEL_NAME" "$MODELS_PATH"
+                # python3 "$SCRIPT_BASE_PATH/efnetv2b0_download_quant.py" "$MODEL_NAME" "$MODELS_PATH"
+                python3 "$SCRIPT_BASE_PATH/effnetb0_download.py" "$MODEL_NAME" "$MODELS_PATH"
             fi
         elif [[ "$TYPE_KEY" == "gvainference" ]]; then
             echo "[INFO] ######  Downloading face reidentification model: $MODEL_NAME using face-model-download.sh"
