@@ -9,6 +9,7 @@ import sys
 import argparse
 from pathlib import Path
 from typing import Dict, List, Any, Optional
+import os
 
 
 class ConfigValidator:
@@ -300,12 +301,14 @@ class ConfigValidator:
 
 def main():
     """Main function to run configuration validation."""
+    camera_stream = os.environ.get("CAMERA_STREAM", "camera_to_workload.json")
+    workload_dist = os.environ.get("WORKLOAD_DIST", "workload_to_pipeline.json")
     parser = argparse.ArgumentParser(description='Validate loss-prevention configuration files')
     parser.add_argument('--pipeline-config', 
-                       default='configs/workload_to_pipeline.json',
+                       default=f'configs/{workload_dist}',
                        help='Path to workload_to_pipeline.json (default: configs/workload_to_pipeline.json)')
     parser.add_argument('--camera-config', 
-                       default='configs/camera_to_workload.json',
+                       default=f'configs/{camera_stream}',
                        help='Path to camera_to_workload.json (default: configs/camera_to_workload.json)')
     parser.add_argument('--validate-pipeline', action='store_true',
                        help='Validate only pipeline configuration')
@@ -317,7 +320,10 @@ def main():
                        help='Validate that all camera workloads have matching pipeline mappings')
     
     args = parser.parse_args()
-    
+
+    print(f"Using camera config file: {camera_stream}")
+    print(f"Using workload config file: {workload_dist}")
+
     # Default to validating all if no specific validation is requested
     if not any([args.validate_pipeline, args.validate_camera, args.validate_all, args.validate_workload_mapping]):
         args.validate_all = True
