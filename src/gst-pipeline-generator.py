@@ -5,10 +5,10 @@ import copy
 from datetime import datetime
 from dotenv import dotenv_values
 
-WORKLOAD_DISTRI = os.environ.get("WORKLOAD_DISTRI", "workload_to_pipeline.json")
+WORKLOAD_DIST = os.environ.get("WORKLOAD_DIST", "workload_to_pipeline.json")
 CAMERA_STREAM = os.environ.get("CAMERA_STREAM", "camera_to_workload.json")
 CONFIG_CAMERA_TO_WORKLOAD = f"/home/pipeline-server/configs/{CAMERA_STREAM}"
-CONFIG_WORKLOAD_TO_PIPELINE = f"/home/pipeline-server/configs/{WORKLOAD_DISTRI}"
+CONFIG_WORKLOAD_TO_PIPELINE = f"/home/pipeline-server/configs/{WORKLOAD_DIST}"
 
 
 MODELSERVER_DIR = "/home/pipeline-server"

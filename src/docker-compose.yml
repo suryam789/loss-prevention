@@ -14,7 +14,7 @@ services:
       - http_proxy=${http_proxy}
       - https_proxy=${https_proxy}
       - MODELS_DIR=/workspace/models
-      - WORKLOAD_DISTRI=${WORKLOAD_DISTRI:-workload_to_pipeline.json}
+      - WORKLOAD_DIST=${WORKLOAD_DIST:-workload_to_pipeline.json}
     volumes:
       - ../models:/workspace/models
       - ../configs:/workspace/configs
@@ -40,7 +40,7 @@ services:
       - RENDER_MODE=${RENDER_MODE:-0}    
       - CONTAINER_NAME=${CONTAINER_NAME}  
       - CAMERA_STREAM=${CAMERA_STREAM:-camera_to_workload.json}
-      - WORKLOAD_DISTRI=${WORKLOAD_DISTRI:-workload_to_pipeline.json}
+      - WORKLOAD_DIST=${WORKLOAD_DIST:-workload_to_pipeline.json}
     volumes:
       - ../models:/home/pipeline-server/models
       - ../performance-tools/sample-media:/home/pipeline-server/sample-media

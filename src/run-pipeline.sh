@@ -6,13 +6,13 @@
 #
 
 CAMERA_STREAM="${CAMERA_STREAM:-camera_to_workload.json}"
-WORKLOAD_DISTRI="${WORKLOAD_DISTRI:-workload_to_pipeline.json}"
+WORKLOAD_DIST="${WORKLOAD_DIST:-workload_to_pipeline.json}"
 
 echo "################# Using camera config: $CAMERA_STREAM ###################"
-echo "################# Using workload config: $WORKLOAD_DISTRI ###################"
+echo "################# Using workload config: $WORKLOAD_DIST ###################"
 
 # Pass both environment variables to the pipeline generator
-CAMERA_STREAM="$CAMERA_STREAM" WORKLOAD_DISTRI="$WORKLOAD_DISTRI" python3 /home/pipeline-server/scripts/gst-pipeline-generator.py
+CAMERA_STREAM="$CAMERA_STREAM" WORKLOAD_DIST="$WORKLOAD_DIST" python3 /home/pipeline-server/scripts/gst-pipeline-generator.py
 
 
 # Get dynamic gst-launch command from Python script

@@ -13,7 +13,7 @@ DENSITY_INCREMENT ?= 1
 MKDOCS_IMAGE ?= asc-mkdocs
 RESULTS_DIR ?= $(PWD)/benchmark
 CAMERA_STREAM ?= camera_to_workload.json
-WORKLOAD_DISTRI ?= workload_to_pipeline.json
+WORKLOAD_DIST ?= workload_to_pipeline.json
 
 download-models:
 	@echo ".....Downloading models....."
@@ -37,7 +37,7 @@ run-model-downloader:
 		-e http_proxy=${HTTP_PROXY} \
 		-e https_proxy=${HTTPS_PROXY} \
 		-e MODELS_DIR=/workspace/models \
-		-e WORKLOAD_DISTRI=${WORKLOAD_DISTRI} \
+		-e WORKLOAD_DIST=${WORKLOAD_DIST} \
 		-v "$(shell pwd)/models:/workspace/models" \
         -v "$(shell pwd)/configs:/workspace/configs" \
 		model-downloader:lp
@@ -98,10 +98,10 @@ run-render-mode:
 	fi
 	@echo "Using DISPLAY=$(DISPLAY)"
 	@echo "Using config file: configs/$(CAMERA_STREAM)"
-	@echo "Using workload config: configs/$(WORKLOAD_DISTRI)"
+	@echo "Using workload config: configs/$(WORKLOAD_DIST)"
 	@xhost +local:docker
 	docker compose -f src/docker-compose.yml build pipeline-runner
-	@RENDER_MODE=1 CAMERA_STREAM=$(CAMERA_STREAM) WORKLOAD_DISTRI=$(WORKLOAD_DISTRI) docker compose -f src/docker-compose.yml up -d
+	@RENDER_MODE=1 CAMERA_STREAM=$(CAMERA_STREAM) WORKLOAD_DIST=$(WORKLOAD_DIST) docker compose -f src/docker-compose.yml up -d
 	$(MAKE) clean-images
 
 benchmark-stream-density: build-benchmark download-models
@@ -169,11 +169,11 @@ clean-docs:
 	rm -rf docs/
 
 validate_workload_mapping:
-	python3 src/validate-configs.py --validate-workload-mapping --camera-config configs/$(CAMERA_STREAM) --pipeline-config configs/$(WORKLOAD_DISTRI)
+	python3 src/validate-configs.py --validate-workload-mapping --camera-config configs/$(CAMERA_STREAM) --pipeline-config configs/$(WORKLOAD_DIST)
 
 validate-pipeline-config:
 	@echo "Validating pipeline configuration..."
-	@python3 src/validate-configs.py --validate-pipeline --pipeline-config configs/$(WORKLOAD_DISTRI)
+	@python3 src/validate-configs.py --validate-pipeline --pipeline-config configs/$(WORKLOAD_DIST)
 
 validate-camera-config:
 	@echo "Validating camera configuration..."
