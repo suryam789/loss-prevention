@@ -6,10 +6,12 @@
 
 # Useful for local testing
 
-FROM python:3-slim
+FROM python@sha256:72e38274c5494544a4dbeb1424dfff390892d004200424b903d47d0c0709c05d
 RUN apt-get update && apt-get install --no-install-recommends -y git \
-  && pip install mkdocs "mkdocs-material>=8.2" "mkdocs-htmlproofer-plugin>=0.8" "mkdocs-swagger-ui-tag" && \
+  && pip install mkdocs==1.6.1 --hash=sha256:db91759624d1647f3f34aa0c3f327dd2601beae39a366d6e064c03468d35c20e\
+ "mkdocs-material>=8.2 --hash=sha256:f0c51d7b91b159ca811503a6b3391b36b48f576d" "mkdocs-htmlproofer-plugin>=0.8 --hash=sha256:0b53a208d18428c6f1e9e949e1545f5d39affbb8" "mkdocs-swagger-ui-tag --hash=sha256:e4a1019c96ef333ec4dab0ef7d80068a345c7526a87fe8718f18852ee5ad34a5" && \
   rm -rf /var/lib/apt/lists/*
 EXPOSE 8000
 ENTRYPOINT ["mkdocs"]
 CMD ["serve", "--dev-addr=0.0.0.0:8000"]
+
