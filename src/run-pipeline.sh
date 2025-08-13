@@ -5,6 +5,16 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+CAMERA_STREAM="${CAMERA_STREAM:-camera_to_workload.json}"
+WORKLOAD_DIST="${WORKLOAD_DIST:-workload_to_pipeline.json}"
+
+echo "################# Using camera config: $CAMERA_STREAM ###################"
+echo "################# Using workload config: $WORKLOAD_DIST ###################"
+
+# Pass both environment variables to the pipeline generator
+CAMERA_STREAM="$CAMERA_STREAM" WORKLOAD_DIST="$WORKLOAD_DIST" python3 /home/pipeline-server/scripts/gst-pipeline-generator.py
+
+
 # Get dynamic gst-launch command from Python script
 set -eo pipefail
 export PYTHONPATH=/home/pipeline-server/src:$PYTHONPATH

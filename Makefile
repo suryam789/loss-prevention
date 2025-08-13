@@ -12,6 +12,8 @@ CONTAINER_NAMES ?= gst0
 DENSITY_INCREMENT ?= 1
 MKDOCS_IMAGE ?= asc-mkdocs
 RESULTS_DIR ?= $(PWD)/benchmark
+CAMERA_STREAM ?= camera_to_workload.json
+WORKLOAD_DIST ?= workload_to_pipeline.json
 
 download-models:
 	@echo ".....Downloading models....."
@@ -19,8 +21,8 @@ download-models:
 	$(MAKE) run-model-downloader
 
 download-sample-videos: | validate-camera-config
-	@echo "Downloading and formatting videos for all cameras in camera_to_workload.json..."
-	python3 download-scripts/download-video.py --camera-config configs/camera_to_workload.json --format-script performance-tools/benchmark-scripts/format_avc_mp4.sh
+	@echo "Downloading and formatting videos for all cameras in $(CAMERA_STREAM)..."
+	python3 download-scripts/download-video.py --camera-config configs/$(CAMERA_STREAM) --format-script performance-tools/benchmark-scripts/format_avc_mp4.sh
 
 build-model-downloader: | validate-pipeline-config
 	@echo "Building model downloader"
@@ -35,7 +37,9 @@ run-model-downloader:
 		-e http_proxy=${HTTP_PROXY} \
 		-e https_proxy=${HTTPS_PROXY} \
 		-e MODELS_DIR=/workspace/models \
+		-e WORKLOAD_DIST=${WORKLOAD_DIST} \
 		-v "$(shell pwd)/models:/workspace/models" \
+        -v "$(shell pwd)/configs:/workspace/configs" \
 		model-downloader:lp
 	@echo "assets downloader completed"
 
@@ -93,9 +97,11 @@ run-render-mode:
 		exit 1; \
 	fi
 	@echo "Using DISPLAY=$(DISPLAY)"
+	@echo "Using config file: configs/$(CAMERA_STREAM)"
+	@echo "Using workload config: configs/$(WORKLOAD_DIST)"
 	@xhost +local:docker
 	docker compose -f src/docker-compose.yml build pipeline-runner
-	@RENDER_MODE=1 docker compose -f src/docker-compose.yml up -d
+	@RENDER_MODE=1 CAMERA_STREAM=$(CAMERA_STREAM) WORKLOAD_DIST=$(WORKLOAD_DIST) docker compose -f src/docker-compose.yml up -d
 	$(MAKE) clean-images
 
 benchmark-stream-density: build-benchmark download-models
@@ -163,15 +169,15 @@ clean-docs:
 	rm -rf docs/
 
 validate_workload_mapping:
-	python3 src/validate-configs.py --validate-workload-mapping
+	python3 src/validate-configs.py --validate-workload-mapping --camera-config configs/$(CAMERA_STREAM) --pipeline-config configs/$(WORKLOAD_DIST)
 
 validate-pipeline-config:
 	@echo "Validating pipeline configuration..."
-	@python3 src/validate-configs.py --validate-pipeline
+	@python3 src/validate-configs.py --validate-pipeline --pipeline-config configs/$(WORKLOAD_DIST)
 
 validate-camera-config:
 	@echo "Validating camera configuration..."
-	@python3 src/validate-configs.py --validate-camera
+	@python3 src/validate-configs.py --validate-camera --camera-config configs/$(CAMERA_STREAM)
 
 validate-all-configs:
 	@echo "Validating all configuration files..."

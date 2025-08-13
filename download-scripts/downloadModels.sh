@@ -16,8 +16,16 @@ cd "$MODELS_PATH" || { echo "Failure to cd to $MODELS_PATH"; exit 1; }
 pwd 
 
 # Path to workload_to_pipeline.json
-CONFIG_JSON="/workspace/configs/workload_to_pipeline.json"
+WORKLOAD_DIST="${WORKLOAD_DIST:-workload_to_pipeline.json}"
+CONFIG_JSON="/workspace/configs/${WORKLOAD_DIST}"
 
+echo "[INFO] Using workload configuration: ${WORKLOAD_DIST}"
+echo "[INFO] Config path: ${CONFIG_JSON}"
+
+if [[ ! -f "$CONFIG_JSON" ]]; then
+    echo "[ERROR] Configuration file not found: $CONFIG_JSON" >&2
+    exit 1
+fi
 # Check for jq
 if ! command -v jq &>/dev/null; then
     echo "[ERROR] jq is required but not installed. Please install jq." >&2

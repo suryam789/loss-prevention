@@ -27,7 +27,10 @@ def process_frame(frame):
     # Load camera_id and workload from camera_to_workload.json    
     camera_id = "camera_001"
     workload = "unknown"
-    config_path = "/home/pipeline-server/configs/camera_to_workload.json"
+
+    camera_stream = os.environ.get("CAMERA_STREAM", "camera_to_workload.json")
+    config_path = f"/home/pipeline-server/configs/{camera_stream}"
+    
     if os.path.exists(config_path):
         try:
             with open(config_path, "r") as f:
