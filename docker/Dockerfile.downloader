@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 # Proxy args with defaults to avoid unset variable issues
 
@@ -15,8 +15,9 @@ WORKDIR /workspace
 COPY download-scripts/requirements.txt /workspace/scripts/
 
 # Install Python dependencies with verbose output for logs
-RUN pip3 install --upgrade pip -v --no-cache-dir && \
-    pip3 install -v --no-cache-dir -r /workspace/scripts/requirements.txt    
+RUN pip3 install --upgrade pip setuptools -v --no-cache-dir && \
+    pip3 install -v --no-cache-dir -r /workspace/scripts/requirements.txt
+RUN pip3 install --upgrade protobuf
 # Copy your scripts and requirements
 COPY download-scripts/*.sh /workspace/scripts/
 COPY download-scripts/*.py /workspace/scripts/
