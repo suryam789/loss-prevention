@@ -75,8 +75,11 @@ update-submodules:
 build-benchmark:
 	cd performance-tools && $(MAKE) build-benchmark-docker
 
+
 benchmark: build-benchmark download-sample-videos download-models	
-	cd performance-tools/benchmark-scripts && python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR); \
+	cd performance-tools/benchmark-scripts && \
+	pip3 install -r requirements.txt && \
+	python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR)
 	
 
 run-lp: | validate_workload_mapping update-submodules download-sample-videos
