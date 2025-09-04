@@ -131,7 +131,7 @@ benchmark-stream-density: build-benchmark download-models
 	  --results_dir $(RESULTS_DIR)
 	
 benchmark-quickstart:
-	DEVICE_ENV=res/all-gpu.env RENDER_MODE=0 $(MAKE) benchmark
+	CAMERA_STREAM=camera_to_workload_full.json WORKLOAD_DIST=workload_to_pipeline_gpu.json RENDER_MODE=0 $(MAKE) benchmark
 	$(MAKE) consolidate-metrics
 
 clean-images:
