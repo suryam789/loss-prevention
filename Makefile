@@ -76,7 +76,7 @@ build-benchmark:
 	cd performance-tools && $(MAKE) build-benchmark-docker
 
 
-benchmark: update-submodules build-benchmark download-sample-videos download-models	
+benchmark: build-benchmark download-sample-videos download-models	
 	cd performance-tools/benchmark-scripts && \
 	pip3 install -r requirements.txt && \
 	python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR)
