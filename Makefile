@@ -75,8 +75,11 @@ update-submodules:
 build-benchmark:
 	cd performance-tools && $(MAKE) build-benchmark-docker
 
+
 benchmark: build-benchmark download-sample-videos download-models	
-	cd performance-tools/benchmark-scripts && python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR); \
+	cd performance-tools/benchmark-scripts && \
+	pip3 install -r requirements.txt && \
+	python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR)
 	
 
 run-lp: | validate_workload_mapping update-submodules download-sample-videos
@@ -105,7 +108,20 @@ run-render-mode:
 	$(MAKE) clean-images
 
 benchmark-stream-density: build-benchmark download-models
-	@cd performance-tools/benchmark-scripts && \
+	@if [ "$(OOM_PROTECTION)" = "0" ]; then \
+        echo "╔════════════════════════════════════════════════════════════╗";\
+		echo "║ WARNING                                                    ║";\
+		echo "║                                                            ║";\
+		echo "║ OOM Protection is DISABLED. This test may:                 ║";\
+		echo "║ • Cause system instability or crashes                      ║";\
+		echo "║ • Require hard reboot if system becomes unresponsive       ║";\
+		echo "║ • Result in data loss in other applications                ║";\
+		echo "║                                                            ║";\
+		echo "║ Press Ctrl+C now to cancel, or wait 5 seconds...           ║";\
+		echo "╚════════════════════════════════════════════════════════════╝";\
+		sleep 5;\
+    fi
+	cd performance-tools/benchmark-scripts && \
 	python3 benchmark.py \
 	  --compose_file ../../src/docker-compose.yml \
 	  --init_duration $(INIT_DURATION) \
@@ -113,6 +129,10 @@ benchmark-stream-density: build-benchmark download-models
 	  --container_names $(CONTAINER_NAMES) \
 	  --density_increment $(DENSITY_INCREMENT) \
 	  --results_dir $(RESULTS_DIR)
+	
+benchmark-quickstart:
+	CAMERA_STREAM=camera_to_workload_full.json WORKLOAD_DIST=workload_to_pipeline_gpu.json RENDER_MODE=0 $(MAKE) benchmark
+	$(MAKE) consolidate-metrics
 
 clean-images:
 	@echo "Cleaning up dangling Docker images..."

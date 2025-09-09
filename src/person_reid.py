@@ -86,7 +86,7 @@ def process_frame(frame):
     timestamp = os.environ.get("TIMESTAMP")
     json_line = json.dumps(output)
     # Use camera_id and workload in output filename
-    out_file = f"/home/pipeline-server/results/person-data_{timestamp}.jsonl"
+    out_file = f"/home/pipeline-server/results/rs-_{timestamp}.jsonl"
     try:
         with open(out_file, "a") as f:
             f.write(json_line + "\n")
