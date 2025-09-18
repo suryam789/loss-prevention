@@ -80,13 +80,19 @@ benchmark: build-benchmark download-sample-videos download-models
 	cd performance-tools/benchmark-scripts && \
 	pip3 install -r requirements.txt && \
 	python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR)
-	
+
+run:
+	docker compose -f src/docker-compose.yml up -d
 
 run-lp: | validate_workload_mapping update-submodules download-sample-videos
 	@echo downloading the models
 	$(MAKE) download-models
 	@echo Running loss prevention pipeline
-	$(MAKE) run-render-mode
+	@if [ "$(RENDER_MODE)" != "0" ]; then \
+		$(MAKE) run-render-mode; \
+	else \
+		$(MAKE) run; \
+	fi
 
 down-lp:
 	docker compose -f src/docker-compose.yml down
