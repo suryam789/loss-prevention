@@ -31,7 +31,6 @@ echo "cid: $cid"
 
 echo "############# Generating GStreamer pipeline command ##########"
 echo "################### RENDER_MODE #################"$RENDER_MODE 
-echo "################### DIR_NAME #################"$(dirname "$0")
 
 gst_cmd=$(python3 "$(dirname "$0")/gst-pipeline-generator.py")
 echo "#############  GStreamer pipeline command generated succussfully ##########"
