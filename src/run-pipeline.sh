@@ -5,18 +5,20 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+set -eo pipefail
+
 CAMERA_STREAM="${CAMERA_STREAM:-camera_to_workload.json}"
 WORKLOAD_DIST="${WORKLOAD_DIST:-workload_to_pipeline.json}"
+
+export CAMERA_STREAM
+export WORKLOAD_DIST
 
 echo "################# Using camera config: $CAMERA_STREAM ###################"
 echo "################# Using workload config: $WORKLOAD_DIST ###################"
 
-# Pass both environment variables to the pipeline generator
-CAMERA_STREAM="$CAMERA_STREAM" WORKLOAD_DIST="$WORKLOAD_DIST" python3 /home/pipeline-server/scripts/gst-pipeline-generator.py
-
 
 # Get dynamic gst-launch command from Python script
-set -eo pipefail
+
 export PYTHONPATH=/home/pipeline-server/src:$PYTHONPATH
 # Use TIMESTAMP env variable if set, otherwise fallback to date
 cid=$(date +%Y%m%d%H%M%S)$(date +%6N | cut -c1-6)
@@ -29,6 +31,8 @@ echo "cid: $cid"
 
 echo "############# Generating GStreamer pipeline command ##########"
 echo "################### RENDER_MODE #################"$RENDER_MODE 
+echo "################### DIR_NAME #################"$(dirname "$0")
+
 gst_cmd=$(python3 "$(dirname "$0")/gst-pipeline-generator.py")
 echo "#############  GStreamer pipeline command generated succussfully ##########"
 
