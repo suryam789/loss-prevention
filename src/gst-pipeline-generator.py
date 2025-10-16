@@ -249,10 +249,10 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
         tee_name = f"t{branch_idx+1}_{idx+1}"
         has_gvapython = any(step.get("type") == "gvapython" for step in steps)
         if not has_gvapython:
-            pipeline += f" ! gvametaconvert format=json ! tee name={tee_name} "
+            pipeline += f" ! gvametaconvert ! tee name={tee_name} "
             results_dir = "/home/pipeline-server/results"
             out_file = f"{results_dir}/rs-{branch_idx+1}_{idx+1}_{timestamp}.jsonl"
-            pipeline += f"    {tee_name}. ! queue ! gvametapublish method=file file-path={out_file} ! gvafpscounter ! fakesink sync=false async=false "
+            pipeline += f"    {tee_name}. ! queue ! gvametapublish file-format=json-lines file-path={out_file} ! gvafpscounter ! fakesink sync=false async=false "
         else:
             pipeline += f" ! tee name={tee_name} "
             #pipeline += f"    {tee_name}. ! queue ! gvafpscounter ! fakesink sync=false async=false "
