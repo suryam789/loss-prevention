@@ -14,6 +14,8 @@ MKDOCS_IMAGE ?= asc-mkdocs
 RESULTS_DIR ?= $(PWD)/benchmark
 CAMERA_STREAM ?= camera_to_workload.json
 WORKLOAD_DIST ?= workload_to_pipeline.json
+BATCH_SIZE_DETECT ?= 1
+BATCH_SIZE_CLASSIFY ?= 1
 
 download-models:
 	@echo ".....Downloading models....."
@@ -46,7 +48,13 @@ run-model-downloader:
 
 build-pipeline-runner:
 	@echo "Building pipeline runner"
-	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} -t pipeline-runner:lp -f docker/Dockerfile.pipeline .
+	docker build \
+		--build-arg HTTPS_PROXY=${HTTPS_PROXY} \
+		--build-arg HTTP_PROXY=${HTTP_PROXY} \
+		--build-arg BATCH_SIZE_DETECT=${BATCH_SIZE_DETECT} \
+        --build-arg BATCH_SIZE_CLASSIFY=${BATCH_SIZE_CLASSIFY} \
+		-t pipeline-runner:lp \
+		-f docker/Dockerfile.pipeline .
 	@echo "pipeline runner build completed"
 
 
@@ -81,17 +89,24 @@ benchmark: build-benchmark download-sample-videos download-models
     ( \
 	python3 -m venv venv && \
 	. venv/bin/activate && \
-	pip install -r requirements.txt && \
+	pip3 install -r requirements.txt && \
 	python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR) && \
 	deactivate \
 	)
-	
+
+run:
+	BATCH_SIZE_DETECT=$(BATCH_SIZE_DETECT) BATCH_SIZE_CLASSIFY=$(BATCH_SIZE_CLASSIFY) \
+	docker compose -f src/docker-compose.yml up -d
 
 run-lp: | validate_workload_mapping update-submodules download-sample-videos
 	@echo downloading the models
 	$(MAKE) download-models
 	@echo Running loss prevention pipeline
-	$(MAKE) run-render-mode
+	@if [ "$(RENDER_MODE)" != "0" ]; then \
+		$(MAKE) run-render-mode; \
+	else \
+		$(MAKE) run; \
+	fi
 
 down-lp:
 	docker compose -f src/docker-compose.yml down
@@ -109,7 +124,7 @@ run-render-mode:
 	@echo "Using workload config: configs/$(WORKLOAD_DIST)"
 	@xhost +local:docker
 	docker compose -f src/docker-compose.yml build pipeline-runner
-	@RENDER_MODE=1 CAMERA_STREAM=$(CAMERA_STREAM) WORKLOAD_DIST=$(WORKLOAD_DIST) docker compose -f src/docker-compose.yml up -d
+	@RENDER_MODE=1 CAMERA_STREAM=$(CAMERA_STREAM) WORKLOAD_DIST=$(WORKLOAD_DIST) BATCH_SIZE_DETECT=$(BATCH_SIZE_DETECT) BATCH_SIZE_CLASSIFY=$(BATCH_SIZE_CLASSIFY) docker compose -f src/docker-compose.yml up -d
 	$(MAKE) clean-images
 
 benchmark-stream-density: build-benchmark download-models
@@ -130,7 +145,7 @@ benchmark-stream-density: build-benchmark download-models
     ( \
 	python3 -m venv venv && \
 	. venv/bin/activate && \
-	pip install -r requirements.txt && \
+	pip3 install -r requirements.txt && \
 	python3 benchmark.py \
 	  --compose_file ../../src/docker-compose.yml \
 	  --init_duration $(INIT_DURATION) \

@@ -4,6 +4,7 @@ from pathlib import Path
 import copy
 from datetime import datetime
 from dotenv import dotenv_values
+import sys
 
 WORKLOAD_DIST = os.environ.get("WORKLOAD_DIST", "workload_to_pipeline.json")
 CAMERA_STREAM = os.environ.get("CAMERA_STREAM", "camera_to_workload.json")
@@ -89,7 +90,25 @@ def build_gst_element(cfg):
     PRE_PROCESS = env_vars.get("PRE_PROCESS", "")
     DETECTION_OPTIONS = env_vars.get("DETECTION_OPTIONS", "")
     PRE_PROCESS_CONFIG = env_vars.get("PRE_PROCESS_CONFIG", "")
-    BATCH_SIZE = env_vars.get("BATCH_SIZE", 1)
+
+    try:
+        BATCH_SIZE_DETECT = int(os.environ.get("BATCH_SIZE_DETECT", 
+                                              env_vars.get("BATCH_SIZE_DETECT", 1)))
+    except ValueError:
+        print(f"Warning: Invalid BATCH_SIZE_DETECT value, using default 1", file=sys.stderr)
+        BATCH_SIZE_DETECT = 1
+        
+    try:
+        BATCH_SIZE_CLASSIFY = int(os.environ.get("BATCH_SIZE_CLASSIFY", 
+                                                env_vars.get("BATCH_SIZE_CLASSIFY", 1)))
+    except ValueError:
+        print(f"Warning: Invalid BATCH_SIZE_CLASSIFY value, using default 1", file=sys.stderr)
+        BATCH_SIZE_CLASSIFY = 1
+    
+    print("******************************************", file=sys.stderr)
+    print(f"DETECT {BATCH_SIZE_DETECT} - CLASSIFY {BATCH_SIZE_CLASSIFY}", file=sys.stderr)
+    print("******************************************", file=sys.stderr)
+    
     CLASSIFICATION_PRE_PROCESS = env_vars.get("CLASSIFICATION_PRE_PROCESS", "")
     # Add inference-region=1 if region_of_interest is present in cfg (from camera_to_workload.json)
     inference_region = ""   
@@ -100,11 +119,11 @@ def build_gst_element(cfg):
     if cfg["type"] == "gvadetect":
         # Always use the precision from the current step config
         model_path = download_model_if_missing(model, "gvadetect", cfg.get("precision", ""))
-        elem = f"gvadetect {name_str} batch-size={BATCH_SIZE} {inference_region} model={model_path} device={device} {PRE_PROCESS} {DETECTION_OPTIONS} {PRE_PROCESS_CONFIG}"
+        elem = f"gvadetect {name_str} batch-size={BATCH_SIZE_DETECT} {inference_region} model={model_path} device={device} {PRE_PROCESS} {DETECTION_OPTIONS} {PRE_PROCESS_CONFIG}"
     elif cfg["type"] == "gvaclassify":
         # Always use the precision from the current step config
         model_path, label_path, proc_path = download_model_if_missing(model, "gvaclassify", cfg.get("precision", ""))     
-        elem = f"gvaclassify {name_str} batch-size={BATCH_SIZE} model={model_path} device={device} labels={label_path} model-proc={proc_path} {CLASSIFICATION_PRE_PROCESS}"
+        elem = f"gvaclassify {name_str} batch-size={BATCH_SIZE_CLASSIFY} model={model_path} device={device} labels={label_path} model-proc={proc_path} {CLASSIFICATION_PRE_PROCESS}"
     elif cfg["type"] == "gvainference":
         model_path = download_model_if_missing(model, "gvainference", cfg.get("precision", ""))
         elem = f"gvainference  model={model_path} device={device} "
@@ -230,10 +249,10 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
         tee_name = f"t{branch_idx+1}_{idx+1}"
         has_gvapython = any(step.get("type") == "gvapython" for step in steps)
         if not has_gvapython:
-            pipeline += f" ! gvametaconvert format=json ! tee name={tee_name} "
+            pipeline += f" ! gvametaconvert ! tee name={tee_name} "
             results_dir = "/home/pipeline-server/results"
             out_file = f"{results_dir}/rs-{branch_idx+1}_{idx+1}_{timestamp}.jsonl"
-            pipeline += f"    {tee_name}. ! queue ! gvametapublish method=file file-path={out_file} ! gvafpscounter ! fakesink sync=false async=false "
+            pipeline += f"    {tee_name}. ! queue ! gvametapublish file-format=json-lines file-path={out_file} ! gvafpscounter ! fakesink sync=false async=false "
         else:
             pipeline += f" ! tee name={tee_name} "
             #pipeline += f"    {tee_name}. ! queue ! gvafpscounter ! fakesink sync=false async=false "

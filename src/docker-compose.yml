@@ -41,6 +41,8 @@ services:
       - CONTAINER_NAME=${CONTAINER_NAME}  
       - CAMERA_STREAM=${CAMERA_STREAM:-camera_to_workload.json}
       - WORKLOAD_DIST=${WORKLOAD_DIST:-workload_to_pipeline.json}
+      - BATCH_SIZE_DETECT=${BATCH_SIZE_DETECT:-1}
+      - BATCH_SIZE_CLASSIFY=${BATCH_SIZE_CLASSIFY:-1}
     volumes:
       - ../models:/home/pipeline-server/models
       - ../performance-tools/sample-media:/home/pipeline-server/sample-media

@@ -34,7 +34,7 @@
         "width": 1920,
         "height": 1080,
         "fps": 15,
-        "fileSrc":"fake-scan-detection-32658425.mp4|https://www.pexels.com/download/video/32658425", 
+        "fileSrc":"fake-scan-detection-34225994.mp4|https://www.pexels.com/download/video/34225994", 
         "workloads": ["fake_scan_detection"],
         "region_of_interest": {
           "x": 25,
