@@ -69,12 +69,35 @@ mkdir -p "$results_dir"
 filesrc_count=$(grep -c "filesrc location=" "$pipeline_file")
 echo "Found $filesrc_count filesrc lines in $pipeline_file"
 
-# Create per-stream pipeline log files
+# Extract first name= value from each filesrc line
+declare -a filesrc_names
+while IFS= read -r line; do
+    if [[ "$line" == *"filesrc location="* ]]; then
+        # Extract first name= value from this line
+        if [[ "$line" =~ name=([^[:space:]]+) ]]; then
+            name="${BASH_REMATCH[1]}"
+            filesrc_names+=("$name")
+        else
+            # Fallback if no name found
+            filesrc_names+=("stream${#filesrc_names[@]}")
+        fi
+    fi
+done < "$pipeline_file"
+
+echo "Extracted filesrc names: ${filesrc_names[*]}"
+
+# Create per-stream pipeline log files using extracted names
 declare -a pipeline_logs
-for i in $(seq 1 $filesrc_count); do
-    logfile="$results_dir/pipeline${cid}_stream${i}.log"
+for i in "${!filesrc_names[@]}"; do
+    name="${filesrc_names[i]}"
+    # Sanitize name for filename
+    safe_name=$(echo "$name" | tr -cd '[:alnum:]_-')
+    # Updated filename pattern: pipeline_stream<i>_safe_name_timestamp.log
+    logfile="$results_dir/pipeline_stream${i}_${cid}.log"
+    #logfile="$results_dir/pipeline${cid}_${safe_name}.log"
     pipeline_logs+=("$logfile")
     > "$logfile"  # empty the file
+    echo "Created log file: $logfile"
 done
 
 # -----------------------------
@@ -92,15 +115,34 @@ GST_PID=$!
 
 # Read the gst log file in "tail -F" mode
 tail -F "$gst_log" | while read -r line; do
-    # Match FpsCounter lines
-    if [[ "$line" =~ FpsCounter.*number-streams=([0-9]+).*per-stream=.*\((.*)\) ]]; then
+    # Match FpsCounter lines - handle both single and multi-stream formats
+    if [[ "$line" =~ FpsCounter.*number-streams=([0-9]+) ]]; then
         num_streams="${BASH_REMATCH[1]}"
-        fps_values="${BASH_REMATCH[2]}"
-
+        
         # Only process if number-streams matches filesrc count
         if [[ "$num_streams" -eq "$filesrc_count" ]]; then
-            # Remove spaces after commas and split
-            IFS=',' read -ra fps_array <<< "$(echo "$fps_values" | tr -d ' ')"
+            # For single stream: per-stream=32.82 fps
+            # For multi stream: per-stream=31.60 fps (26.92, 36.29)
+            if [[ "$num_streams" -eq 1 ]]; then
+                # Single stream: extract just the number after per-stream=
+                if [[ "$line" =~ per-stream=([0-9]+\.[0-9]+) ]]; then
+                    fps_array=("${BASH_REMATCH[1]}")
+                else
+                    continue
+                fi
+            else
+                # Multi-stream: extract values inside parentheses after "fps"
+                # Pattern: per-stream=XX.XX fps (XX.XX, XX.XX)
+                multi_pattern='fps[[:space:]]*\(([^)]+)\)'
+                if [[ "$line" =~ $multi_pattern ]]; then
+                    fps_values="${BASH_REMATCH[1]}"
+                    IFS=',' read -ra fps_array <<< "$(echo "$fps_values" | tr -d ' ')"
+                else
+                    continue
+                fi
+            fi
+            
+            # Write to corresponding log files
             for idx in "${!fps_array[@]}"; do
                 fps="${fps_array[idx]}"
                 if [[ idx -lt ${#pipeline_logs[@]} ]]; then
@@ -114,4 +156,4 @@ done
 wait $GST_PID
 
 
-echo "############# GST COMMAND COMPLETED SUCCESSFULLY #############"
+echo "############# GST COMMAND COMPLETED SUCCESSFULLY #############

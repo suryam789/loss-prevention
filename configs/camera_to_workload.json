@@ -28,22 +28,7 @@
           "x2": 1060,
           "y2": 1340
         }
-      },   
-      { 
-        "camera_id": "cam3", 
-        "width": 1920,
-        "height": 1080,
-        "fps": 15,
-        "fileSrc":"fake-scan-detection-34225994.mp4|https://www.pexels.com/download/video/34225994", 
-        "workloads": ["fake_scan_detection"],
-        "region_of_interest": {
-          "x": 25,
-          "y": 535,
-          "x2": 1300,
-          "y2": 1085
-        }
       }
     ]
   }
 }
-
