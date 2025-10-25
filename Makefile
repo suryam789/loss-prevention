@@ -16,6 +16,7 @@ CAMERA_STREAM ?= camera_to_workload.json
 WORKLOAD_DIST ?= workload_to_pipeline.json
 BATCH_SIZE_DETECT ?= 1
 BATCH_SIZE_CLASSIFY ?= 1
+MULTI_STREAM_MODE ?= 0
 
 download-models:
 	@echo ".....Downloading models....."
@@ -144,8 +145,9 @@ benchmark-stream-density: build-benchmark download-models
 	  --target_fps $(TARGET_FPS) \
 	  --container_names $(CONTAINER_NAMES) \
 	  --density_increment $(DENSITY_INCREMENT) \
-	  --results_dir $(RESULTS_DIR)
-	
+	  --results_dir $(RESULTS_DIR) \
+	  --multi_stream_mode $(MULTI_STREAM_MODE)
+
 benchmark-quickstart:
 	CAMERA_STREAM=camera_to_workload_full.json WORKLOAD_DIST=workload_to_pipeline_gpu.json RENDER_MODE=0 $(MAKE) benchmark
 	$(MAKE) consolidate-metrics
