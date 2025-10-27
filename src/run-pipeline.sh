@@ -100,6 +100,15 @@ for i in "${!filesrc_names[@]}"; do
     echo "Created log file: $logfile"
 done
 
+# Set GStreamer tracing environment
+export GST_DEBUG="GST_TRACER:7"
+export GST_TRACERS="latency(flags=pipeline)"
+
+echo "Running with tracing enabled:"
+echo "GST_DEBUG=$GST_DEBUG"
+echo "GST_TRACERS=$GST_TRACERS"
+
+
 # -----------------------------
 # Run pipeline and capture FPS
 # -----------------------------
