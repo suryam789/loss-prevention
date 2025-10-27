@@ -16,7 +16,6 @@ CAMERA_STREAM ?= camera_to_workload.json
 WORKLOAD_DIST ?= workload_to_pipeline.json
 BATCH_SIZE_DETECT ?= 1
 BATCH_SIZE_CLASSIFY ?= 1
-MULTI_STREAM_MODE ?= 0
 
 download-models:
 	@echo ".....Downloading models....."
@@ -138,6 +137,7 @@ benchmark-stream-density: build-benchmark download-models
 		sleep 5;\
     fi
 	cd performance-tools/benchmark-scripts && \
+	export MULTI_STREAM_MODE=1 && \
 	pip3 install -r requirements.txt && \
 	python3 benchmark.py \
 	  --compose_file ../../src/docker-compose.yml \
@@ -146,7 +146,7 @@ benchmark-stream-density: build-benchmark download-models
 	  --container_names $(CONTAINER_NAMES) \
 	  --density_increment $(DENSITY_INCREMENT) \
 	  --results_dir $(RESULTS_DIR) \
-	  --multi_stream_mode $(MULTI_STREAM_MODE)
+	  
 
 benchmark-quickstart:
 	CAMERA_STREAM=camera_to_workload_full.json WORKLOAD_DIST=workload_to_pipeline_gpu.json RENDER_MODE=0 $(MAKE) benchmark
