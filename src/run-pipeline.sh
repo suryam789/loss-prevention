@@ -166,5 +166,5 @@ done
 
 wait $GST_PID
 
-
+sleep 10m
 echo "############# GST COMMAND COMPLETED SUCCESSFULLY #############
