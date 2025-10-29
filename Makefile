@@ -86,8 +86,13 @@ build-benchmark:
 
 benchmark: build-benchmark download-sample-videos download-models	
 	cd performance-tools/benchmark-scripts && \
+    ( \
+	python3 -m venv venv && \
+	. venv/bin/activate && \
 	pip3 install -r requirements.txt && \
-	python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR)
+	python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR) && \
+	deactivate \
+	)
 
 run:
 	BATCH_SIZE_DETECT=$(BATCH_SIZE_DETECT) BATCH_SIZE_CLASSIFY=$(BATCH_SIZE_CLASSIFY) \
@@ -119,7 +124,7 @@ run-render-mode:
 	@echo "Using workload config: configs/$(WORKLOAD_DIST)"
 	@xhost +local:docker
 	docker compose -f src/docker-compose.yml build pipeline-runner
-	@RENDER_MODE=$(RENDER_MODE) CAMERA_STREAM=$(CAMERA_STREAM) WORKLOAD_DIST=$(WORKLOAD_DIST) BATCH_SIZE_DETECT=$(BATCH_SIZE_DETECT) BATCH_SIZE_CLASSIFY=$(BATCH_SIZE_CLASSIFY) docker compose -f src/docker-compose.yml up -d
+	@RENDER_MODE=1 CAMERA_STREAM=$(CAMERA_STREAM) WORKLOAD_DIST=$(WORKLOAD_DIST) BATCH_SIZE_DETECT=$(BATCH_SIZE_DETECT) BATCH_SIZE_CLASSIFY=$(BATCH_SIZE_CLASSIFY) docker compose -f src/docker-compose.yml up -d
 	$(MAKE) clean-images
 
 benchmark-stream-density: build-benchmark download-models
@@ -138,6 +143,9 @@ benchmark-stream-density: build-benchmark download-models
     fi
 	cd performance-tools/benchmark-scripts && \
 	export MULTI_STREAM_MODE=1 && \
+    ( \
+	python3 -m venv venv && \
+	. venv/bin/activate && \
 	pip3 install -r requirements.txt && \
 	python3 benchmark.py \
 	  --compose_file ../../src/docker-compose.yml \
@@ -145,9 +153,10 @@ benchmark-stream-density: build-benchmark download-models
 	  --target_fps $(TARGET_FPS) \
 	  --container_names $(CONTAINER_NAMES) \
 	  --density_increment $(DENSITY_INCREMENT) \
-	  --results_dir $(RESULTS_DIR) \
-	  
-
+	  --results_dir $(RESULTS_DIR) && \
+	deactivate \
+	)
+	
 benchmark-quickstart:
 	CAMERA_STREAM=camera_to_workload_full.json WORKLOAD_DIST=workload_to_pipeline_gpu.json RENDER_MODE=0 $(MAKE) benchmark
 	$(MAKE) consolidate-metrics
