@@ -14,7 +14,7 @@ CONFIG_WORKLOAD_TO_PIPELINE = f"/home/pipeline-server/configs/{WORKLOAD_DIST}"
 
 MODELSERVER_DIR = "/home/pipeline-server"
 MODELSERVER_MODELS_DIR = "/home/pipeline-server/models"
-MODELSERVER_VIDEOS_DIR = "/home/pipeline-server/performance-tools/sample-media"
+MODELSERVER_VIDEOS_DIR = "/home/pipeline-server/sample-media"
 
 
 def download_video_if_missing(video_name, width=None, fps=None):
