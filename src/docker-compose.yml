@@ -38,7 +38,7 @@ services:
     environment:
       - DISPLAY=${DISPLAY:-:0}
       - RENDER_MODE=${RENDER_MODE:-0}    
-      - CONTAINER_NAME=${CONTAINER_NAME}  
+      - CONTAINER_NAME=${CONTAINER_NAME:-gst}  
       - CAMERA_STREAM=${CAMERA_STREAM:-camera_to_workload.json}
       - WORKLOAD_DIST=${WORKLOAD_DIST:-workload_to_pipeline.json}
       - BATCH_SIZE_DETECT=${BATCH_SIZE_DETECT:-1}

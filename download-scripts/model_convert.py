@@ -5,7 +5,6 @@ import subprocess
 import json
 import torch
 import timm
-from openvino.tools.mo import mo
 import openvino
 import openvino as ov
 import nncf

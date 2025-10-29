@@ -75,13 +75,13 @@
         "type": "gvadetect",
         "model": "face-detection-retail-0004",
         "device": "GPU",
-        "precision": "FP16-INT8"
+        "precision": "FP16"
       },
       {
         "type": "gvainference",
         "model": "face-reidentification-retail-0095",
         "device": "GPU",
-        "precision": "FP16-INT8"
+        "precision": "FP16"
       },
       {
         "type": "gvapython",

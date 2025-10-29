@@ -142,6 +142,7 @@ benchmark-stream-density: build-benchmark download-models
 		sleep 5;\
     fi
 	cd performance-tools/benchmark-scripts && \
+	export MULTI_STREAM_MODE=1 && \
     ( \
 	python3 -m venv venv && \
 	. venv/bin/activate && \

@@ -70,76 +70,67 @@ for TYPE_KEY in "${!TYPE_MODELS[@]}"; do
     IFS=',' read -ra MODELS <<< "${TYPE_MODELS[$TYPE_KEY]}"
     for MODEL_NAME in "${MODELS[@]}"; do
         MODEL_PATH="$MODELS_PATH/$MODEL_NAME"
-        if [ -e "$MODEL_PATH" ]; then
-            echo "[INFO] ########## $MODEL_NAME already exists, skipping download."
+        # Check if the model already exists (any precision)
+        if find "$MODELS_PATH" -type f -path "*/$MODEL_NAME/*.xml" | grep -q "$MODEL_NAME.xml"; then
+            echo "[INFO] ########## Model $MODEL_NAME already exists under $MODELS_PATH, skipping download."
             continue
         fi
-        echo "[INFO] ########### Processing $MODEL_NAME ($TYPE_KEY) ..."
-        PRECISION="INT8"
-        MODEL_XML_PATH=""
+
+
+        # Extract precision directly from JSON (unified logic)
+        PRECISION=$(jq -r --arg model "$MODEL_NAME" '
+          .workload_pipeline_map[] |
+          .[] |
+          select(.model == $model) |
+          .precision // "FP16"
+        ' "$CONFIG_JSON" | head -1)
+
+        # Fallback if not found
+        if [[ -z "$PRECISION" || "$PRECISION" == "null" ]]; then
+            PRECISION="FP16"
+        fi
+
+        echo "[INFO] ########### Processing $MODEL_NAME ($TYPE_KEY) with precision $PRECISION ..."
+
         case "$TYPE_KEY" in
             gvadetect|object_detection)
-                PRECISION=$(jq -r --arg model "$MODEL_NAME" '
-                  .workload_pipeline_map[] | 
-                  .[] | 
-                  select(.model == $model and .type == "gvadetect") | 
-                  .precision // "INT8"
-                ' "$CONFIG_JSON" | head -1)
-                MODEL_XML_PATH="$MODELS_PATH/object_detection/$MODEL_NAME/$PRECISION/$MODEL_NAME.xml"
+                if [[ "$MODEL_NAME" == face-detection-retail-* ]]; then
+                    echo "[INFO] ###### Downloading face detection model: $MODEL_NAME ($PRECISION)"
+                    "$SCRIPT_BASE_PATH/omz-model-download.sh" "$MODEL_NAME" "$MODELS_PATH/object_detection" "$PRECISION"
+                else
+                    echo "[INFO] ###### Downloading YOLO model: $MODEL_NAME ($PRECISION)"
+                    python3 "$SCRIPT_BASE_PATH/model_convert.py" export_yolo "$MODEL_NAME" "$MODELS_PATH"
+
+                    quant_dataset="$MODELS_PATH/datasets/coco128.yaml"
+                    if [ ! -f "$quant_dataset" ]; then
+                        mkdir -p "$(dirname "$quant_dataset")"
+                        wget --no-check-certificate --timeout=30 --tries=2 \
+                            "https://raw.githubusercontent.com/ultralytics/ultralytics/v8.1.0/ultralytics/cfg/datasets/coco128.yaml" \
+                            -O "$quant_dataset"
+                    fi
+                    python3 "$SCRIPT_BASE_PATH/model_convert.py" quantize_yolo "$MODEL_NAME" "$quant_dataset" "$MODELS_PATH"
+                fi
                 ;;
             gvaclassify|object_classification)
-                PRECISION=$(jq -r --arg model "$MODEL_NAME" '
-                  .workload_pipeline_map[] | 
-                  .[] | 
-                  select(.model == $model and .type == "gvaclassify") | 
-                  .precision // "INT8"
-                ' "$CONFIG_JSON" | head -1)
-                MODEL_XML_PATH="$MODELS_PATH/object_classification/$MODEL_NAME/$PRECISION/$MODEL_NAME.xml"
+                if [[ "$MODEL_NAME" == face-reidentification-retail-* ]]; then
+                    echo "[INFO] ###### Downloading face reidentification model: $MODEL_NAME ($PRECISION)"
+                    "$SCRIPT_BASE_PATH/omz-model-download.sh" "$MODEL_NAME" "$MODELS_PATH/object_classification" "$PRECISION"
+                else
+                    echo "[INFO] ###### Downloading classification model: $MODEL_NAME ($PRECISION)"
+                    python3 "$SCRIPT_BASE_PATH/effnetb0_download.py" "$MODEL_NAME" "$MODELS_PATH"
+                fi
                 ;;
             gvainference)
-                MODEL_XML_PATH="$MODELS_PATH/object_classification/$MODEL_NAME/$PRECISION/$MODEL_NAME.xml"
+                echo "[INFO] ###### Downloading inference model: $MODEL_NAME ($PRECISION)"
+                "$SCRIPT_BASE_PATH/omz-model-download.sh" "$MODEL_NAME" "$MODELS_PATH/object_classification" "$PRECISION"
+                ;;
+            *)
+                echo "[WARN] Unsupported type: $TYPE_KEY (model: $MODEL_NAME)"
                 ;;
         esac
-        # Default to INT8 if no precision found
-        if [[ -z "$PRECISION" || "$PRECISION" == "null" ]]; then
-            PRECISION="INT8"
-        fi
-        echo "[INFO] ########### Using precision: $PRECISION for model: $MODEL_NAME #########"
-        if [ -f "$MODEL_XML_PATH" ]; then
-            echo "[INFO] ###### Model $MODEL_NAME with precision $PRECISION already exists at $MODEL_XML_PATH, skipping download."
-            continue
-        fi
-        # Download logic
-        if [[ "$TYPE_KEY" == "gvadetect" || "$TYPE_KEY" == "object_detection" ]]; then
-            if [[ "$MODEL_NAME" == face-detection-retail-* ]]; then
-                echo "[INFO] ######  Downloading face model: $MODEL_NAME using face-model-download.sh"
-                "$SCRIPT_BASE_PATH/face-model-download.sh" "$MODEL_NAME" "$MODELS_PATH/object_detection"
-            else
-                echo "[INFO] ######  Downloading and converting model: $MODEL_NAME"
-                python3 "$SCRIPT_BASE_PATH/model_convert.py" export_yolo "$MODEL_NAME" "$MODELS_PATH"
-                # Quantize if needed
-                quant_dataset="$MODELS_PATH/datasets/coco128.yaml"
-                if [ ! -f "$quant_dataset" ]; then
-                    mkdir -p "$(dirname "$quant_dataset")"
-                    wget --no-check-certificate --timeout=30 --tries=2 "https://raw.githubusercontent.com/ultralytics/ultralytics/v8.1.0/ultralytics/cfg/datasets/coco128.yaml" -O "$quant_dataset"
-                fi
-                python3 "$SCRIPT_BASE_PATH/model_convert.py" quantize_yolo "$MODEL_NAME" "$quant_dataset" "$MODELS_PATH"
-            fi
-        elif [[ "$TYPE_KEY" == "gvaclassify" || "$TYPE_KEY" == "object_classification" ]]; then
-            if [[ "$MODEL_NAME" == face-reidentification-retail-* ]]; then
-                echo "[INFO] ######  Downloading face reidentification model: $MODEL_NAME using face-model-download.sh"
-                "$SCRIPT_BASE_PATH/face-model-download.sh" "$MODEL_NAME" "$MODELS_PATH/object_classification"
-            else
-                # python3 "$SCRIPT_BASE_PATH/efnetv2b0_download_quant.py" "$MODEL_NAME" "$MODELS_PATH"
-                python3 "$SCRIPT_BASE_PATH/effnetb0_download.py" "$MODEL_NAME" "$MODELS_PATH"
-            fi
-        elif [[ "$TYPE_KEY" == "gvainference" ]]; then
-            echo "[INFO] ######  Downloading face reidentification model: $MODEL_NAME using face-model-download.sh"
-            "$SCRIPT_BASE_PATH/face-model-download.sh" "$MODEL_NAME" "$MODELS_PATH/object_classification"
-            echo "[WARN] Unsupported type: $TYPE_KEY, skipping..."
-        fi
     done
 done
+
 
 
 
