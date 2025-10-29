@@ -252,7 +252,7 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
             pipeline += f" ! gvametaconvert ! tee name={tee_name} "
             results_dir = "/home/pipeline-server/results"
             out_file = f"{results_dir}/rs-{branch_idx+1}_{idx+1}_{timestamp}.jsonl"
-            pipeline += f"    {tee_name}. ! queue ! gvametapublish file-format=json-lines file-path={out_file} ! gvafpscounter ! fakesink sync=false async=false "
+            pipeline += f"    {tee_name}. ! queue ! gvametapublish file-format=json-lines file-path={out_file} ! gvafpscounter ! fakesink sync=false  "
         else:
             pipeline += f" ! tee name={tee_name} "
             #pipeline += f"    {tee_name}. ! queue ! gvafpscounter ! fakesink sync=false async=false "
@@ -260,7 +260,7 @@ def build_dynamic_gstlaunch_command(camera, workloads, workload_map, branch_idx=
         if render_mode == "1":
             pipeline += f"    {tee_name}. ! queue ! gvawatermark ! videoconvert ! fpsdisplaysink video-sink=autovideosink text-overlay=true signal-fps-measurements=true"
         else:
-            pipeline += f"    {tee_name}. ! queue ! fakesink sync=false async=false"
+            pipeline += f"    {tee_name}. ! queue ! fakesink sync=false "
         pipelines.append(pipeline)
     return pipelines
 
