@@ -6,7 +6,7 @@
         "fps": 15,
         "width": 1080,
         "height": 1920,
-        "fileSrc":"items-in-basket-32658421.mp4|https://www.pexels.com/download/video/32658421", 
+        "fileSrc":"cam1-items-in-basket-32658421.mp4|https://www.pexels.com/download/video/32658421", 
         "workloads": ["items_in_basket"],
         "region_of_interest": {
           "x": 335,
@@ -20,7 +20,7 @@
          "fps": 15,
         "width": 1080,
         "height": 1920,
-        "fileSrc":"hidden-items-product-switching-32658426.mp4|https://www.pexels.com/download/video/32658426", 
+        "fileSrc":"cam2-hidden-items-product-switching-32658426.mp4|https://www.pexels.com/download/video/32658426", 
         "workloads": ["hidden_items"],
         "region_of_interest": {
           "x": 335,
@@ -34,7 +34,7 @@
         "width": 1920,
         "height": 1080,
         "fps": 15,
-        "fileSrc":"fake-scan-detection-32658425.mp4|https://www.pexels.com/download/video/32658425", 
+        "fileSrc":"cam3-fake-scan-detection-32658425.mp4|https://www.pexels.com/download/video/32658425", 
         "workloads": ["fake_scan_detection"],
         "region_of_interest": {
           "x": 25,
@@ -48,7 +48,7 @@
         "fps": 15,
         "width": 1080,
         "height": 1920,
-        "fileSrc":"items-in-basket-32658421.mp4|https://www.pexels.com/download/video/32658421", 
+        "fileSrc":"cam4-items-in-basket-32658421.mp4|https://www.pexels.com/download/video/32658421", 
         "workloads": ["multi_product_identification"],
         "region_of_interest": {
           "x": 335,
@@ -62,7 +62,7 @@
          "fps": 15,
         "width": 1080,
         "height": 1920,
-        "fileSrc":"hidden-items-product-switching-32658426.mp4|https://www.pexels.com/download/video/32658426", 
+        "fileSrc":"cam5-hidden-items-product-switching-32658426.mp4|https://www.pexels.com/download/video/32658426", 
         "workloads": ["product_switching"],
         "region_of_interest": {
           "x": 335,
@@ -76,7 +76,7 @@
          "fps": 15,
         "width": 1080,
         "height": 1920,
-        "fileSrc":"face-detection-3249935.mp4|https://www.pexels.com/download/video/3249935", 
+        "fileSrc":"cam6-face-detection-3249935.mp4|https://www.pexels.com/download/video/3249935", 
         "workloads": ["sweet_heartening"]
       }
       

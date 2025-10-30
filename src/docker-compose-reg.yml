@@ -1,12 +1,6 @@
 services:
   model-downloader:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.downloader
-      args:
-        - HTTP_PROXY=${HTTP_PROXY}
-        - HTTPS_PROXY=${HTTPS_PROXY}
-    image: model-downloader:lp
+    image: iotgdevcloud/model-downloader-lp:latest
     container_name: model-downloader
     environment:
       - HTTP_PROXY=${HTTP_PROXY}
@@ -22,13 +16,7 @@ services:
     command: ["/bin/bash", "-c", "/workspace/scripts/downloadModels.sh"]
 
   pipeline-runner:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.pipeline
-      args:
-        - HTTP_PROXY=${HTTP_PROXY}
-        - HTTPS_PROXY=${HTTPS_PROXY}
-    image: pipeline-runner:lp
+    image: iotgdevcloud/pipeline-runner-lp:latest
     deploy:
       mode: replicated
       replicas: ${PIPELINE_COUNT:-1}
@@ -38,7 +26,7 @@ services:
     environment:
       - DISPLAY=${DISPLAY:-:0}
       - RENDER_MODE=${RENDER_MODE:-0}    
-      - CONTAINER_NAME=${CONTAINER_NAME:-gst}  
+      - CONTAINER_NAME=${CONTAINER_NAME}  
       - CAMERA_STREAM=${CAMERA_STREAM:-camera_to_workload.json}
       - WORKLOAD_DIST=${WORKLOAD_DIST:-workload_to_pipeline.json}
       - BATCH_SIZE_DETECT=${BATCH_SIZE_DETECT:-1}
