@@ -112,18 +112,18 @@ def build_gst_element(cfg):
     CLASSIFICATION_PRE_PROCESS = env_vars.get("CLASSIFICATION_PRE_PROCESS", "")
     # Add inference-region=1 if region_of_interest is present in cfg (from camera_to_workload.json)
     inference_region = ""   
-    name_str = f"name={workload_name}_{camera_id}" if workload_name and camera_id and cfg["type"] == "gvadetect" else ""
+    name_str = f"name={camera_id}_{workload_name}" if workload_name and camera_id and cfg["type"] == "gvadetect" else ""
     if cfg["type"] == "gvadetect" and cfg.get("region_of_interest") is not None:
         inference_region = " inference-region=1"
 
     if cfg["type"] == "gvadetect":
         # Always use the precision from the current step config
         model_path = download_model_if_missing(model, "gvadetect", cfg.get("precision", ""))
-        elem = f"gvadetect {name_str} batch-size={BATCH_SIZE_DETECT} {inference_region} model={model_path} device={device} {PRE_PROCESS} {DETECTION_OPTIONS} {PRE_PROCESS_CONFIG}"
+        elem = f"gvadetect {name_str} batch-size={BATCH_SIZE_DETECT} inference-interval=3 scale-method=fast {inference_region} model={model_path} device={device} {PRE_PROCESS} {DETECTION_OPTIONS} {PRE_PROCESS_CONFIG}"
     elif cfg["type"] == "gvaclassify":
         # Always use the precision from the current step config
-        model_path, label_path, proc_path = download_model_if_missing(model, "gvaclassify", cfg.get("precision", ""))     
-        elem = f"gvaclassify {name_str} batch-size={BATCH_SIZE_CLASSIFY} model={model_path} device={device} labels={label_path} model-proc={proc_path} {CLASSIFICATION_PRE_PROCESS}"
+        model_path, label_path, proc_path = download_model_if_missing(model, "gvaclassify", cfg.get("precision", "")) 
+        elem = f"gvaclassify {name_str} batch-size={BATCH_SIZE_CLASSIFY} inference-region=1 scale-method=fast model={model_path} device={device} labels={label_path} model-proc={proc_path} {CLASSIFICATION_PRE_PROCESS}"
     elif cfg["type"] == "gvainference":
         model_path = download_model_if_missing(model, "gvainference", cfg.get("precision", ""))
         elem = f"gvainference  model={model_path} device={device} "
