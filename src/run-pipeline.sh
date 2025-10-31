@@ -126,24 +126,17 @@ GST_PID=$!
 
 # Read the gst log file in "tail -F" mode
 tail -F "$gst_log" | while read -r line; do
-    # Match FpsCounter lines - handle both single and multi-stream formats
-    if [[ "$line" =~ FpsCounter.*number-streams=([0-9]+) ]]; then
+    # Match only FpsCounter(last ...) lines (ignore 'average' lines)
+    if [[ "$line" =~ FpsCounter\(last.*number-streams=([0-9]+) ]]; then
         num_streams="${BASH_REMATCH[1]}"
-        
-        # Only process if number-streams matches filesrc count
         if [[ "$num_streams" -eq "$filesrc_count" ]]; then
-            # For single stream: per-stream=32.82 fps
-            # For multi stream: per-stream=31.60 fps (26.92, 36.29)
             if [[ "$num_streams" -eq 1 ]]; then
-                # Single stream: extract just the number after per-stream=
                 if [[ "$line" =~ per-stream=([0-9]+\.[0-9]+) ]]; then
                     fps_array=("${BASH_REMATCH[1]}")
                 else
                     continue
                 fi
             else
-                # Multi-stream: extract values inside parentheses after "fps"
-                # Pattern: per-stream=XX.XX fps (XX.XX, XX.XX)
                 multi_pattern='fps[[:space:]]*\(([^)]+)\)'
                 if [[ "$line" =~ $multi_pattern ]]; then
                     fps_values="${BASH_REMATCH[1]}"
@@ -152,8 +145,6 @@ tail -F "$gst_log" | while read -r line; do
                     continue
                 fi
             fi
-            
-            # Write to corresponding log files
             for idx in "${!fps_array[@]}"; do
                 fps="${fps_array[idx]}"
                 if [[ idx -lt ${#pipeline_logs[@]} ]]; then
