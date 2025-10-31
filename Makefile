@@ -86,6 +86,7 @@ build-benchmark:
 
 benchmark: build-benchmark download-sample-videos download-models	
 	cd performance-tools/benchmark-scripts && \
+	export MULTI_STREAM_MODE=1 && \
     ( \
 	python3 -m venv venv && \
 	. venv/bin/activate && \
