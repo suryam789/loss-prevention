@@ -43,6 +43,7 @@ jobs:
             echo "running make build-pipeline-runner"
             make build-pipeline-runner
             sudo du -sh /* 2>/dev/null | sort -rh | head -n 10
+            sudo df -h
 
         - name: Run Trivy vulnerability scanner on model-downloader
           uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2
@@ -73,6 +74,7 @@ jobs:
           with:
             sarif_file: 'trivy-results-pipeline-runner.sarif'
             category: 'pipeline-runner'
+
 
 
 
