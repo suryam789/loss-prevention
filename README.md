@@ -39,6 +39,8 @@ make run-lp
 
 ```
 
+For a comprehensive and advanced guide, refer to- [Loss Prevention Documentation Guide](https://intel-retail.github.io/documentation/use-cases/loss-prevention/loss-prevention.html)
+
 ### 4. Stop all containers
 
 ```sh
