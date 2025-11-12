@@ -19,9 +19,9 @@ BATCH_SIZE_CLASSIFY ?= 1
 REGISTRY ?= false
 
 # Registry image references
-REGISTRY_MODEL_DOWNLOADER ?= palletiavi/model-downloader-lp:latest
-REGISTRY_PIPELINE_RUNNER ?= palletiavi/pipeline-runner-lp:latest
-REGISTRY_BENCHMARK ?= palletiavi/retail-benchmark:latest
+REGISTRY_MODEL_DOWNLOADER ?= intel/model-downloader-lp:latest
+REGISTRY_PIPELINE_RUNNER ?= intel/pipeline-runner-lp:latest
+REGISTRY_BENCHMARK ?= intel/retail-benchmark:latest
 
 check-models:
 	@chmod +x check_models.sh
