@@ -129,7 +129,11 @@ benchmark: build-benchmark download-sample-videos download-models
 	python3 -m venv venv && \
 	. venv/bin/activate && \
 	pip3 install -r requirements.txt && \
-	python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR) $(if $(filter true,$(REGISTRY)),--benchmark_type reg,) && \
+	if [ "$(REGISTRY)" = "true" ]; then \
+		python3 benchmark.py --compose_file ../../src/docker-compose-reg.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR) --benchmark_type reg; \
+	else \
+		python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR); \
+	fi && \
 	deactivate \
 	)
 
@@ -217,7 +221,7 @@ benchmark-quickstart: download-models download-sample-videos
 	. venv/bin/activate && \
 	pip3 install -r requirements.txt && \
 	if [ "$(REGISTRY)" = "true" ]; then \
-		python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR) --benchmark_type reg; \
+		python3 benchmark.py --compose_file ../../src/docker-compose-reg.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR) --benchmark_type reg; \
 	else \
 		python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR); \
 	fi && \
