@@ -21,6 +21,7 @@ REGISTRY ?= false
 # Registry image references
 REGISTRY_MODEL_DOWNLOADER ?= palletiavi/model-downloader-lp:latest
 REGISTRY_PIPELINE_RUNNER ?= palletiavi/pipeline-runner-lp:latest
+REGISTRY_BENCHMARK ?= palletiavi/retail-benchmark:latest
 
 check-models:
 	@chmod +x check_models.sh
@@ -108,9 +109,18 @@ update-submodules:
 	git submodule update --remote --merge
 	@echo "Submodules updated (if any present)."
 
-build-benchmark:
-	cd performance-tools && $(MAKE) build-benchmark-docker
+fetch-benchmark:
+	@echo "Fetching benchmark image from registry..."
+	docker pull $(REGISTRY_BENCHMARK)
+	docker tag $(REGISTRY_BENCHMARK) retail-benchmark:dev
+	@echo "Benchmark image ready"
 
+build-benchmark:
+	@if [ "$(REGISTRY)" = "true" ]; then \
+		$(MAKE) fetch-benchmark; \
+	else \
+		cd performance-tools && $(MAKE) build-benchmark-docker; \
+	fi
 
 benchmark: build-benchmark download-sample-videos download-models	
 	cd performance-tools/benchmark-scripts && \
@@ -119,7 +129,7 @@ benchmark: build-benchmark download-sample-videos download-models
 	python3 -m venv venv && \
 	. venv/bin/activate && \
 	pip3 install -r requirements.txt && \
-	python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR) && \
+	python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR) $(if $(filter true,$(REGISTRY)),--benchmark_type reg,) && \
 	deactivate \
 	)
 
@@ -193,8 +203,26 @@ benchmark-stream-density: build-benchmark download-models
 	deactivate \
 	)
 	
-benchmark-quickstart:
-	CAMERA_STREAM=camera_to_workload_full.json WORKLOAD_DIST=workload_to_pipeline_gpu.json RENDER_MODE=0 $(MAKE) benchmark
+benchmark-quickstart: download-models download-sample-videos
+	@if [ "$(REGISTRY)" = "true" ]; then \
+		echo "Using registry mode - skipping benchmark container build..."; \
+	else \
+		echo "Building benchmark container locally..."; \
+		$(MAKE) build-benchmark; \
+	fi
+	cd performance-tools/benchmark-scripts && \
+	export MULTI_STREAM_MODE=1 && \
+	( \
+	python3 -m venv venv && \
+	. venv/bin/activate && \
+	pip3 install -r requirements.txt && \
+	if [ "$(REGISTRY)" = "true" ]; then \
+		python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR) --benchmark_type reg; \
+	else \
+		python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR); \
+	fi && \
+	deactivate \
+	)
 	$(MAKE) consolidate-metrics
 
 clean-images:
