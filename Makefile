@@ -1,7 +1,7 @@
 # Copyright © 2025 Intel Corporation. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-.PHONY: update-submodules download-models download-samples download-sample-videos build-assets-downloader run-assets-downloader build-pipeline-runner run-loss-prevention clean-images clean-containers clean-all clean-project-images validate-config validate-camera-config validate-all-configs
+.PHONY: update-submodules download-models download-samples download-sample-videos build-assets-downloader run-assets-downloader build-pipeline-runner run-loss-prevention clean-images clean-containers clean-all clean-project-images validate-config validate-camera-config validate-all-configs check-models
 
 
 # Default values for benchmark
@@ -16,15 +16,39 @@ CAMERA_STREAM ?= camera_to_workload.json
 WORKLOAD_DIST ?= workload_to_pipeline.json
 BATCH_SIZE_DETECT ?= 1
 BATCH_SIZE_CLASSIFY ?= 1
+REGISTRY ?= false
 
-download-models:
-	@echo ".....Downloading models....."
-	$(MAKE) build-model-downloader
-	$(MAKE) run-model-downloader
+# Registry image references
+REGISTRY_MODEL_DOWNLOADER ?= intel/model-downloader-lp:latest
+REGISTRY_PIPELINE_RUNNER ?= intel/pipeline-runner-lp:latest
+REGISTRY_BENCHMARK ?= intel/retail-benchmark:latest
+
+check-models:
+	@chmod +x check_models.sh
+	@./check_models.sh models || true
+
+download-models: check-models
+	@if ./check_models.sh models; then \
+		echo ".....Downloading models....."; \
+		if [ "$(REGISTRY)" = "true" ]; then \
+			$(MAKE) fetch-model-downloader; \
+		else \
+			$(MAKE) build-model-downloader; \
+		fi; \
+		$(MAKE) run-model-downloader; \
+	else \
+		echo ".....All models already present, skipping download....."; \
+	fi
 
 download-sample-videos: | validate-camera-config
 	@echo "Downloading and formatting videos for all cameras in $(CAMERA_STREAM)..."
 	python3 download-scripts/download-video.py --camera-config configs/$(CAMERA_STREAM) --format-script performance-tools/benchmark-scripts/format_avc_mp4.sh
+
+fetch-model-downloader:
+	@echo "Fetching model downloader from registry..."
+	docker pull $(REGISTRY_MODEL_DOWNLOADER)
+	docker tag $(REGISTRY_MODEL_DOWNLOADER) model-downloader:lp
+	@echo "Model downloader ready"
 
 build-model-downloader: | validate-pipeline-config
 	@echo "Building model downloader"
@@ -41,10 +65,15 @@ run-model-downloader:
 		-e MODELS_DIR=/workspace/models \
 		-e WORKLOAD_DIST=${WORKLOAD_DIST} \
 		-v "$(shell pwd)/models:/workspace/models" \
-        -v "$(shell pwd)/configs:/workspace/configs" \
+		-v "$(shell pwd)/configs:/workspace/configs" \
 		model-downloader:lp
 	@echo "assets downloader completed"
 
+fetch-pipeline-runner:
+	@echo "Fetching pipeline runner from registry..."
+	docker pull $(REGISTRY_PIPELINE_RUNNER)
+	docker tag $(REGISTRY_PIPELINE_RUNNER) pipeline-runner:lp
+	@echo "Pipeline runner ready"
 
 build-pipeline-runner:
 	@echo "Building pipeline runner"
@@ -52,7 +81,7 @@ build-pipeline-runner:
 		--build-arg HTTPS_PROXY=${HTTPS_PROXY} \
 		--build-arg HTTP_PROXY=${HTTP_PROXY} \
 		--build-arg BATCH_SIZE_DETECT=${BATCH_SIZE_DETECT} \
-        --build-arg BATCH_SIZE_CLASSIFY=${BATCH_SIZE_CLASSIFY} \
+		--build-arg BATCH_SIZE_CLASSIFY=${BATCH_SIZE_CLASSIFY} \
 		-t pipeline-runner:lp \
 		-f docker/Dockerfile.pipeline .
 	@echo "pipeline runner build completed"
@@ -80,28 +109,44 @@ update-submodules:
 	git submodule update --remote --merge
 	@echo "Submodules updated (if any present)."
 
-build-benchmark:
-	cd performance-tools && $(MAKE) build-benchmark-docker
+fetch-benchmark:
+	@echo "Fetching benchmark image from registry..."
+	docker pull $(REGISTRY_BENCHMARK)
+	docker tag $(REGISTRY_BENCHMARK) retail-benchmark:dev
+	@echo "Benchmark image ready"
 
+build-benchmark:
+	@if [ "$(REGISTRY)" = "true" ]; then \
+		$(MAKE) fetch-benchmark; \
+	else \
+		cd performance-tools && $(MAKE) build-benchmark-docker; \
+	fi
 
 benchmark: build-benchmark download-sample-videos download-models	
 	cd performance-tools/benchmark-scripts && \
 	export MULTI_STREAM_MODE=1 && \
-    ( \
+	( \
 	python3 -m venv venv && \
 	. venv/bin/activate && \
 	pip3 install -r requirements.txt && \
-	python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR) && \
+	if [ "$(REGISTRY)" = "true" ]; then \
+		python3 benchmark.py --compose_file ../../src/docker-compose-reg.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR) --benchmark_type reg; \
+	else \
+		python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR); \
+	fi && \
 	deactivate \
 	)
 
 run:
+	@if [ "$(REGISTRY)" = "true" ]; then \
+		$(MAKE) fetch-pipeline-runner; \
+	else \
+		docker compose -f src/docker-compose.yml build pipeline-runner; \
+	fi
 	BATCH_SIZE_DETECT=$(BATCH_SIZE_DETECT) BATCH_SIZE_CLASSIFY=$(BATCH_SIZE_CLASSIFY) \
 	docker compose -f src/docker-compose.yml up -d
 
-run-lp: | validate_workload_mapping update-submodules download-sample-videos
-	@echo downloading the models
-	$(MAKE) download-models
+run-lp: | validate_workload_mapping update-submodules download-sample-videos download-models
 	@echo Running loss prevention pipeline
 	@if [ "$(RENDER_MODE)" != "0" ]; then \
 		$(MAKE) run-render-mode; \
@@ -124,7 +169,11 @@ run-render-mode:
 	@echo "Using config file: configs/$(CAMERA_STREAM)"
 	@echo "Using workload config: configs/$(WORKLOAD_DIST)"
 	@xhost +local:docker
-	docker compose -f src/docker-compose.yml build pipeline-runner
+	@if [ "$(REGISTRY)" = "true" ]; then \
+		$(MAKE) fetch-pipeline-runner; \
+	else \
+		docker compose -f src/docker-compose.yml build pipeline-runner; \
+	fi
 	@RENDER_MODE=1 CAMERA_STREAM=$(CAMERA_STREAM) WORKLOAD_DIST=$(WORKLOAD_DIST) BATCH_SIZE_DETECT=$(BATCH_SIZE_DETECT) BATCH_SIZE_CLASSIFY=$(BATCH_SIZE_CLASSIFY) docker compose -f src/docker-compose.yml up -d
 	$(MAKE) clean-images
 
@@ -158,8 +207,26 @@ benchmark-stream-density: build-benchmark download-models
 	deactivate \
 	)
 	
-benchmark-quickstart:
-	CAMERA_STREAM=camera_to_workload_full.json WORKLOAD_DIST=workload_to_pipeline_gpu.json RENDER_MODE=0 $(MAKE) benchmark
+benchmark-quickstart: download-models download-sample-videos
+	@if [ "$(REGISTRY)" = "true" ]; then \
+		echo "Using registry mode - skipping benchmark container build..."; \
+	else \
+		echo "Building benchmark container locally..."; \
+		$(MAKE) build-benchmark; \
+	fi
+	cd performance-tools/benchmark-scripts && \
+	export MULTI_STREAM_MODE=1 && \
+	( \
+	python3 -m venv venv && \
+	. venv/bin/activate && \
+	pip3 install -r requirements.txt && \
+	if [ "$(REGISTRY)" = "true" ]; then \
+		python3 benchmark.py --compose_file ../../src/docker-compose-reg.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR) --benchmark_type reg; \
+	else \
+		python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR); \
+	fi && \
+	deactivate \
+	)
 	$(MAKE) consolidate-metrics
 
 clean-images:
