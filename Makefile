@@ -17,7 +17,8 @@ WORKLOAD_DIST ?= workload_to_pipeline.json
 BATCH_SIZE_DETECT ?= 1
 BATCH_SIZE_CLASSIFY ?= 1
 REGISTRY ?= false
-
+DOCKER_COMPOSE ?= docker-compose.yml
+DOCKER_COMPOSE_REGISTRY ?= docker-compose-reg.yml
 # Registry image references
 REGISTRY_MODEL_DOWNLOADER ?= intel/model-downloader-lp:latest
 REGISTRY_PIPELINE_RUNNER ?= intel/pipeline-runner-lp:latest
@@ -130,9 +131,9 @@ benchmark: build-benchmark download-sample-videos download-models
 	. venv/bin/activate && \
 	pip3 install -r requirements.txt && \
 	if [ "$(REGISTRY)" = "true" ]; then \
-		python3 benchmark.py --compose_file ../../src/docker-compose-reg.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR) --benchmark_type reg; \
+		python3 benchmark.py --compose_file ../../src/$(DOCKER_COMPOSE_REGISTRY) --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR) --benchmark_type reg; \
 	else \
-		python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR); \
+		python3 benchmark.py --compose_file ../../src/$(DOCKER_COMPOSE) --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR); \
 	fi && \
 	deactivate \
 	)
@@ -155,7 +156,13 @@ run-lp: | validate_workload_mapping update-submodules download-sample-videos dow
 	fi
 
 down-lp:
-	docker compose -f src/docker-compose.yml down
+	@if [ "$(REGISTRY)" = "true" ]; then \
+		echo "Stopping registry demo containers..."; \
+		docker compose -f src/$(DOCKER_COMPOSE_REGISTRY) down; \
+		echo "Registry demo containers stopped and removed."; \
+	else \
+		docker compose -f src/$(DOCKER_COMPOSE) down; \
+	fi
 
 run-render-mode:
 	@if [ -z "$(DISPLAY)" ] || ! echo "$(DISPLAY)" | grep -qE "^:[0-9]+(\.[0-9]+)?$$"; then \
@@ -197,13 +204,24 @@ benchmark-stream-density: build-benchmark download-models
 	python3 -m venv venv && \
 	. venv/bin/activate && \
 	pip3 install -r requirements.txt && \
-	python3 benchmark.py \
-	  --compose_file ../../src/docker-compose.yml \
-	  --init_duration $(INIT_DURATION) \
-	  --target_fps $(TARGET_FPS) \
-	  --container_names $(CONTAINER_NAMES) \
-	  --density_increment $(DENSITY_INCREMENT) \
-	  --results_dir $(RESULTS_DIR) && \
+	if [ "$(REGISTRY)" = "true" ]; then \
+		python3 benchmark.py \
+			--compose_file ../../src/$(DOCKER_COMPOSE_REGISTRY) \
+			--init_duration $(INIT_DURATION) \
+			--target_fps $(TARGET_FPS) \
+			--container_names $(CONTAINER_NAMES) \
+			--density_increment $(DENSITY_INCREMENT) \
+			--benchmark_type reg \
+			--results_dir $(RESULTS_DIR); \
+	else \
+		python3 benchmark.py \
+			--compose_file ../../src/$(DOCKER_COMPOSE) \
+			--init_duration $(INIT_DURATION) \
+			--target_fps $(TARGET_FPS) \
+			--container_names $(CONTAINER_NAMES) \
+			--density_increment $(DENSITY_INCREMENT) \
+			--results_dir $(RESULTS_DIR); \
+	fi; \
 	deactivate \
 	)
 	
@@ -221,9 +239,9 @@ benchmark-quickstart: download-models download-sample-videos
 	. venv/bin/activate && \
 	pip3 install -r requirements.txt && \
 	if [ "$(REGISTRY)" = "true" ]; then \
-		python3 benchmark.py --compose_file ../../src/docker-compose-reg.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR) --benchmark_type reg; \
+		python3 benchmark.py --compose_file ../../src/$(DOCKER_COMPOSE_REGISTRY) --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR) --benchmark_type reg; \
 	else \
-		python3 benchmark.py --compose_file ../../src/docker-compose.yml --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR); \
+		python3 benchmark.py --compose_file ../../src/$(DOCKER_COMPOSE) --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR); \
 	fi && \
 	deactivate \
 	)
