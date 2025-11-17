@@ -107,7 +107,6 @@ update-submodules:
 	@echo "Cloning performance tool repositories"
 	git submodule deinit -f .
 	git submodule update --init --recursive
-	git submodule update --remote --merge
 	@echo "Submodules updated (if any present)."
 
 fetch-benchmark:
