@@ -16,7 +16,7 @@ CAMERA_STREAM ?= camera_to_workload.json
 WORKLOAD_DIST ?= workload_to_pipeline.json
 BATCH_SIZE_DETECT ?= 1
 BATCH_SIZE_CLASSIFY ?= 1
-REGISTRY ?= false
+REGISTRY ?= true
 DOCKER_COMPOSE ?= docker-compose.yml
 DOCKER_COMPOSE_REGISTRY ?= docker-compose-reg.yml
 # Registry image references
