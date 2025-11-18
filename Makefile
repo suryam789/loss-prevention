@@ -19,10 +19,16 @@ BATCH_SIZE_CLASSIFY ?= 1
 REGISTRY ?= true
 DOCKER_COMPOSE ?= docker-compose.yml
 DOCKER_COMPOSE_REGISTRY ?= docker-compose-reg.yml
+
+TAG ?= rc1
+#local image references
+MODELDOWNLOADER_IMAGE ?= model-downloader-lp:$(TAG)
+PIPELINE_RUNNER_IMAGE ?= pipeline-runner-lp:$(TAG)
+REGISTRY ?= true
 # Registry image references
-REGISTRY_MODEL_DOWNLOADER ?= intel/model-downloader-lp:latest
-REGISTRY_PIPELINE_RUNNER ?= intel/pipeline-runner-lp:latest
-REGISTRY_BENCHMARK ?= intel/retail-benchmark:latest
+REGISTRY_MODEL_DOWNLOADER ?= intel/model-downloader-lp:$(TAG)
+REGISTRY_PIPELINE_RUNNER ?= intel/pipeline-runner-lp:$(TAG)
+REGISTRY_BENCHMARK ?= intel/retail-benchmark:$(TAG)
 
 check-models:
 	@chmod +x check_models.sh
@@ -48,12 +54,12 @@ download-sample-videos: | validate-camera-config
 fetch-model-downloader:
 	@echo "Fetching model downloader from registry..."
 	docker pull $(REGISTRY_MODEL_DOWNLOADER)
-	docker tag $(REGISTRY_MODEL_DOWNLOADER) model-downloader:lp
+	docker tag $(REGISTRY_MODEL_DOWNLOADER) $(MODELDOWNLOADER_IMAGE)
 	@echo "Model downloader ready"
 
 build-model-downloader: | validate-pipeline-config
 	@echo "Building model downloader"
-	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} -t model-downloader:lp -f docker/Dockerfile.downloader .
+	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} -t $(MODELDOWNLOADER_IMAGE) -f docker/Dockerfile.downloader .
 	@echo "assets downloader completed"
 
 run-model-downloader:
@@ -67,13 +73,13 @@ run-model-downloader:
 		-e WORKLOAD_DIST=${WORKLOAD_DIST} \
 		-v "$(shell pwd)/models:/workspace/models" \
 		-v "$(shell pwd)/configs:/workspace/configs" \
-		model-downloader:lp
+		$(MODELDOWNLOADER_IMAGE)
 	@echo "assets downloader completed"
 
 fetch-pipeline-runner:
 	@echo "Fetching pipeline runner from registry..."
 	docker pull $(REGISTRY_PIPELINE_RUNNER)
-	docker tag $(REGISTRY_PIPELINE_RUNNER) pipeline-runner:lp
+	docker tag $(REGISTRY_PIPELINE_RUNNER) $(PIPELINE_RUNNER_IMAGE)
 	@echo "Pipeline runner ready"
 
 build-pipeline-runner:
@@ -83,7 +89,7 @@ build-pipeline-runner:
 		--build-arg HTTP_PROXY=${HTTP_PROXY} \
 		--build-arg BATCH_SIZE_DETECT=${BATCH_SIZE_DETECT} \
 		--build-arg BATCH_SIZE_CLASSIFY=${BATCH_SIZE_CLASSIFY} \
-		-t pipeline-runner:lp \
+		-t $(PIPELINE_RUNNER_IMAGE) \
 		-f docker/Dockerfile.pipeline .
 	@echo "pipeline runner build completed"
 
@@ -99,7 +105,7 @@ run-pipeline-runner:
 		-e http_proxy=${HTTP_PROXY} \
 		-e https_proxy=${HTTPS_PROXY} \
 		--volume $(PWD)/results:/home/pipeline-server/results \
-		pipeline-runner:lp
+		$(PIPELINE_RUNNER_IMAGE)
 	@echo "pipeline runner container completed successfully"
 
 
@@ -267,7 +273,7 @@ clean-all:
 
 clean-project-images:
 	@echo "Cleaning up project-specific images..."
-	@docker rmi model-downloader:lp pipeline-runner:lp 2>/dev/null || true
+	@docker rmi $(MODELDOWNLOADER_IMAGE) $(PIPELINE_RUNNER_IMAGE) 2>/dev/null || true
 	@echo "Project images cleaned up"
 
 docs: clean-docs
