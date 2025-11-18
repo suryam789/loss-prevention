@@ -32,27 +32,27 @@ Example: make run-lp REGISTRY=false
 
 1.1 Download the models using download_models/downloadModels.sh
 
-    ```bash
-    make download-models
-    ```
+```bash
+make download-models
+```
 
 1.2 Update github submodules
 
-    ```bash
-    make update-submodules
-    ```
+```bash
+make update-submodules
+```
 
 1.3 Download sample videos used by the performance tools
 
-    ```bash
-    make download-sample-videos
-    ```
+```bash
+make download-sample-videos
+```
 
 1.4 Run the LP application
 
-    ```bash
-    make run-render-mode
-    ```
+```bash
+make run-render-mode
+```
 
 - Run Loss Prevention appliaction with single command.   
 
@@ -95,13 +95,13 @@ make down-lp
 >*By default, the configuration is set to use the CPU. If you want to benchmark the application on GPU or NPU, please update the device value in workload_to_pipeline.json.*
 
 ```sh
-make  benchmark
+make benchmark
 ```
 
 ### 5. See the benchmarking results.
 
 ```sh
-make  consolidate-metrics
+make consolidate-metrics
 
 cat benchmark/metrics.csv
 ```
