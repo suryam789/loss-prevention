@@ -68,19 +68,20 @@ Example: make run-lp REGISTRY=false
       `WORKLOAD_DIST=workload_to_pipeline_cpu.json`: all workloads run on CPU. <br>
 
 ### 2 To build the images locally step by step:
-    - Follow the following steps:
-      ```bash
-      make download-models REGISTRY=false
-      make update-submodules REGISTRY=false
-      make download-sample-videos
-      make run-render-mode REGISTRY=false
-      ```
+
+- Follow the following steps:
+  ```bash
+  make download-models REGISTRY=false
+  make update-submodules REGISTRY=false
+  make download-sample-videos
+  make run-render-mode REGISTRY=false
+  ```
       
-    - The above series of commands can be executed using only one command:
+- The above series of commands can be executed using only one command:
     
-      ```bash
-      make run-lp REGISTRY=false
-      ```
+  ```bash
+  make run-lp REGISTRY=false
+  ```
 
 For a comprehensive and advanced guide, refer to- [Loss Prevention Documentation Guide](https://intel-retail.github.io/documentation/use-cases/loss-prevention/loss-prevention.html)
 
