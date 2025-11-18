@@ -24,6 +24,7 @@ TAG ?= rc1
 #local image references
 MODELDOWNLOADER_IMAGE ?= model-downloader-lp:$(TAG)
 PIPELINE_RUNNER_IMAGE ?= pipeline-runner-lp:$(TAG)
+BENCHMARK_IMAGE ?= benchmark:latest
 REGISTRY ?= true
 # Registry image references
 REGISTRY_MODEL_DOWNLOADER ?= intel/model-downloader-lp:$(TAG)
@@ -118,7 +119,7 @@ update-submodules:
 fetch-benchmark:
 	@echo "Fetching benchmark image from registry..."
 	docker pull $(REGISTRY_BENCHMARK)
-	docker tag $(REGISTRY_BENCHMARK) retail-benchmark:dev
+	docker tag $(REGISTRY_BENCHMARK) $(BENCHMARK_IMAGE)
 	@echo "Benchmark image ready"
 
 build-benchmark:
