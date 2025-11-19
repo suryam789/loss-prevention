@@ -6,7 +6,7 @@ services:
       args:
         - HTTP_PROXY=${HTTP_PROXY}
         - HTTPS_PROXY=${HTTPS_PROXY}
-    image: model-downloader:lp
+    image: model-downloader-lp:${TAG:-rc1}
     container_name: model-downloader
     environment:
       - HTTP_PROXY=${HTTP_PROXY}
@@ -28,7 +28,7 @@ services:
       args:
         - HTTP_PROXY=${HTTP_PROXY}
         - HTTPS_PROXY=${HTTPS_PROXY}
-    image: pipeline-runner:lp
+    image: pipeline-runner-lp:${TAG:-rc1}
     deploy:
       mode: replicated
       replicas: ${PIPELINE_COUNT:-1}
