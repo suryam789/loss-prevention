@@ -124,8 +124,10 @@ fetch-benchmark:
 
 build-benchmark:
 	@if [ "$(REGISTRY)" = "true" ]; then \
+		$(MAKE) fetch-pipeline-runner; \
 		$(MAKE) fetch-benchmark; \
 	else \
+		$(MAKE) build-pipeline-runner; \
 		cd performance-tools && $(MAKE) build-benchmark-docker; \
 	fi
 
