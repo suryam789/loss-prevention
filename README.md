@@ -15,42 +15,77 @@ The Loss Prevention Pipeline System is an open-source reference implementation f
 
 ## 🚀 QuickStart
 
-> The first run will download models, videos, and build Docker images. This may take some time.
+### **NOTE:** 
 
+By default the application runs by pulling the pre-built images. If you want to build the images locally and then run the application, set the flag:
 
-### 1. Download models and videos, and run the Loss Prevention application.
+```bash
+REGISTRY=false
 
-```sh
+usage: make <command> REGISTRY=false (applicable for all commands like benchmark, benchmark-stream-density..)
+Example: make run-lp REGISTRY=false
+```
+
+(If this is the first time, it will take some time to download videos, models, docker images and build images)
+
+### 1. Step by step instructions:
+
+1.1 Download the models using download_models/downloadModels.sh
+
+```bash
 make download-models
+```
+
+1.2 Update github submodules
+
+```bash
 make update-submodules
+```
+
+1.3 Download sample videos used by the performance tools
+
+```bash
 make download-sample-videos
+```
+
+1.4 Run the LP application
+
+```bash
 make run-render-mode
 ```
 
+- Run Loss Prevention appliaction with single command.   
 
-> **User can directly run single make command that internally called all above command and run the Loss Prevention application.**
+    ```bash
+    make run-lp
+    ```
 
-### **NOTE:**  
-If you want to run the Application using pre-built container images, set the flag:
+    - Running Loss Prevention application with ENV variables:
+      ```bash
+      CAMERA_STREAM=camera_to_workload_full.json WORKLOAD_DIST=workload_to_pipeline_cpu.json make run-lp
+      ```
+      `CAMERA_STREAM=camera_to_workload_full.json`: runs all 6 workloads. <br>
+      `WORKLOAD_DIST=workload_to_pipeline_cpu.json`: all workloads run on CPU. <br>
 
-```bash
-REGISTRY=true
+### 2 To build the images locally step by step:
 
-usage: make <command> REGISTRY=true (applicable for all commands like benchmark, benchmark-stream-density..)
-Example: make run-lp REGISTRY=true
-```
-
-### 3. Run Loss Prevention appliaction with single command.
-
-
-```sh
-make run-lp
-
-```
+- Follow the following steps:
+  ```bash
+  make download-models REGISTRY=false
+  make update-submodules REGISTRY=false
+  make download-sample-videos
+  make run-render-mode REGISTRY=false
+  ```
+      
+- The above series of commands can be executed using only one command:
+    
+  ```bash
+  make run-lp REGISTRY=false
+  ```
 
 For a comprehensive and advanced guide, refer to- [Loss Prevention Documentation Guide](https://intel-retail.github.io/documentation/use-cases/loss-prevention/loss-prevention.html)
 
-### 4. Stop all containers
+### 3. Stop all containers
 
 ```sh
 make down-lp
@@ -60,13 +95,13 @@ make down-lp
 >*By default, the configuration is set to use the CPU. If you want to benchmark the application on GPU or NPU, please update the device value in workload_to_pipeline.json.*
 
 ```sh
-make  benchmark
+make benchmark
 ```
 
 ### 5. See the benchmarking results.
 
 ```sh
-make  consolidate-metrics
+make consolidate-metrics
 
 cat benchmark/metrics.csv
 ```
