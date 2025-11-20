@@ -3,6 +3,10 @@
 
 .PHONY: update-submodules download-models download-samples download-sample-videos build-assets-downloader run-assets-downloader build-pipeline-runner run-loss-prevention clean-images clean-containers clean-all clean-project-images validate-config validate-camera-config validate-all-configs check-models
 
+HTTP_PROXY := $(or $(HTTP_PROXY),$(http_proxy))
+HTTPS_PROXY := $(or $(HTTPS_PROXY),$(https_proxy))
+export HTTP_PROXY
+export HTTPS_PROXY
 
 # Default values for benchmark
 PIPELINE_COUNT ?= 1
