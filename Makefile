@@ -150,17 +150,6 @@ benchmark: build-benchmark download-sample-videos download-models
 	deactivate \
 	)
 
-run:
-	@if [ "$(REGISTRY)" = "true" ]; then \
-		$(MAKE) fetch-pipeline-runner; \
-		echo "##############Using registry mode - fetching pipeline runner..."; \
-		BATCH_SIZE_DETECT=$(BATCH_SIZE_DETECT) BATCH_SIZE_CLASSIFY=$(BATCH_SIZE_CLASSIFY) docker compose -f src/$(DOCKER_COMPOSE_REGISTRY) up -d; \
-	else \
-		docker compose -f src/$(DOCKER_COMPOSE) build pipeline-runner; \
-		BATCH_SIZE_DETECT=$(BATCH_SIZE_DETECT) BATCH_SIZE_CLASSIFY=$(BATCH_SIZE_CLASSIFY) docker compose -f src/$(DOCKER_COMPOSE) up -d; \
-	fi
-	
-
 run-lp: | validate_workload_mapping update-submodules download-sample-videos download-models
 	@echo Running loss prevention pipeline
 	@if [ "$(RENDER_MODE)" != "0" ]; then \
@@ -178,6 +167,15 @@ down-lp:
 		docker compose -f src/$(DOCKER_COMPOSE) down; \
 	fi
 
+run:
+	@if [ "$(REGISTRY)" = "true" ]; then \
+		echo "##############Using registry mode - fetching pipeline runner..."; \
+		BATCH_SIZE_DETECT=$(BATCH_SIZE_DETECT) BATCH_SIZE_CLASSIFY=$(BATCH_SIZE_CLASSIFY) docker compose -f src/$(DOCKER_COMPOSE_REGISTRY) up -d; \
+	else \
+		docker compose -f src/$(DOCKER_COMPOSE) build pipeline-runner; \
+		BATCH_SIZE_DETECT=$(BATCH_SIZE_DETECT) BATCH_SIZE_CLASSIFY=$(BATCH_SIZE_CLASSIFY) docker compose -f src/$(DOCKER_COMPOSE) up -d; \
+	fi
+
 run-render-mode:
 	@if [ -z "$(DISPLAY)" ] || ! echo "$(DISPLAY)" | grep -qE "^:[0-9]+(\.[0-9]+)?$$"; then \
 		echo "ERROR: Invalid or missing DISPLAY environment variable."; \
@@ -192,7 +190,6 @@ run-render-mode:
 	@xhost +local:docker
 	@if [ "$(REGISTRY)" = "true" ]; then \
 		echo "##############Using registry mode - fetching pipeline runner..."; \
-		$(MAKE) fetch-pipeline-runner; \
 		RENDER_MODE=1 CAMERA_STREAM=$(CAMERA_STREAM) WORKLOAD_DIST=$(WORKLOAD_DIST) BATCH_SIZE_DETECT=$(BATCH_SIZE_DETECT) BATCH_SIZE_CLASSIFY=$(BATCH_SIZE_CLASSIFY) docker compose -f src/$(DOCKER_COMPOSE_REGISTRY) up -d; \
 	else \
 		docker compose -f src/$(DOCKER_COMPOSE) build pipeline-runner; \
