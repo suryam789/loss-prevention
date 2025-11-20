@@ -16,11 +16,11 @@ The Loss Prevention Pipeline System is an open-source reference implementation f
 ## 🚀 QuickStart
 Clone the repo with the below command
 ```
-git clone -b <release-or-tag> --single-branch https://github.com/intel-retail/automated-self-checkout
+git clone -b <release-or-tag> --single-branch https://github.com/intel-retail/loss-prevention
 ```
 >Replace <release-or-tag> with the version you want to clone (for example, **v4.0.0**).
 ```
-git clone -b v4.0.0 --single-branch https://github.com/intel-retail/automated-self-checkout
+git clone -b v4.0.0 --single-branch https://github.com/intel-retail/loss-prevention
 ```
 ### **NOTE:** 
 
