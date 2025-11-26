@@ -24,16 +24,16 @@ REGISTRY ?= true
 DOCKER_COMPOSE ?= docker-compose.yml
 DOCKER_COMPOSE_REGISTRY ?= docker-compose-reg.yml
 
-TAG ?= rc1
+TAG ?= rc2
 #local image references
-MODELDOWNLOADER_IMAGE ?= model-downloader-lp:$(TAG)
-PIPELINE_RUNNER_IMAGE ?= pipeline-runner-lp:$(TAG)
+MODELDOWNLOADER_IMAGE ?= model-downloader-lp:4.3.1-$(TAG)
+PIPELINE_RUNNER_IMAGE ?= pipeline-runner-lp:4.3.1-$(TAG)
 BENCHMARK_IMAGE ?= benchmark:latest
 REGISTRY ?= true
 # Registry image references
-REGISTRY_MODEL_DOWNLOADER ?= intel/model-downloader-lp:$(TAG)
-REGISTRY_PIPELINE_RUNNER ?= intel/pipeline-runner-lp:$(TAG)
-REGISTRY_BENCHMARK ?= intel/retail-benchmark:$(TAG)
+REGISTRY_MODEL_DOWNLOADER ?= intel/model-downloader-lp:4.3.1-$(TAG)
+REGISTRY_PIPELINE_RUNNER ?= intel/pipeline-runner-lp:4.3.1-$(TAG)
+REGISTRY_BENCHMARK ?= intel/retail-benchmark:3.3.0-$(TAG)
 
 check-models:
 	@chmod +x check_models.sh
