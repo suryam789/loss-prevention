@@ -1,6 +1,6 @@
 services:
   model-downloader:
-    image: intel/model-downloader-lp:${TAG:-rc1}
+    image: intel/model-downloader-lp:4.3.1-${TAG:-rc2}
     container_name: model-downloader
     environment:
       - HTTP_PROXY=${HTTP_PROXY}
@@ -16,7 +16,7 @@ services:
     command: ["/bin/bash", "-c", "/workspace/scripts/downloadModels.sh"]
 
   pipeline-runner:
-    image: intel/pipeline-runner-lp:${TAG:-rc1}
+    image: intel/pipeline-runner-lp:4.3.1-${TAG:-rc2}
     deploy:
       mode: replicated
       replicas: ${PIPELINE_COUNT:-1}
