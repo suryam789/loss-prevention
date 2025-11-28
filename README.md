@@ -94,8 +94,13 @@ For a comprehensive and advanced guide, refer to- [Loss Prevention Documentation
 
 ### 3. Stop all containers
 
+When pre-built images are pulled-
 ```sh
 make down-lp
+```
+When images are built locally-
+```sh
+make down-lp REGISTRY=false
 ```
 
 ### 4. Run benchmarking on CPU/NPU/GPU.
