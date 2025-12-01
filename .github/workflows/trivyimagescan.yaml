@@ -48,7 +48,7 @@ jobs:
         - name: Run Trivy vulnerability scanner on model-downloader
           uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2
           with:
-            image-ref: 'model-downloader:lp'
+            image-ref: 'model-downloader-lp:4.3.1-rc2'
             format: 'template'
             template: '@/contrib/sarif.tpl'
             output: 'trivy-results-model-downloader.sarif'
@@ -74,6 +74,7 @@ jobs:
           with:
             sarif_file: 'trivy-results-pipeline-runner.sarif'
             category: 'pipeline-runner'
+
 
 
 
