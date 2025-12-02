@@ -50,8 +50,8 @@ jobs:
           with:
             image-ref: 'model-downloader-lp:4.3.1-rc2'
             format: 'template'
-            template: '@/contrib/sarif.tpl'
-            output: 'trivy-results-model-downloader.sarif'
+            template: '@$HOME/.local/bin/trivy-bin/contrib/html.tpl'
+            output: 'trivy-results-model-downloader.html'
             severity: 'CRITICAL,HIGH'
 
         - name: Run Trivy vulnerability scanner on pipeline-runner
@@ -64,16 +64,17 @@ jobs:
             severity: 'CRITICAL,HIGH'
 
         - name: Upload Trivy scan results for model-downloader to GitHub Security tab
-          uses: github/codeql-action/upload-sarif@1b549b9259bda1cb5ddde3b41741a82a2d15a841
+          uses: actions/upload-artifact@v4
           with:
-            sarif_file: 'trivy-results-model-downloader.sarif'
-            category: 'model-downloader'
+            name: trivy-html-report
+            path: trivy-results-model-downloader.html
 
         - name: Upload Trivy scan results for pipeline-runner to GitHub Security tab
           uses: github/codeql-action/upload-sarif@1b549b9259bda1cb5ddde3b41741a82a2d15a841
           with:
             sarif_file: 'trivy-results-pipeline-runner.sarif'
             category: 'pipeline-runner'
+
 
 
 
