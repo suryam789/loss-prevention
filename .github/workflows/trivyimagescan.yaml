@@ -50,7 +50,7 @@ jobs:
           with:
             image-ref: 'model-downloader-lp:4.3.1-rc2'
             format: 'template'
-            template: '@$HOME/.local/bin/trivy-bin/contrib/html.tpl'
+            template: '@/contrib/html.tpl'
             output: 'trivy-results-model-downloader.html'
             severity: 'CRITICAL,HIGH'
 
@@ -74,6 +74,7 @@ jobs:
           with:
             sarif_file: 'trivy-results-pipeline-runner.sarif'
             category: 'pipeline-runner'
+
 
 
 
