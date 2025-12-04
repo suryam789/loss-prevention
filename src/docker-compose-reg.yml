@@ -1,6 +1,6 @@
 services:
   model-downloader:
-    image: intel/model-downloader-lp:4.3.1-${TAG:-rc2}
+    image: intel/model-downloader-lp:4.3.2
     container_name: model-downloader
     environment:
       - HTTP_PROXY=${HTTP_PROXY}
