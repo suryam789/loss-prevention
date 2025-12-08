@@ -16,7 +16,7 @@ services:
     command: ["/bin/bash", "-c", "/workspace/scripts/downloadModels.sh"]
 
   pipeline-runner:
-    image: intel/pipeline-runner-lp:4.3.1-${TAG:-rc2}
+    image: intel/pipeline-runner-lp:4.3.2
     deploy:
       mode: replicated
       replicas: ${PIPELINE_COUNT:-1}
