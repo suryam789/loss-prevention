@@ -9,14 +9,19 @@ WORKLOAD_PIPELINE_CONFIG="/home/pipeline-server/lp-vlm/configs/"$WORKLOAD_DIST
 VIDEO_NAME="$(python3 /home/pipeline-server/lp-vlm/workload_utils.py \
   --camera-config "/home/pipeline-server/lp-vlm/configs/${CAMERA_STREAM}" \
   --get-video-name)"
+ORIGINAL_VIDEO_NAME="$(python3 /home/pipeline-server/lp-vlm/workload_utils.py \
+  --camera-config "/home/pipeline-server/lp-vlm/configs/${CAMERA_STREAM}" \
+  --extract_video_name)"
 STREAM_URI="$(python3 /home/pipeline-server/lp-vlm/workload_utils.py \
   --camera-config "/home/pipeline-server/lp-vlm/configs/${CAMERA_STREAM}" \
   --get-stream-uri)"
 
 export VIDEO_NAME
+export ORIGINAL_VIDEO_NAME
 export STREAM_URI
 
 echo "VIDEO_NAME from config:" "$VIDEO_NAME"
+echo "ORIGINAL_VIDEO_NAME from config:" "$ORIGINAL_VIDEO_NAME"
 echo "STREAM_URI from config:" "$STREAM_URI"
 echo "WORKLOAD_DIST from env:" $WORKLOAD_DIST
 echo "CONFIG_PATH set to:" $WORKLOAD_PIPELINE_CONFIG
@@ -88,8 +93,7 @@ else
 fi
 
 time gst-launch-1.0 --verbose \
-  rtspsrc location="$STREAM_URI" protocols=tcp latency=${RTSP_LATENCY:-200} ! \
-  rtph264depay ! h264parse config-interval=-1 ! queue ! \
+  filesrc location=/home/pipeline-server/lp-vlm/sample-media/$ORIGINAL_VIDEO_NAME ! \
   decodebin3 ! videoconvert ! videorate ! \
   video/x-raw,format=BGR,framerate=13/1 ! \
   gvadetect model-instance-id=detect1_1 name=lp-vlm batch-size=1 \
