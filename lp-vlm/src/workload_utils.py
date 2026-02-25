@@ -249,6 +249,60 @@ def get_video_name_only(camera_cfg_path: str = None) -> str:
     stream_name, _, _ = get_video_from_config(camera_cfg_path)
     return stream_name
 
+
+def get_video_name_with_extension(camera_cfg_path: str = None) -> str:
+    """Return the bench-style video name plus the original file extension.
+
+    Uses extract_video_name(fileSrc, width, fps) to build the base name
+    (e.g. "lp-vlm-1080-15-bench") and appends the extension taken from
+    the original fileSrc value in the camera config (e.g. ".mp4").
+    """
+    # Resolve config path similarly to other helpers
+    if not camera_cfg_path:
+        camera_cfg_path = os.getenv("CAMERA_STREAM") or CONFIG_PATH_DEFAULT
+
+    cfg = load_config(camera_cfg_path)
+    lane = cfg.get("lane_config", {})
+    cameras = lane.get("cameras", [])
+
+    if not cameras:
+        raise ValueError("[ERROR] No cameras found in configuration")
+
+    # Select the single lp_vlm camera
+    vlm_cameras = [cam for cam in cameras if camera_has_vlm(cam)]
+    if len(vlm_cameras) == 0:
+        raise ValueError(
+            f"[ERROR] No lp_vlm workload found in any camera. "
+            f"Available workloads: {[c.get('workloads', []) for c in cameras]}"
+        )
+    if len(vlm_cameras) > 1:
+        camera_ids = [c.get("camera_id", "unknown") for c in vlm_cameras]
+        raise ValueError(
+            f"[ERROR] More than one LP_VLM workload defined. "
+            f"Found {len(vlm_cameras)} cameras with LP_VLM: {camera_ids}. "
+            f"Only one camera should have LP_VLM workload."
+        )
+
+    cam = vlm_cameras[0]
+
+    # Original fileSrc, first segment before '|'
+    raw_src = str(cam.get("fileSrc", ""))
+    file_src = raw_src.split("|", 1)[0].strip()
+    if not file_src:
+        raise ValueError("[ERROR] lp_vlm camera has empty fileSrc")
+
+    # Extension from original file (e.g. .mp4)
+    ext = Path(file_src).suffix or ""
+
+    # Base bench-style name from existing helper
+    width = cam.get("width")
+    fps = cam.get("fps")
+    base_name = extract_video_name(file_src, width, fps)
+    if not base_name:
+        raise ValueError("[ERROR] Could not derive video name from fileSrc")
+
+    return f"{base_name}{ext}"
+
 def get_video_from_config(camera_cfg_path: str = None):
     """
     Validate VLM configuration and extract stream metadata.
@@ -308,6 +362,11 @@ if __name__ == "__main__":
         action="store_true",
         help="Return only the RTSP URI for lp_vlm workload"
     )
+    parser.add_argument(
+        "--extract_video_name",
+        action="store_true",
+        help="Return bench-style video name with original file extension"
+    )
 
     args = parser.parse_args()
 
@@ -325,6 +384,10 @@ if __name__ == "__main__":
                 "roi": roi_coordinates
             }))
             exit(0)
+        if args.extract_video_name:
+            video_name = get_video_name_with_extension(args.camera_config)
+            print(video_name)
+            exit(0)
         if args.get_stream_uri:
             _, stream_uri, _ = get_video_from_config(args.camera_config)
             print(stream_uri)
@@ -332,7 +395,7 @@ if __name__ == "__main__":
         if args.get_video_name:
             video_name = get_video_name_only(args.camera_config)
             print(video_name)
-            exit(0)
+            exit(0)    
         parser.print_help()
         exit(1)
 
