@@ -6,23 +6,14 @@ MODEL_PATH="/home/pipeline-server/lp-vlm/models"
 WORKLOAD_PIPELINE_CONFIG="/home/pipeline-server/lp-vlm/configs/"$WORKLOAD_DIST
 
 
-VIDEO_NAME="$(python3 /home/pipeline-server/lp-vlm/workload_utils.py \
-  --camera-config "/home/pipeline-server/lp-vlm/configs/${CAMERA_STREAM}" \
-  --get-video-name)"
 ORIGINAL_VIDEO_NAME="$(python3 /home/pipeline-server/lp-vlm/workload_utils.py \
   --camera-config "/home/pipeline-server/lp-vlm/configs/${CAMERA_STREAM}" \
   --extract_video_name)"
-STREAM_URI="$(python3 /home/pipeline-server/lp-vlm/workload_utils.py \
-  --camera-config "/home/pipeline-server/lp-vlm/configs/${CAMERA_STREAM}" \
-  --get-stream-uri)"
 
-export VIDEO_NAME
+
 export ORIGINAL_VIDEO_NAME
-export STREAM_URI
 
-echo "VIDEO_NAME from config:" "$VIDEO_NAME"
 echo "ORIGINAL_VIDEO_NAME from config:" "$ORIGINAL_VIDEO_NAME"
-echo "STREAM_URI from config:" "$STREAM_URI"
 echo "WORKLOAD_DIST from env:" $WORKLOAD_DIST
 echo "CONFIG_PATH set to:" $WORKLOAD_PIPELINE_CONFIG
 
@@ -74,12 +65,8 @@ fi
 
 echo "🔍 Using model: $MODEL_FULL_PATH"
 
-if [ -z "$STREAM_URI" ]; then
-  echo "Error: STREAM_URI is not set"
-  exit 1
-fi
 
-echo "Starting Object Detection pipeline for stream: $STREAM_URI"
+echo "Starting Object Detection pipeline"
 
 export GST_DEBUG="${GST_DEBUG:-4}"
 
