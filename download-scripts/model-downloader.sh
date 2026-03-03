@@ -23,11 +23,36 @@ if [[ -n "${WORKLOAD_DIST:-}" && -f "$CONFIG_JSON" ]]; then
             # ---- VLM handling ----
             VLM_MODEL=$(jq -r '.vlm_model' <<< "$entry")
             VLM_PRECISION=$(jq -r '.vlm_precision // "int8"' <<< "$entry")
+            MODEL=$(jq -r '.model' <<< "$entry")
+            MODEL_PRECISION=$(jq -r '.precision // "FP16"' <<< "$entry")
             
+            # Download VLM model
             export MODEL_NAME="$VLM_MODEL"
             export PRECISION="$VLM_PRECISION"
 
             echo "[INFO] VLM | $MODEL_NAME | $PRECISION"
+            
+            # Skip if already exists
+            if find "$MODELS_PATH" -type f -path "*/$MODEL_NAME/*.xml" | grep -q "$MODEL_NAME.xml"; then
+                echo "[INFO] VLM Model $MODEL_NAME already exists, skipping"
+            else
+                bash "$SCRIPT_BASE_PATH/model-handler.sh"
+            fi
+            
+            # Download detection model if it exists and is not null/empty
+            if [[ "$MODEL" != "null" && -n "$MODEL" ]]; then
+                export MODEL_NAME="$MODEL"
+                export PRECISION="$MODEL_PRECISION"
+
+                echo "[INFO] VLM Detection Model | $MODEL_NAME | $PRECISION"
+                
+                # Skip if already exists
+                if find "$MODELS_PATH" -type f -path "*/$MODEL_NAME/*.xml" | grep -q "$MODEL_NAME.xml"; then
+                    echo "[INFO] Detection Model $MODEL_NAME already exists, skipping"
+                else
+                    bash "$SCRIPT_BASE_PATH/model-handler.sh"
+                fi
+            fi
         else
             # ---- Non-VLM handling ----
             MODEL=$(jq -r '.model' <<< "$entry")
@@ -37,15 +62,15 @@ if [[ -n "${WORKLOAD_DIST:-}" && -f "$CONFIG_JSON" ]]; then
             export PRECISION="$PRECISION"
 
             echo "[INFO] $TYPE | $MODEL | $PRECISION"
-        fi
+            
+            # Skip if already exists
+            if find "$MODELS_PATH" -type f -path "*/$MODEL_NAME/*.xml" | grep -q "$MODEL_NAME.xml"; then
+                echo "[INFO] Model $MODEL_NAME already exists, skipping"
+                continue
+            fi
 
-        # Skip if already exists
-        if find "$MODELS_PATH" -type f -path "*/$MODEL_NAME/*.xml" | grep -q "$MODEL_NAME.xml"; then
-            echo "[INFO] Model $MODEL_NAME already exists, skipping"
-            continue
+            bash "$SCRIPT_BASE_PATH/model-handler.sh"
         fi
-
-        bash "$SCRIPT_BASE_PATH/model-handler.sh"
     done
 
 ############################################
