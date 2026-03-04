@@ -101,7 +101,7 @@ The system includes an integrated RTSP server (MediaMTX) that streams video file
     *Visual Mode*
 
     ```
-    RENDER_MODE=1 make run-lp
+    RENDER_MODE=1 DISPLAY=:0 make run-lp
     ```
 > :bulb:
 > For the first time execution, it will take some time to download videos, models and docker images
