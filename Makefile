@@ -40,7 +40,7 @@ STREAM_LOOP ?= true
 
 
 TAG ?= 2026.0-rc1
-
+RENDER_MODE ?=0
 REGISTRY ?= true
 # Registry image references
 REGISTRY_MODEL_DOWNLOADER ?= intel/model-downloader:$(TAG)
