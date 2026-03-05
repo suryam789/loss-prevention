@@ -83,6 +83,8 @@ The system includes an integrated RTSP server (MediaMTX) that streams video file
     ```
     git clone -b v4.0.0 --single-branch https://github.com/intel-retail/loss-prevention
     ```
+### Run Loss Prevention Workload
+
 >[!IMPORTANT]
 >Default Settings
 >
@@ -106,6 +108,39 @@ The system includes an integrated RTSP server (MediaMTX) that streams video file
 > :bulb:
 > For the first time execution, it will take some time to download videos, models and docker images
 
+### Run Automated Self Checkout Workload
+
+#### 1. Object Detection
+*Headless Mode*
+```
+make run-lp CAMERA_STREAM=camera_to_workload_asc_object_detection.json WORKLOAD_DIST=workload_to_pipeline_asc_object_detection_cpu.json 
+```
+*Visual Mode* 
+```
+make run-lp CAMERA_STREAM=camera_to_workload_asc_object_detection.json WORKLOAD_DIST=workload_to_pipeline_asc_object_detection_cpu.json RENDER_MODE=1 DISPLAY=:0
+```
+#### 2. Age Verification
+*Headless Mode* 
+```
+make run-lp CAMERA_STREAM=camera_to_workload_asc_age_verification.json WORKLOAD_DIST=workload_to_pipeline_asc_age_verification_gpu.json
+```
+*Visual Mode* 
+```
+make run-lp CAMERA_STREAM=camera_to_workload_asc_age_verification.json WORKLOAD_DIST=workload_to_pipeline_asc_age_verification_gpu.json RENDER_MODE=1 DISPLAY=:0
+```
+#### 3. Combined Detection and Classification
+*Headless Mode*
+```
+make run-lp CAMERA_STREAM=camera_to_workload_asc_object_detection_classification.json WORKLOAD_DIST=workload_to_pipeline_asc_object_detection_classification_gpu.json
+```
+*Visual Mode* 
+```
+make run-lp CAMERA_STREAM=camera_to_workload_asc_object_detection_classification.json WORKLOAD_DIST=workload_to_pipeline_asc_object_detection_classification_gpu.json RENDER_MODE=1 DISPLAY=:0
+```
+>[!IMPORTANT]
+>For more Automated Self Checkout Workloads, :point_right: [Loss Prevention Documentation Guide](https://intel-retail.github.io/documentation/use-cases/loss-prevention/advanced.html#automated-self-checkout-configurations)
+
+
 __What to Expect__
   
 + *Visual Mode*
@@ -128,36 +163,6 @@ __Stop the application__
 make down-lp
 ```
 
-## 📁 Project Structure
-
-- `configs/` — Configuration files (camera/workload mapping, pipeline mapping)
-- `docker/` — Dockerfiles for downloader and pipeline containers
-- `docs/` — Documentation (HLD, LLD, system design)
-- `download-scripts/` — Scripts for downloading models and videos
-- `src/` — Main source code and pipeline runner scripts
-- `src/rtsp-streamer/` — RTSP server container (MediaMTX + FFmpeg)
-- `src/gst-pipeline-generator.py` — Dynamic GStreamer pipeline generator
-- `src/docker-compose.yml` — Multi-container orchestration
-- `performance-tools/sample-media/` — Video files for RTSP streaming
-- `Makefile` — Build automation and workflow commands
-
-## 🐳 Docker Services
-
-The application runs the following Docker containers:
-
-| Service | Purpose | Port | Notes |
-|---------|---------|------|-------|
-| `rtsp-streamer` | RTSP video streaming server | 8554 | Streams videos from sample-media |
-| `rabbitmq` | Message broker for VLM workload | 5672, 15672 | Requires credentials |
-| `minio-service` | Object storage for frames | 4000, 4001 | S3-compatible storage |
-| `model-downloader` | Downloads AI models | - | Runs once at startup |
-| `lp-vlm-workload-handler` | VLM inference processor | - | GPU/CPU inference |
-| `vlm-pipeline-runner` | VLM pipeline orchestrator | - | Requires DISPLAY variable |
-| `lp-pipeline-runner` | Main inference pipeline | - | Supports CPU/GPU/NPU |
-
-**Network Configuration:**
-- All services run on `my_network` bridge network for DNS resolution
-- Use `rtsp-streamer`, `rabbitmq`, `minio-service` as hostnames for inter-service communication
 
 ## :heavy_plus_sign: Advanced Usage
 >[!IMPORTANT]
@@ -222,7 +227,37 @@ make benchmark
 >[!IMPORTANT]
 >For Advanced Benchmark settings, :point_right: [Benchmarking Guide](https://intel-retail.github.io/documentation/use-cases/loss-prevention/advanced.html)
 
-      
+## 📁 Project Structure
+
+- `configs/` — Configuration files (camera/workload mapping, pipeline mapping)
+- `docker/` — Dockerfiles for downloader and pipeline containers
+- `docs/` — Documentation (HLD, LLD, system design)
+- `download-scripts/` — Scripts for downloading models and videos
+- `src/` — Main source code and pipeline runner scripts
+- `src/rtsp-streamer/` — RTSP server container (MediaMTX + FFmpeg)
+- `src/gst-pipeline-generator.py` — Dynamic GStreamer pipeline generator
+- `src/docker-compose.yml` — Multi-container orchestration
+- `performance-tools/sample-media/` — Video files for RTSP streaming
+- `Makefile` — Build automation and workflow commands
+
+## 🐳 Docker Services
+
+The application runs the following Docker containers:
+
+| Service | Purpose | Port | Notes |
+|---------|---------|------|-------|
+| `rtsp-streamer` | RTSP video streaming server | 8554 | Streams videos from sample-media |
+| `rabbitmq` | Message broker for VLM workload | 5672, 15672 | Requires credentials |
+| `minio-service` | Object storage for frames | 4000, 4001 | S3-compatible storage |
+| `model-downloader` | Downloads AI models | - | Runs once at startup |
+| `lp-vlm-workload-handler` | VLM inference processor | - | GPU/CPU inference |
+| `vlm-pipeline-runner` | VLM pipeline orchestrator | - | Requires DISPLAY variable |
+| `lp-pipeline-runner` | Main inference pipeline | - | Supports CPU/GPU/NPU |
+
+**Network Configuration:**
+- All services run on `my_network` bridge network for DNS resolution
+- Use `rtsp-streamer`, `rabbitmq`, `minio-service` as hostnames for inter-service communication
+   
 ## &#8505; Useful Information
 
 + __Make Commands__
