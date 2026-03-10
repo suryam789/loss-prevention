@@ -200,7 +200,8 @@ benchmark: build-benchmark download-sample-videos download-models
 		python3 benchmark.py \
 			--compose_file ../../src/$(DOCKER_COMPOSE) \
 			--pipelines $(PIPELINE_COUNT) \
-			--results_dir $(RESULTS_DIR); \
+			--results_dir $(RESULTS_DIR) \
+			$$(if [ "$(REGISTRY)" = "true" ]; then echo "--benchmark_type=reg"; fi); \
 		deactivate \
 	)
 
@@ -235,7 +236,8 @@ benchmark-stream-density: build-benchmark download-sample-videos download-models
 		--target_fps $(TARGET_FPS) \
 		--container_names $(CONTAINER_NAMES) \
 		--density_increment $(DENSITY_INCREMENT) \
-		--results_dir $(RESULTS_DIR); \
+		--results_dir $(RESULTS_DIR) \
+		$$(if [ "$(REGISTRY)" = "true" ]; then echo "--benchmark_type=reg"; fi); \
 	deactivate \
 	)
 	
@@ -255,7 +257,7 @@ benchmark-quickstart: download-models download-sample-videos
 	python3 -m venv venv && \
 	. venv/bin/activate && \
 	pip3 install -r requirements.txt && \
-	python3 benchmark.py --compose_file ../../src/$(DOCKER_COMPOSE) --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR); \
+	python3 benchmark.py --compose_file ../../src/$(DOCKER_COMPOSE) --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR) $$(if [ "$(REGISTRY)" = "true" ]; then echo "--benchmark_type=reg"; fi); \
 	deactivate \
 	)
 	$(MAKE) consolidate-metrics
