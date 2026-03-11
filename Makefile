@@ -39,13 +39,15 @@ DOCKER_COMPOSE ?= docker-compose.yml
 STREAM_LOOP ?= true
 
 
-TAG ?= 2026.0-rc1
+TAG ?= 2026.0-rc2
+LP_TAG = $(shell cat VERSION)
+export LP_TAG
 RENDER_MODE ?=0
 REGISTRY ?= true
 # Registry image references
-REGISTRY_MODEL_DOWNLOADER ?= intel/model-downloader:$(TAG)
-REGISTRY_PIPELINE_RUNNER ?= intel/pipeline-runner-lp:$(TAG)
-REGISTRY_BENCHMARK ?= intel/retail-benchmark:$(TAG)
+REGISTRY_MODEL_DOWNLOADER ?= intel/model-downloader:$(LP_TAG)
+REGISTRY_PIPELINE_RUNNER ?= intel/pipeline-runner-lp:$(LP_TAG)
+REGISTRY_BENCHMARK ?= intel/retail-benchmark:$(LP_TAG)
 
 VLM_LOGS_FILE ?= $(PWD)/vlm_loss_prevention.log
 LP_VLM_WORKLOAD_ENABLED := $(shell python3 lp-vlm/src/workload_utils.py --camera-config configs/$(CAMERA_STREAM) --has-lp-vlm)
