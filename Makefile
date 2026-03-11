@@ -39,7 +39,7 @@ DOCKER_COMPOSE ?= docker-compose.yml
 STREAM_LOOP ?= true
 
 
-TAG ?= 2026.0-rc1
+TAG ?= 2026.0-rc2
 RENDER_MODE ?=0
 REGISTRY ?= true
 # Registry image references
