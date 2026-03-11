@@ -6,7 +6,7 @@ services:
       args:
         - HTTP_PROXY=${HTTP_PROXY}
         - HTTPS_PROXY=${HTTPS_PROXY}
-    image: intel/model-downloader:2026.0-rc2
+    image: intel/model-downloader:${LP_TAG}
     container_name: model-downloader-lp
     environment:
       - HTTP_PROXY=${HTTP_PROXY}
@@ -87,7 +87,7 @@ services:
         - HTTPS_PROXY=${HTTPS_PROXY}
         - http_proxy=${http_proxy}
         - https_proxy=${https_proxy}
-    image: intel/rtsp-streamer:2026.0-rc2
+    image: intel/rtsp-streamer:${LP_TAG}
     restart: unless-stopped
     environment:
       - HTTP_PROXY=${HTTP_PROXY}
@@ -112,7 +112,7 @@ services:
       args:
         - HTTP_PROXY=${HTTP_PROXY}
         - HTTPS_PROXY=${HTTPS_PROXY}
-    image: intel/lp-vlm-workload-handler:2026.0-rc2
+    image: intel/lp-vlm-workload-handler:${LP_TAG}
     #user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
     devices:
       - /dev/dri:/dev/dri
@@ -171,7 +171,7 @@ services:
 
   vlm-pipeline-runner:
     container_name: vlm-pipeline-runner    
-    image: intel/pipeline-runner-lp:2026.0-rc2
+    image: intel/pipeline-runner-lp:${LP_TAG}
     #user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
     environment:
       - HTTP_PROXY=${HTTP_PROXY}
@@ -236,7 +236,7 @@ services:
       args:
         - HTTP_PROXY=${HTTP_PROXY}
         - HTTPS_PROXY=${HTTPS_PROXY}
-    image: intel/pipeline-runner-lp:2026.0-rc2
+    image: intel/pipeline-runner-lp:${LP_TAG}
     #user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"    
     depends_on:
       model-downloader:
