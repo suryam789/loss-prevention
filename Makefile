@@ -40,12 +40,13 @@ STREAM_LOOP ?= true
 
 
 TAG ?= 2026.0-rc2
+LP_TAG = $(shell cat VERSION)
 RENDER_MODE ?=0
 REGISTRY ?= true
 # Registry image references
-REGISTRY_MODEL_DOWNLOADER ?= intel/model-downloader:$(TAG)
-REGISTRY_PIPELINE_RUNNER ?= intel/pipeline-runner-lp:$(TAG)
-REGISTRY_BENCHMARK ?= intel/retail-benchmark:$(TAG)
+REGISTRY_MODEL_DOWNLOADER ?= intel/model-downloader:$(LP_TAG)
+REGISTRY_PIPELINE_RUNNER ?= intel/pipeline-runner-lp:$(LP_TAG)
+REGISTRY_BENCHMARK ?= intel/retail-benchmark:$(LP_TAG)
 
 VLM_LOGS_FILE ?= $(PWD)/vlm_loss_prevention.log
 LP_VLM_WORKLOAD_ENABLED := $(shell python3 lp-vlm/src/workload_utils.py --camera-config configs/$(CAMERA_STREAM) --has-lp-vlm)
@@ -81,7 +82,7 @@ fetch-model-downloader:
 
 build-model-downloader: | validate-pipeline-config
 	@echo "Building model downloader"
-	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} -t $(REGISTRY_MODEL_DOWNLOADER) -f docker/Dockerfile.downloader .
+	LP_TAG=$(LP_TAG) docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} -t $(REGISTRY_MODEL_DOWNLOADER) -f docker/Dockerfile.downloader .
 	@echo "assets downloader completed"
 
 run-model-downloader:
@@ -127,7 +128,7 @@ run-lp: validate_workload_mapping update-submodules download-sample-videos
 
 
 down-lp:	
-	docker compose -f src/$(DOCKER_COMPOSE) down	
+	LP_TAG=$(LP_TAG) docker compose -f src/$(DOCKER_COMPOSE) down	
 	@echo "Cleaning up VLM temporary files..."
 	@rm -f vlm_loss_prevention.log
 	@rm -f lp-vlm/lp-vlm.env
@@ -141,10 +142,10 @@ run: validate_workload_mapping download-sample-videos
 	    [ -f $$LOG_FILE ] || touch $$LOG_FILE
 	@if [ "$(REGISTRY)" = "true" ]; then \
 		echo "##############Using registry mode - fetching pipeline runner..."; \
-		LOCAL_UID=$(shell id -u) LOCAL_GID=$(shell id -g) LP_VLM_WORKLOAD_ENABLED=$(LP_VLM_WORKLOAD_ENABLED) STREAM_LOOP=$(STREAM_LOOP_VALUE) BATCH_SIZE_DETECT=$(BATCH_SIZE_DETECT) BATCH_SIZE_CLASSIFY=$(BATCH_SIZE_CLASSIFY) docker compose -f src/$(DOCKER_COMPOSE) up -d; \
+		LP_TAG=$(LP_TAG) LOCAL_UID=$(shell id -u) LOCAL_GID=$(shell id -g) LP_VLM_WORKLOAD_ENABLED=$(LP_VLM_WORKLOAD_ENABLED) STREAM_LOOP=$(STREAM_LOOP_VALUE) BATCH_SIZE_DETECT=$(BATCH_SIZE_DETECT) BATCH_SIZE_CLASSIFY=$(BATCH_SIZE_CLASSIFY) docker compose -f src/$(DOCKER_COMPOSE) up -d; \
 	else \
 		docker compose -f src/$(DOCKER_COMPOSE) build pipeline-runner; \
-		LOCAL_UID=$(shell id -u) LOCAL_GID=$(shell id -g) LP_VLM_WORKLOAD_ENABLED=$(LP_VLM_WORKLOAD_ENABLED) STREAM_LOOP=$(STREAM_LOOP_VALUE) BATCH_SIZE_DETECT=$(BATCH_SIZE_DETECT) BATCH_SIZE_CLASSIFY=$(BATCH_SIZE_CLASSIFY) docker compose -f src/$(DOCKER_COMPOSE) up --build -d; \
+		LP_TAG=$(LP_TAG) LOCAL_UID=$(shell id -u) LOCAL_GID=$(shell id -g) LP_VLM_WORKLOAD_ENABLED=$(LP_VLM_WORKLOAD_ENABLED) STREAM_LOOP=$(STREAM_LOOP_VALUE) BATCH_SIZE_DETECT=$(BATCH_SIZE_DETECT) BATCH_SIZE_CLASSIFY=$(BATCH_SIZE_CLASSIFY) docker compose -f src/$(DOCKER_COMPOSE) up --build -d; \
 	fi
 
 run-render-mode: validate_workload_mapping download-sample-videos
@@ -165,11 +166,11 @@ run-render-mode: validate_workload_mapping download-sample-videos
 	@if [ "$(REGISTRY)" = "true" ]; then \
 		echo "##############Using registry mode - fetching pipeline runner..."; \
 		mkdir -p results results/vlm-results; \
-		LOCAL_UID=$(shell id -u) LOCAL_GID=$(shell id -g) RENDER_MODE=1  LP_VLM_WORKLOAD_ENABLED=$(LP_VLM_WORKLOAD_ENABLED) STREAM_LOOP=$(STREAM_LOOP_VALUE) CAMERA_STREAM=$(CAMERA_STREAM) WORKLOAD_DIST=$(WORKLOAD_DIST) BATCH_SIZE_DETECT=$(BATCH_SIZE_DETECT) BATCH_SIZE_CLASSIFY=$(BATCH_SIZE_CLASSIFY) docker compose -f src/$(DOCKER_COMPOSE) up -d; \
+		LP_TAG=$(LP_TAG) LOCAL_UID=$(shell id -u) LOCAL_GID=$(shell id -g) RENDER_MODE=1  LP_VLM_WORKLOAD_ENABLED=$(LP_VLM_WORKLOAD_ENABLED) STREAM_LOOP=$(STREAM_LOOP_VALUE) CAMERA_STREAM=$(CAMERA_STREAM) WORKLOAD_DIST=$(WORKLOAD_DIST) BATCH_SIZE_DETECT=$(BATCH_SIZE_DETECT) BATCH_SIZE_CLASSIFY=$(BATCH_SIZE_CLASSIFY) docker compose -f src/$(DOCKER_COMPOSE) up -d; \
 	else \
 		docker compose -f src/$(DOCKER_COMPOSE) build; \
 		mkdir -p results results/vlm-results; \
-		LOCAL_UID=$(shell id -u) LOCAL_GID=$(shell id -g) RENDER_MODE=1 LP_VLM_WORKLOAD_ENABLED=$(LP_VLM_WORKLOAD_ENABLED) STREAM_LOOP=$(STREAM_LOOP_VALUE) CAMERA_STREAM=$(CAMERA_STREAM) WORKLOAD_DIST=$(WORKLOAD_DIST) BATCH_SIZE_DETECT=$(BATCH_SIZE_DETECT) BATCH_SIZE_CLASSIFY=$(BATCH_SIZE_CLASSIFY) docker compose -f src/$(DOCKER_COMPOSE) up --build -d; \
+		LP_TAG=$(LP_TAG) LOCAL_UID=$(shell id -u) LOCAL_GID=$(shell id -g) RENDER_MODE=1 LP_VLM_WORKLOAD_ENABLED=$(LP_VLM_WORKLOAD_ENABLED) STREAM_LOOP=$(STREAM_LOOP_VALUE) CAMERA_STREAM=$(CAMERA_STREAM) WORKLOAD_DIST=$(WORKLOAD_DIST) BATCH_SIZE_DETECT=$(BATCH_SIZE_DETECT) BATCH_SIZE_CLASSIFY=$(BATCH_SIZE_CLASSIFY) docker compose -f src/$(DOCKER_COMPOSE) up --build -d; \
 	fi	
 	$(MAKE) clean-images
 
@@ -197,7 +198,7 @@ benchmark: build-benchmark download-sample-videos download-models
 		python3 -m venv venv && \
 		. venv/bin/activate && \
 		pip3 install -r requirements.txt && \
-		python3 benchmark.py \
+		LP_TAG=$(LP_TAG) python3 benchmark.py \
 			--compose_file ../../src/$(DOCKER_COMPOSE) \
 			--pipelines $(PIPELINE_COUNT) \
 			--results_dir $(RESULTS_DIR) \
@@ -230,7 +231,7 @@ benchmark-stream-density: build-benchmark download-sample-videos download-models
 	python3 -m venv venv && \
 	. venv/bin/activate && \
 	pip3 install -r requirements.txt && \
-	python3 benchmark.py \
+	LP_TAG=$(LP_TAG) python3 benchmark.py \
 		--compose_file ../../src/$(DOCKER_COMPOSE) \
 		--init_duration $(INIT_DURATION) \
 		--target_fps $(TARGET_FPS) \
@@ -257,7 +258,7 @@ benchmark-quickstart: download-models download-sample-videos
 	python3 -m venv venv && \
 	. venv/bin/activate && \
 	pip3 install -r requirements.txt && \
-	python3 benchmark.py --compose_file ../../src/$(DOCKER_COMPOSE) --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR) $$(if [ "$(REGISTRY)" = "true" ]; then echo "--benchmark_type=reg"; fi); \
+	LP_TAG=$(LP_TAG) python3 benchmark.py --compose_file ../../src/$(DOCKER_COMPOSE) --pipelines $(PIPELINE_COUNT) --results_dir $(RESULTS_DIR) $$(if [ "$(REGISTRY)" = "true" ]; then echo "--benchmark_type=reg"; fi); \
 	deactivate \
 	)
 	$(MAKE) consolidate-metrics
