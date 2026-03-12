@@ -177,12 +177,20 @@ make down-lp
     make update-submodules REGISTRY=false
     #Download sample videos used by the performance tools
     make download-sample-videos REGISTRY=false
-    #Run the LP application
-    make run-render-mode REGISTRY=false RENDER_MODE=1
+    #Run the LP application for visual mode
+    make run-render-mode DISPLAY=:0 REGISTRY=false RENDER_MODE=1
+    or
+    #Run the LP application for headless mode
+    make run REGISTRY=false
 ```
 - Or simply:
+- Visual Mode
 ```sh
-    make run-lp REGISTRY=false RENDER_MODE=1
+    make run-lp DISPLAY=:0 REGISTRY=false RENDER_MODE=1
+```
+- Headless Mode
+```sh
+    make run-lp REGISTRY=false
 ```
 
 ### 2. Run the VLM based workload
