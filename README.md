@@ -273,5 +273,8 @@ The application runs the following Docker containers:
     - `make clean-images` — Remove dangling Docker images
     - `make clean-containers` — Remove stopped containers
     - `make clean-all` — Remove all unused Docker resources
+ + __Known Issues__
+    - On EMT OS, containers built on Alpine base images (e.g., MinIO) may report as unhealthy despite the service functioning normally.
+      Docker health checks are failing with OCI runtime errors, preventing proper container orchestration and monitoring. 
 
 
