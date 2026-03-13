@@ -11,7 +11,7 @@ export HTTPS_PROXY
 
 
 export PWD=$(shell pwd)
-HOST_IP := $(shell hostname -I | cut -d' ' -f1 2>/dev/null || ipconfig getifaddr en0)
+HOST_IP := $(shell ip route get 1.1.1.1 2>/dev/null | sed -n 's/.*src \([0-9.]*\).*/\1/p')
 export VLM_DEVICE ?= CPU
 export VLM_SERVICE_PORT ?= 8000
 export LP_BASE_DIR=$(PWD)
