@@ -46,17 +46,17 @@ jobs:
             sudo df -h
 
         - name: Run Trivy vulnerability scanner on model-downloader
-          uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2
+          uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
           with:
-            image-ref: 'model-downloader-lp:2026.0-rc1'
+            image-ref: 'model-downloader-lp:2026.0-rc3'
             format: 'table'
             output: 'trivy-results-modeldownloader.txt'
             severity: 'CRITICAL,HIGH'
 
         - name: Run Trivy vulnerability scanner on pipeline-runner
-          uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2
+          uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
           with:
-            image-ref: 'pipeline-runner-lp:2026.0-rc1'
+            image-ref: 'pipeline-runner-lp:2026.0-rc3'
             format: 'table'
             output: 'trivy-results-pipelinerunner.txt'
             severity: 'CRITICAL,HIGH'
