@@ -29,6 +29,13 @@ jobs:
           uses: actions/checkout@1e31de5234b9f8995739874a8ce0492dc87873e2
           with:
             ref: main
+        - name: Read VERSION
+          shell: bash
+          run: |
+            VERSION="$(cat VERSION | tr -d '\n\r' | xargs)"
+            echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+            echo "Using VERSION=$VERSION"
+            
         - name: Update Sub Module Performance-Tools
           run: make update-submodules
           
@@ -48,7 +55,7 @@ jobs:
         - name: Run Trivy vulnerability scanner on model-downloader
           uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
           with:
-            image-ref: 'intel/model-downloader:2026.0-rc3'
+            image-ref: "intel/model-downloader:${{ env.VERSION }}"
             format: 'table'
             output: 'trivy-results-modeldownloader.txt'
             severity: 'CRITICAL,HIGH'
@@ -56,7 +63,7 @@ jobs:
         - name: Run Trivy vulnerability scanner on pipeline-runner
           uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
           with:
-            image-ref: 'intel/pipeline-runner-lp:2026.0-rc3'
+            image-ref: "intel/pipeline-runner-lp:${{ env.VERSION }}"
             format: 'table'
             output: 'trivy-results-pipelinerunner.txt'
             severity: 'CRITICAL,HIGH'
