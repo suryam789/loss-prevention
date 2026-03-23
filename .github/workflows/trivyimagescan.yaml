@@ -48,7 +48,7 @@ jobs:
         - name: Run Trivy vulnerability scanner on model-downloader
           uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
           with:
-            image-ref: 'model-downloader-lp:2026.0-rc3'
+            image-ref: 'intel/model-downloader-lp:2026.0-rc3'
             format: 'table'
             output: 'trivy-results-modeldownloader.txt'
             severity: 'CRITICAL,HIGH'
@@ -56,7 +56,7 @@ jobs:
         - name: Run Trivy vulnerability scanner on pipeline-runner
           uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
           with:
-            image-ref: 'pipeline-runner-lp:2026.0-rc3'
+            image-ref: 'intel/pipeline-runner-lp:2026.0-rc3'
             format: 'table'
             output: 'trivy-results-pipelinerunner.txt'
             severity: 'CRITICAL,HIGH'
