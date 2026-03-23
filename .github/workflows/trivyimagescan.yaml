@@ -48,7 +48,7 @@ jobs:
         - name: Run Trivy vulnerability scanner on model-downloader
           uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
           with:
-            image-ref: 'intel/model-downloader-lp:2026.0-rc3'
+            image-ref: 'intel/model-downloader:2026.0-rc3'
             format: 'table'
             output: 'trivy-results-modeldownloader.txt'
             severity: 'CRITICAL,HIGH'
