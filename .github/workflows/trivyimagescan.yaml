@@ -94,18 +94,3 @@ jobs:
               trivy-results-lp-vlm-workload-handler.txt
               trivy-results-lp-rtsp-streamer.txt
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
