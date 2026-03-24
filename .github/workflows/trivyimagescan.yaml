@@ -68,17 +68,31 @@ jobs:
             output: 'trivy-results-pipelinerunner.txt'
             severity: 'CRITICAL,HIGH'
 
+        - name: Run Trivy vulnerability scanner on lp vlm workload handler
+          uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
+          with:
+            image-ref: "intel/lp-vlm-workload-handler:${{ env.VERSION }}"
+            format: 'table'
+            output: 'trivy-results-lp-vlm-workload-handler.txt'
+            severity: 'CRITICAL,HIGH'
+            
+        - name: Run Trivy vulnerability scanner on rtsp-streamer
+          uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
+          with:
+            image-ref: "intel/rtsp-streamer:${{ env.VERSION }}"
+            format: 'table'
+            output: 'trivy-results-lp-rtsp-streamer.txt'
+            severity: 'CRITICAL,HIGH'
+            
         - name: Upload Trivy scan results for model-downloader to GitHub Security tab
           uses: actions/upload-artifact@v4
           with:
-            name: trivy-html-modeldownloader-report
-            path: trivy-results-modeldownloader.txt
-
-        - name: Upload Trivy scan results for pipeline-runner to GitHub Security tab
-          uses: actions/upload-artifact@v4
-          with:
-            name: trivy-html-pipelinerunner-report
-            path: trivy-results-pipelinerunner.txt
+            name: trivy-loss-prevention-report
+            path: |
+              trivy-results-modeldownloader.txt
+              trivy-results-pipelinerunner.txt
+              trivy-results-lp-vlm-workload-handler.txt
+              trivy-results-lp-rtsp-streamer.txt
 
 
 
