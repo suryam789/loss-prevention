@@ -86,6 +86,10 @@ build-model-downloader: | validate-pipeline-config
 	docker build --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg HTTP_PROXY=${HTTP_PROXY} -t $(REGISTRY_MODEL_DOWNLOADER) -f docker/Dockerfile.downloader .
 	@echo "assets downloader completed"
 
+build-lp-images:
+	@echo "Building loss prevention images"
+	docker compose -f src/$(DOCKER_COMPOSE) build
+
 run-model-downloader:
 	@echo "Running assets downloader"
 	docker run --rm \
