@@ -48,7 +48,7 @@ jobs:
         - name: Build Pipeline Runner image from Dockerfile
           run: |
             echo "running make build-pipeline-runner"
-            make build-pipeline-runner
+            make build-lp-images
             sudo du -sh /* 2>/dev/null | sort -rh | head -n 10
             sudo df -h
 
