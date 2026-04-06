@@ -148,7 +148,7 @@ run: validate_workload_mapping download-sample-videos
 	@if [ "$(REGISTRY)" = "true" ]; then \
 		echo "##############Using registry mode - fetching pipeline runner..."; \
 		LOCAL_UID=$(shell id -u) LOCAL_GID=$(shell id -g) LP_VLM_WORKLOAD_ENABLED=$(LP_VLM_WORKLOAD_ENABLED) STREAM_LOOP=$(STREAM_LOOP_VALUE) BATCH_SIZE_DETECT=$(BATCH_SIZE_DETECT) BATCH_SIZE_CLASSIFY=$(BATCH_SIZE_CLASSIFY) docker compose -f src/$(DOCKER_COMPOSE) up -d; \
-	else \		
+	else \
 		LOCAL_UID=$(shell id -u) LOCAL_GID=$(shell id -g) LP_VLM_WORKLOAD_ENABLED=$(LP_VLM_WORKLOAD_ENABLED) STREAM_LOOP=$(STREAM_LOOP_VALUE) BATCH_SIZE_DETECT=$(BATCH_SIZE_DETECT) BATCH_SIZE_CLASSIFY=$(BATCH_SIZE_CLASSIFY) docker compose -f src/$(DOCKER_COMPOSE) up --build -d; \
 	fi
 
